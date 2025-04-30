@@ -1,4 +1,6 @@
-package org.example;
+package Main;
+
+import GameState.GameStateManager;
 
 import javax.swing.JPanel;
 import java.awt.*;

@@ -1,4 +1,6 @@
-package org.example;
+package TileMap;
+
+import Main.GamePanel;
 
 import javax.imageio.ImageIO;
 import java.awt.*;

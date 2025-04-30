@@ -1,9 +1,11 @@
-package org.example;
+package GameState;
+
+import TileMap.Background;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
-public class MenuState extends GameState{
+public class MenuState extends GameState {
 
     private Background bg;
 
@@ -62,7 +64,7 @@ public class MenuState extends GameState{
 
     private void select() {
         if(currentChoice == 0) {
-            // start
+            gsm.setState(GameStateManager.LEVEL1STATE);
         }
         if( currentChoice == 1) {
             // help
