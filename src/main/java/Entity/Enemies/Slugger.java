@@ -93,12 +93,13 @@ public class Slugger extends Enemy {
             right = false;
             left = true;
             facingRight = false;
+            dx = -maxSpeed;
         }
         if(left && dx == 0) {
             right = true;
             left = false;
             facingRight = true;
-
+            dx = maxSpeed;
         }
 
         // update animation

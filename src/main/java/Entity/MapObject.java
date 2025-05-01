@@ -63,6 +63,8 @@ public abstract class MapObject {
     protected double jumpStart;
     protected double stopJumpSpeed;
 
+    protected boolean outOfMap;
+
     // constructor
     public MapObject (TileMap tm) {
         tileMap = tm;
@@ -86,6 +88,16 @@ public abstract class MapObject {
         int topTile = (int) (y - cwidth / 2) / tileSize;
         int bottomTile = (int) (y + cwidth / 2 - 1) / tileSize;
 
+        int numRows = tileMap.getNumRows();
+        int numCols = tileMap.getNumCols();
+
+        // If out of bounds (below map), respawn or stop
+        if (topTile < 0 || bottomTile >= numRows || leftTile < 0 || rightTile >= numCols) {
+            outOfMap = true;
+            return;
+        } else {
+            outOfMap = false;
+        }
         int tl = tileMap.getType(topTile, leftTile);
         int tr = tileMap.getType(topTile, rightTile);
         int bl = tileMap.getType(bottomTile, leftTile);

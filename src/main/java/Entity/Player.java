@@ -222,6 +222,7 @@ public class Player extends MapObject{
     public void update() {
 
         // update position
+        if(outOfMap) respawn(true);
         getNextPosition();
         checkTileMapCollision();
         setPosition(xtemp, ytemp);
@@ -341,9 +342,12 @@ public class Player extends MapObject{
                 return;
             }
         }
-
         super.draw(g);
+    }
 
+    public void respawn(boolean dead) {
+        setPosition(100, 100);
+        health = maxHealth;
     }
 
 }

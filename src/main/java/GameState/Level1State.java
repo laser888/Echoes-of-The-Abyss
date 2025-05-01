@@ -4,7 +4,6 @@ import Entity.*;
 import Entity.Enemies.Slugger;
 import Main.GamePanel;
 import TileMap.Background;
-import TileMap.Background;
 import TileMap.TileMap;
 
 import java.awt.*;

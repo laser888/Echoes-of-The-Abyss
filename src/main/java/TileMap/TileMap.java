@@ -158,4 +158,7 @@ public class TileMap {
     public void setTween(double i) {
         tween = i;
     }
+
+    public int getNumCols() { return numCols; }
+    public int getNumRows() { return numRows; }
 }
