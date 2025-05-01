@@ -82,6 +82,11 @@ public class TileMap {
             width = numCols * tileSize;
             height = numRows * tileSize;
 
+            xmin = GamePanel.WIDTH - width;
+            xmax = 0;
+            ymin = GamePanel.HEIGHT - height;
+            ymax = 0;
+
             String delims = "\\s+";
             for(int row = 0; row < numRows; row++) {
                 String line = br.readLine();
@@ -150,4 +155,7 @@ public class TileMap {
         }
     }
 
+    public void setTween(int i) {
+        tween = i;
+    }
 }
