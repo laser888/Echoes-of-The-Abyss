@@ -93,12 +93,13 @@ public class Slugger extends Enemy {
             right = false;
             left = true;
             facingRight = false;
+            dx = -moveSpeed;
         }
         if(left && dx == 0) {
             right = true;
             left = false;
             facingRight = true;
-
+            dx = moveSpeed;
         }
 
         // update animation
@@ -108,7 +109,7 @@ public class Slugger extends Enemy {
 
     public void draw(Graphics2D g) {
 
-        //if(notOnScreen()) return;
+        if(notOnScreen()) return;
 
         setMapPosition();
 
