@@ -27,6 +27,10 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
     // game state manager
     private GameStateManager gsm;
 
+    private int frameCount = 0;
+    private long fpsTimer = System.nanoTime();
+    private static int currentFPS;
+
     public GamePanel() {
         super();
         setPreferredSize(new Dimension(WIDTH * SCALE, HEIGHT * SCALE));
@@ -61,10 +65,18 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
         long wait;
 
 
+
         //game loop
         while (running) {
 
             start = System.nanoTime();
+
+            frameCount++;
+            if(System.nanoTime() - fpsTimer >= 1000000000) {
+                currentFPS = frameCount;
+                frameCount = 0;
+                fpsTimer = System.nanoTime();
+            }
 
             update();
             draw();
@@ -118,6 +130,8 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
     public void keyReleased(KeyEvent key) {
         gsm.keyReleased(key.getKeyCode());
     }
+
+    public static int getFPS() { return currentFPS; }
 
 
 }

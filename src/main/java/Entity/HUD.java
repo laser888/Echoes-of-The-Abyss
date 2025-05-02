@@ -1,5 +1,7 @@
 package Entity;
 
+import Main.GamePanel;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -41,6 +43,11 @@ public class HUD {
             g.drawString("X: " + player.getx(), 80, 20);
             g.drawString("Y: " + player.gety(), 80, 50);
         }
+
+        g.setColor(Color.BLUE);
+        g.setFont(new Font("Arial", Font.PLAIN, 14));
+        g.drawString("FPS: " + GamePanel.getFPS(), 269, 20);
+
     }
 
 }
