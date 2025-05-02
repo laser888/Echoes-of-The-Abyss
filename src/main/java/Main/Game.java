@@ -9,7 +9,7 @@ public class Game {
         JFrame window = new JFrame("Dragon Tale");
         window.setContentPane(new GamePanel());
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        window.setResizable(false);
+        window.setResizable(true);
         window.pack();
         window.setVisible(true);
 
