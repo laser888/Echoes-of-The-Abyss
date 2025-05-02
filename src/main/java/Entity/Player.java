@@ -158,9 +158,11 @@ public class Player extends MapObject{
 
     public void hit(int damage) {
         if(flinching) return;
+        dead = false;
         health -= damage;
         if(health < 0) health = 0;
         if(health == 0) dead = true;
+        respawn(dead);
         flinching = true;
         flinchTimer = System.nanoTime();
 
@@ -346,8 +348,8 @@ public class Player extends MapObject{
     }
 
     public void respawn(boolean dead) {
+        if(!dead) return;
         setPosition(100, 100);
         health = maxHealth;
     }
-
 }
