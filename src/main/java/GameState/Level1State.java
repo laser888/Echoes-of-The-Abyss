@@ -138,7 +138,7 @@ public class Level1State extends GameState {
         if(k == KeyEvent.VK_SHIFT) player.setGliding(true);
         if(k == KeyEvent.VK_R) player.setScratching(true);
         if(k == KeyEvent.VK_F) player.setFiring(true);
-
+        if(k == KeyEvent.VK_F3) HUD.toggleDebug();
     }
 
     public void keyReleased(int k) {

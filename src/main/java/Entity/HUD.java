@@ -10,6 +10,9 @@ public class HUD {
 
     private BufferedImage image;
     private Font font;
+    private static boolean debug = false;
+
+    public static void toggleDebug() { debug = !debug; }
 
     public HUD(Player p) {
         player = p;
@@ -32,11 +35,12 @@ public class HUD {
         g.drawString(player.getHealth() + "/" + player.getMaxHealth(), 35, 25);
         g.drawString(player.getFire() / 100 + "/" + player.getMaxFire() / 100, 30,45);
 
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.PLAIN, 16));
-        g.drawString("X: " + player.getx(), 80, 20);
-        g.drawString("Y: " + player.gety(), 80, 50);
-
+        if(debug) {
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.PLAIN, 16));
+            g.drawString("X: " + player.getx(), 80, 20);
+            g.drawString("Y: " + player.gety(), 80, 50);
+        }
     }
 
 }
