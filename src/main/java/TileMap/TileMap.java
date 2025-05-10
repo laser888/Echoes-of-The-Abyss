@@ -37,8 +37,8 @@ public class TileMap {
     private Tile[][] tiles;
 
     // drawing
-    private int rowOffest;
-    private int colOffest;
+    private int rowOffset;
+    private int colOffset;
     private int numRowsToDraw;
     private int numColsToDraw;
 
@@ -122,8 +122,8 @@ public class TileMap {
 
         fixBounds();
 
-        colOffest = (int) -this.x / tileSize;
-        rowOffest = (int) -this.y / tileSize;
+        colOffset = (int) -this.x / tileSize;
+        rowOffset = (int) -this.y / tileSize;
 
     }
 
@@ -135,11 +135,11 @@ public class TileMap {
     }
 
     public void draw(Graphics2D g) {
-        for(int row = rowOffest; row < rowOffest + numRowsToDraw; row++) {
+        for(int row = rowOffset; row < rowOffset + numRowsToDraw; row++) {
 
             if(row >= numRows) break;
 
-            for(int col = colOffest; col < colOffest + numColsToDraw; col++) {
+            for(int col = colOffset; col < colOffset + numColsToDraw; col++) {
 
                 if(col >= numCols) break;
 
