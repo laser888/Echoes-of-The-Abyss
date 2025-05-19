@@ -26,6 +26,8 @@ public class Level1State extends GameState {
     // Chat
     public static boolean isTyping = false;
     public static StringBuilder typedText = new StringBuilder();
+    private ArrayList<String> chatHistory = new ArrayList<>();
+    private int chatIndex = -1;
 
     public Level1State (GameStateManager gsm) {
         this.gsm = gsm;
@@ -149,10 +151,12 @@ public class Level1State extends GameState {
     }
 
     private void executeCommand(String command) {
+        chatHistory.add(command);
+        chatIndex = chatHistory.size();
         String[] token = command.trim().split(" ");
 
         switch(token[0].toLowerCase()) {
-            case "tp":
+            case "/tp":
                 if(token.length == 3) {
                     try {
                         int x = Integer.parseInt(token[1]);
@@ -163,7 +167,7 @@ public class Level1State extends GameState {
                     }
                 }
                 break;
-            case "speed":
+            case "/speed":
                 if(token.length == 2) {
                     try {
                         player.setSpeed(Double.parseDouble(token[1]));
@@ -172,13 +176,13 @@ public class Level1State extends GameState {
                     }
                 }
                 break;
-            case "god":
+            case "/god":
                 player.godMode(true);
                 break;
-            case "fly":
+            case "/fly":
                 player.fly(true);
                 break;
-            case "stop":
+            case "/stop":
                 player.godMode(false);
                 break;
         }
@@ -190,16 +194,31 @@ public class Level1State extends GameState {
             if(k == KeyEvent.VK_ESCAPE) {
                 typedText.setLength(0);
                 isTyping = false;
-            }
-            if (k == KeyEvent.VK_ENTER) {
+            } else if (k == KeyEvent.VK_ENTER) {
                 executeCommand(typedText.toString());
+                System.out.println("Chat: " + typedText.toString());
                 typedText.setLength(0);
                 isTyping = false;
             } else if (k == KeyEvent.VK_BACK_SPACE && !typedText.isEmpty()) {
                 typedText.deleteCharAt(typedText.length() - 1);
+            } else if(k == KeyEvent.VK_UP) {
+                if(chatIndex > 0) {
+                    chatIndex--;
+                    typedText.setLength(0);
+                    typedText.append(chatHistory.get(chatIndex));
+                }
+            } else if(k == KeyEvent.VK_DOWN) {
+                if(chatIndex < chatHistory.size() - 1) {
+                    chatIndex++;
+                    typedText.setLength(0);
+                    typedText.append(chatHistory.get(chatIndex));
+                } else {
+                    chatIndex = chatHistory.size();
+                    typedText.setLength(0);
+                }
             } else {
                 char c = (char) k;
-                if (Character.isLetterOrDigit(c) || c == ' ') {
+                if (Character.isLetterOrDigit(c) || c == ' ' || c == '/') {
                     typedText.append(c);
                 }
             }
@@ -209,6 +228,7 @@ public class Level1State extends GameState {
         if (k == KeyEvent.VK_SLASH) {
             isTyping = true;
             typedText.setLength(0);
+            chatIndex = chatHistory.size();
             return;
         }
         if(!isTyping) {
