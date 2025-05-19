@@ -9,7 +9,7 @@ public class WinState extends GameState {
 
     private Background bg;
 
-    private int currentChoice = -1;
+    private int currentChoice = 0;
     private String[] options = { "Main Menu", "Quit"};
 
     private Color titleColor;

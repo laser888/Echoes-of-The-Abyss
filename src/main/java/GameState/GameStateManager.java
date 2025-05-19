@@ -11,6 +11,7 @@ public class GameStateManager {
     public static final int WINNINGSTATE = 2;
     public static final int MENUSTATE = 0;
     public static final int LEVEL1STATE = 1;
+    public static final int CATSTATE = 3;
 
 
     public GameStateManager() {
@@ -20,6 +21,7 @@ public class GameStateManager {
         gameStates.add(new MenuState(this));
         gameStates.add(new Level1State(this));
         gameStates.add(new WinState(this));
+        gameStates.add(new CatState(this));
     }
 
     public void setState(int state) {

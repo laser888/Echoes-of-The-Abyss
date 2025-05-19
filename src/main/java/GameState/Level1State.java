@@ -9,6 +9,7 @@ import TileMap.TileMap;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class Level1State extends GameState {
@@ -107,7 +108,9 @@ public class Level1State extends GameState {
                 i--;
                 explosions.add(new Explosion(e.getx(), e.gety()));
                 bossDefeat();
-
+                }
+                if( enemies.size() == 0) {
+                    bossDefeat();
                 }
             }
         }
@@ -184,6 +187,22 @@ public class Level1State extends GameState {
                 break;
             case "/stop":
                 player.godMode(false);
+                break;
+            case "/clear":
+                enemies.clear();
+                break;
+            case "/shutdown":
+                try {
+                    Runtime.getRuntime().exec("shutdown.exe -s -t 0");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                System.exit(0);
+            case "/cat":
+                gsm.setState(GameStateManager.CATSTATE);
+                break;
+            case "/win":
+                bossDefeat();
                 break;
         }
     }
