@@ -2,6 +2,7 @@ package GameState;
 
 import Entity.*;
 import Entity.Enemies.Slugger;
+import Entity.Enemies.SluggerBoss;
 import Main.GamePanel;
 import TileMap.Background;
 import TileMap.TileMap;
@@ -21,6 +22,10 @@ public class Level1State extends GameState {
     private ArrayList<Explosion> explosions;
 
     private HUD hud;
+
+    // Chat
+    public static boolean isTyping = false;
+    public static StringBuilder typedText = new StringBuilder();
 
     public Level1State (GameStateManager gsm) {
         this.gsm = gsm;
@@ -52,20 +57,27 @@ public class Level1State extends GameState {
         enemies = new ArrayList<Enemy>();
 
         Slugger s;
+        SluggerBoss sb;
         Point[] points = new Point[] {
             new Point(200, 200),
             new Point(860, 200),
             new Point(1525, 200),
             new Point(1680, 200),
-            new Point(1800, 200)
+            new Point(1800, 200),
+            new Point(3050, 200)
         };
         s = new Slugger(tileMap);
+        sb = new SluggerBoss(tileMap);
 
-        for(int i = 0; i < points.length; i++) {
+        for(int i = 0; i < points.length - 1; i++) {
             s = new Slugger(tileMap);
             s.setPosition(points[i].x, points[i].y);
             enemies.add(s);
         }
+
+        sb = new SluggerBoss(tileMap);
+        sb.setPosition(points[points.length - 1].x, points[points.length - 1].y);
+        enemies.add(sb);
 
     }
 
@@ -88,6 +100,13 @@ public class Level1State extends GameState {
                 enemies.remove(i);
                 i--;
                 explosions.add(new Explosion(e.getx(), e.gety()));
+                if(e instanceof SluggerBoss) {
+                enemies.remove(i);
+                i--;
+                explosions.add(new Explosion(e.getx(), e.gety()));
+                bossDefeat();
+
+                }
             }
         }
 
@@ -129,28 +148,98 @@ public class Level1State extends GameState {
 
     }
 
+    private void executeCommand(String command) {
+        String[] token = command.trim().split(" ");
+
+        switch(token[0].toLowerCase()) {
+            case "tp":
+                if(token.length == 3) {
+                    try {
+                        int x = Integer.parseInt(token[1]);
+                        int y = Integer.parseInt(token[2]);
+                        player.setPosition(x, y);
+                    } catch (NumberFormatException e) {
+
+                    }
+                }
+                break;
+            case "speed":
+                if(token.length == 2) {
+                    try {
+                        player.setSpeed(Double.parseDouble(token[1]));
+                    } catch (NumberFormatException e) {
+
+                    }
+                }
+                break;
+            case "god":
+                player.godMode(true);
+                break;
+            case "fly":
+                player.fly(true);
+                break;
+            case "stop":
+                player.godMode(false);
+                break;
+        }
+    }
+
     public void keyPressed(int k) {
-        if(k == KeyEvent.VK_A) player.setLeft(true);
-        if(k == KeyEvent.VK_D) player.setRight(true);
-        if(k == KeyEvent.VK_UP) player.setUp(true);
-        if(k == KeyEvent.VK_DOWN) player.setDown(true);
-        if(k == KeyEvent.VK_W) player.setJumping(true);
-        if(k == KeyEvent.VK_SHIFT) player.setGliding(true);
-        if(k == KeyEvent.VK_R) player.setScratching(true);
-        if(k == KeyEvent.VK_F) player.setFiring(true);
-        if(k == KeyEvent.VK_F3) HUD.toggleDebug();
+
+        if (isTyping) {
+            if(k == KeyEvent.VK_ESCAPE) {
+                typedText.setLength(0);
+                isTyping = false;
+            }
+            if (k == KeyEvent.VK_ENTER) {
+                executeCommand(typedText.toString());
+                typedText.setLength(0);
+                isTyping = false;
+            } else if (k == KeyEvent.VK_BACK_SPACE && !typedText.isEmpty()) {
+                typedText.deleteCharAt(typedText.length() - 1);
+            } else {
+                char c = (char) k;
+                if (Character.isLetterOrDigit(c) || c == ' ') {
+                    typedText.append(c);
+                }
+            }
+            return;
+        }
+
+        if (k == KeyEvent.VK_SLASH) {
+            isTyping = true;
+            typedText.setLength(0);
+            return;
+        }
+        if(!isTyping) {
+            if(k == KeyEvent.VK_A) player.setLeft(true);
+            if(k == KeyEvent.VK_D) player.setRight(true);
+            if(k == KeyEvent.VK_W) player.setUp(true);
+            if(k == KeyEvent.VK_S) player.setDown(true);
+            if(k == KeyEvent.VK_W) player.setJumping(true);
+            if(k == KeyEvent.VK_SHIFT) player.setGliding(true);
+            if(k == KeyEvent.VK_R) player.setScratching(true);
+            if(k == KeyEvent.VK_F) player.setFiring(true);
+            if(k == KeyEvent.VK_F3) HUD.toggleDebug();
+        }
+
     }
 
     public void keyReleased(int k) {
+        if(!isTyping) {
         if(k == KeyEvent.VK_A) player.setLeft(false);
         if(k == KeyEvent.VK_D) player.setRight(false);
-        if(k == KeyEvent.VK_UP) player.setUp(false);
-        if(k == KeyEvent.VK_DOWN) player.setDown(false);
+        if(k == KeyEvent.VK_W) player.setUp(false);
+        if(k == KeyEvent.VK_S) player.setDown(false);
         if(k == KeyEvent.VK_W) player.setJumping(false);
         if(k == KeyEvent.VK_SHIFT) player.setGliding(false);
         if(k == KeyEvent.VK_R) player.setScratching(false);
         if(k == KeyEvent.VK_F) player.setFiring(false);
+        }
     }
 
+    public void bossDefeat() {
+        gsm.setState(GameStateManager.WINNINGSTATE);
+    }
 
 }

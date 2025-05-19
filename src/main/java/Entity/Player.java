@@ -18,6 +18,7 @@ public class Player extends MapObject{
     private boolean dead;
     private boolean flinching;
     private long flinchTimer;
+    private boolean flying;
 
     // fireball
     private boolean firing;
@@ -65,7 +66,7 @@ public class Player extends MapObject{
 
         facingRight = true;
 
-        health = maxHealth = 5;
+        health = maxHealth = 500;
         fire = maxFire = 2500;
 
         fireCost = 200;
@@ -170,6 +171,16 @@ public class Player extends MapObject{
 
     private void getNextPosition() {
 
+        if(flying) {
+            dx = 0;
+            dy = 0;
+            if(left) dx = -maxSpeed;
+            if(right) dx = maxSpeed;
+            if(up) dy = -maxSpeed;
+            if(down) dy = maxSpeed;
+            return; // Don't process fall/jump physics
+        }
+
         // movement
         if(left) {
             dx -= moveSpeed;
@@ -266,6 +277,9 @@ public class Player extends MapObject{
             }
         }
 
+        health += 1;
+        if(health > maxHealth) health = maxHealth;
+
         // set animation
         if(scratching) {
             if(currentAction != SCRATCHING) {
@@ -352,4 +366,46 @@ public class Player extends MapObject{
         setPosition(100, 100);
         health = maxHealth;
     }
+
+    public void setSpeed(double speed) {
+        maxSpeed = speed;
+        moveSpeed = speed;
+    }
+
+    public void godMode(boolean god) {
+        if(god) {
+            maxHealth = Integer.MAX_VALUE - 1;
+            maxFire = Integer.MAX_VALUE - 1;
+            maxSpeed *= 3;
+            fire = maxFire;
+            health = maxHealth;
+            moveSpeed = maxSpeed;
+            flying = true;
+            falling = false;
+            jumping = false;
+        } else {
+            maxHealth = 500;
+            maxFire = 2500;
+            moveSpeed = 0.3;
+            maxSpeed = 1.6;
+            fire = maxFire;
+            health = maxHealth;
+            flying = false;
+            falling = true;
+            jumping = true;
+        }
+    }
+
+    public void fly(boolean fly) {
+        flying = fly;
+        if(flying) {
+            falling = false;
+            jumping = false;
+            dy = 0;
+        } else {
+            falling = true;
+            jumping = true;
+        }
+    }
+
 }
