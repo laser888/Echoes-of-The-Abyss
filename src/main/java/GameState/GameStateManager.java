@@ -19,7 +19,7 @@ public class GameStateManager {
         currentState = MENUSTATE;
         gameStates.add(new MenuState(this));
         gameStates.add(new Level1State(this));
-        gameStates.add(new WinScreen(this));
+        gameStates.add(new WinState(this));
     }
 
     public void setState(int state) {

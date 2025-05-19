@@ -5,7 +5,7 @@ import TileMap.Background;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
-public class WinScreen extends GameState {
+public class WinState extends GameState {
 
     private Background bg;
 
@@ -17,7 +17,7 @@ public class WinScreen extends GameState {
 
     private Font font;
 
-    public WinScreen(GameStateManager gsm) {
+    public WinState(GameStateManager gsm) {
         this.gsm = gsm;
 
         try {
@@ -77,7 +77,7 @@ public class WinScreen extends GameState {
         }
         if(k == KeyEvent.VK_UP) {
             currentChoice--;
-            if(currentChoice == 0) {
+            if(currentChoice == -1) {
                 currentChoice = options.length - 1 ;
             }
         }
@@ -88,5 +88,6 @@ public class WinScreen extends GameState {
             }
         }
     }
+
     public  void keyReleased(int k) {}
 }
