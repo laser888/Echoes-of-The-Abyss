@@ -45,4 +45,8 @@ public class GameStateManager {
         gameStates.get(currentState).keyReleased(k);
     }
 
+    public GameState getCurrentState() {
+        return gameStates.get(currentState);
+    }
+
 }

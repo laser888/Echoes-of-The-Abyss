@@ -7,9 +7,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 
-public class GamePanel extends JPanel implements Runnable, KeyListener{
+public class GamePanel extends JPanel implements Runnable, KeyListener, MouseListener {
 
-    // demensions
+    // dimensions
     public static final int WIDTH = 320;
     public static final int HEIGHT = 240;
     public static final int SCALE = 2;
@@ -18,7 +18,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
     private Thread thread;
     private boolean running;
     private int FPS = 60;
-    private long targetTime = 1000/FPS;
+    private long targetTime = 1000 / FPS;
 
     // image
     private BufferedImage image;
@@ -40,20 +40,18 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 
     public void addNotify() {
         super.addNotify();
-        if(thread == null) {
+        if (thread == null) {
             thread = new Thread(this);
             addKeyListener(this);
+            addMouseListener(this);
             thread.start();
         }
     }
 
     private void init() {
         image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
-
         g = (Graphics2D) image.getGraphics();
-
         running = true;
-
         gsm = new GameStateManager();
     }
 
@@ -64,15 +62,12 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
         long elapsed;
         long wait;
 
-
-
-        //game loop
+        // game loop
         while (running) {
-
             start = System.nanoTime();
 
             frameCount++;
-            if(System.nanoTime() - fpsTimer >= 1000000000) {
+            if (System.nanoTime() - fpsTimer >= 1000000000) {
                 currentFPS = frameCount;
                 frameCount = 0;
                 fpsTimer = System.nanoTime();
@@ -83,7 +78,6 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
             drawToScreen();
 
             elapsed = System.nanoTime() - start;
-
             wait = targetTime - elapsed / 1000000;
 
             if (wait < 0) {
@@ -91,16 +85,11 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
             }
 
             try {
-
                 Thread.sleep(wait);
-
-            } catch(Exception e) {
-
+            } catch (Exception e) {
                 e.printStackTrace();
-
             }
         }
-
     }
 
     private void update() {
@@ -120,7 +109,6 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
     }
 
     public void keyTyped(KeyEvent key) {
-
     }
 
     public void keyPressed(KeyEvent key) {
@@ -131,7 +119,27 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
         gsm.keyReleased(key.getKeyCode());
     }
 
-    public static int getFPS() { return currentFPS; }
+    public void mousePressed(MouseEvent e) {
+        if (gsm != null && gsm.getCurrentState() != null) {
+            gsm.getCurrentState().mousePressed(e);
+        } else {
+            System.out.println("GamePanel: Cannot forward mouse event - gsm or current state is null");
+        }
+    }
 
+    public void mouseClicked(MouseEvent e) {
+    }
 
+    public void mouseReleased(MouseEvent e) {
+    }
+
+    public void mouseEntered(MouseEvent e) {
+    }
+
+    public void mouseExited(MouseEvent e) {
+    }
+
+    public static int getFPS() {
+        return currentFPS;
+    }
 }

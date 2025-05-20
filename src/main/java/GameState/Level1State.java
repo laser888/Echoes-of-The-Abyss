@@ -4,13 +4,17 @@ import Entity.*;
 import Entity.Enemies.Slugger;
 import Entity.Enemies.SluggerBoss;
 import Main.GamePanel;
+import Terminals.SimonSays;
 import TileMap.Background;
 import TileMap.TileMap;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
+import javax.imageio.ImageIO;
 
 public class Level1State extends GameState {
 
@@ -24,19 +28,20 @@ public class Level1State extends GameState {
 
     private HUD hud;
 
-    // Chat
+    private SimonSays terminal;
+    private BufferedImage terminalTexture;
+
     public static boolean isTyping = false;
     public static StringBuilder typedText = new StringBuilder();
     private ArrayList<String> chatHistory = new ArrayList<>();
     private int chatIndex = -1;
 
-    public Level1State (GameStateManager gsm) {
+    public Level1State(GameStateManager gsm) {
         this.gsm = gsm;
         init();
     }
 
     public void init() {
-
         tileMap = new TileMap(30);
         tileMap.loadTiles("/TileSets/grasstileset.gif");
         tileMap.loadMap("/Maps/level1-1.map");
@@ -54,20 +59,29 @@ public class Level1State extends GameState {
 
         hud = new HUD(player);
 
+        terminal = new SimonSays(350, 115);
+
+        try {
+            terminalTexture = ImageIO.read(getClass().getResourceAsStream("/Sprites/Terminal/terminal.png"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            terminalTexture = null;
+        }
     }
 
     private void populateEnemies() {
+
         enemies = new ArrayList<Enemy>();
 
         Slugger s;
         SluggerBoss sb;
         Point[] points = new Point[] {
-            new Point(200, 200),
-            new Point(860, 200),
-            new Point(1525, 200),
-            new Point(1680, 200),
-            new Point(1800, 200),
-            new Point(3050, 200)
+                new Point(200, 200),
+                new Point(860, 200),
+                new Point(1525, 200),
+                new Point(1680, 200),
+                new Point(1800, 200),
+                new Point(3050, 200)
         };
         s = new Slugger(tileMap);
         sb = new SluggerBoss(tileMap);
@@ -81,41 +95,42 @@ public class Level1State extends GameState {
         sb = new SluggerBoss(tileMap);
         sb.setPosition(points[points.length - 1].x, points[points.length - 1].y);
         enemies.add(sb);
-
     }
 
     public void update() {
-        // update player
         player.update();
         tileMap.setPosition(GamePanel.WIDTH / 2 - player.getx(), GamePanel.HEIGHT / 2 - player.gety());
-
-        // set background
         bg.setPosition(tileMap.getx(), tileMap.gety());
-
-        // attack enemies
         player.checkAttack(enemies);
 
-        // update all enemies
         for(int i = 0; i < enemies.size(); i++) {
+
             Enemy e = enemies.get(i);
             e.update();
             if(e.isDead()) {
                 enemies.remove(i);
                 i--;
                 explosions.add(new Explosion(e.getx(), e.gety()));
+
                 if(e instanceof SluggerBoss) {
-                enemies.remove(i);
-                i--;
-                explosions.add(new Explosion(e.getx(), e.gety()));
-                bossDefeat();
+
+                    enemies.remove(i);
+                    i--;
+                    explosions.add(new Explosion(e.getx(), e.gety()));
+                    bossDefeat();
                 }
-                if( enemies.size() == 0) {
+                if(enemies.size() == 0) {
                     bossDefeat();
                 }
             }
         }
 
-        // update explosions
+        terminal.update();
+        if (terminal.isActive() && terminal.isCompleted()) {
+            terminal.close();
+            executeCommand("/cat");
+        }
+
         for(int i = 0; i < explosions.size(); i++) {
             explosions.get(i).update();
             if(explosions.get(i).shouldRemove()) {
@@ -123,34 +138,38 @@ public class Level1State extends GameState {
                 i--;
             }
         }
-
     }
 
     public void draw(Graphics2D g) {
-
-        // draw bg
         bg.draw(g);
-
-        // draw tilemap
         tileMap.draw(g);
 
-        // draw player
+        int drawSize = 24;
+        int x = (int)(terminal.getTriggerZone().x + terminal.getTriggerZone().width / 2 + tileMap.getx());
+        int y = (int)(terminal.getTriggerZone().y + terminal.getTriggerZone().height / 2 + tileMap.gety());
+        g.drawImage(terminalTexture, x - drawSize / 2, y - drawSize / 2, drawSize, drawSize, null);
+
         player.draw(g);
 
-        // draw enemies
         for(int i = 0; i < enemies.size(); i++) {
             enemies.get(i).draw(g);
         }
 
-        // draw explosions
         for(int i = 0; i < explosions.size(); i++) {
             explosions.get(i).setMapPosition((int) tileMap.getx(), (int) tileMap.gety());
             explosions.get(i).draw(g);
         }
 
-        // draw hud
-        hud.draw(g);
+        terminal.render(g);
 
+        if (terminal.getTriggerZone().contains(player.getx(), player.gety()) && !terminal.isActive()) {
+
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.PLAIN, 12));
+            g.drawString("Press E to interact", (int)(player.getx() + tileMap.getx()), (int)(player.gety() + tileMap.gety() - 20));
+        }
+
+        hud.draw(g);
     }
 
     private void executeCommand(String command) {
@@ -166,7 +185,6 @@ public class Level1State extends GameState {
                         int y = Integer.parseInt(token[2]);
                         player.setPosition(x, y);
                     } catch (NumberFormatException e) {
-
                     }
                 }
                 break;
@@ -175,7 +193,6 @@ public class Level1State extends GameState {
                     try {
                         player.setSpeed(Double.parseDouble(token[1]));
                     } catch (NumberFormatException e) {
-
                     }
                 }
                 break;
@@ -208,24 +225,28 @@ public class Level1State extends GameState {
     }
 
     public void keyPressed(int k) {
-
         if (isTyping) {
+
             if(k == KeyEvent.VK_ESCAPE) {
                 typedText.setLength(0);
                 isTyping = false;
+
             } else if (k == KeyEvent.VK_ENTER) {
                 executeCommand(typedText.toString());
                 System.out.println("Chat: " + typedText.toString());
                 typedText.setLength(0);
                 isTyping = false;
+
             } else if (k == KeyEvent.VK_BACK_SPACE && !typedText.isEmpty()) {
                 typedText.deleteCharAt(typedText.length() - 1);
+
             } else if(k == KeyEvent.VK_UP) {
                 if(chatIndex > 0) {
                     chatIndex--;
                     typedText.setLength(0);
                     typedText.append(chatHistory.get(chatIndex));
                 }
+
             } else if(k == KeyEvent.VK_DOWN) {
                 if(chatIndex < chatHistory.size() - 1) {
                     chatIndex++;
@@ -235,6 +256,7 @@ public class Level1State extends GameState {
                     chatIndex = chatHistory.size();
                     typedText.setLength(0);
                 }
+
             } else {
                 char c = (char) k;
                 if (Character.isLetterOrDigit(c) || c == ' ' || c == '/') {
@@ -244,13 +266,23 @@ public class Level1State extends GameState {
             return;
         }
 
+        if (k == KeyEvent.VK_E && terminal.getTriggerZone().contains(player.getx(), player.gety()) && !terminal.isActive()) {
+            terminal.start();
+            return;
+        }
+        if (k == KeyEvent.VK_ESCAPE && terminal.isActive()) {
+            terminal.close();
+            return;
+        }
+
         if (k == KeyEvent.VK_SLASH) {
             isTyping = true;
             typedText.setLength(0);
             chatIndex = chatHistory.size();
             return;
         }
-        if(!isTyping) {
+
+        if (!isTyping && !terminal.isActive()) {
             if(k == KeyEvent.VK_A) player.setLeft(true);
             if(k == KeyEvent.VK_D) player.setRight(true);
             if(k == KeyEvent.VK_W) player.setUp(true);
@@ -261,24 +293,30 @@ public class Level1State extends GameState {
             if(k == KeyEvent.VK_F) player.setFiring(true);
             if(k == KeyEvent.VK_F3) HUD.toggleDebug();
         }
-
     }
 
     public void keyReleased(int k) {
-        if(!isTyping) {
-        if(k == KeyEvent.VK_A) player.setLeft(false);
-        if(k == KeyEvent.VK_D) player.setRight(false);
-        if(k == KeyEvent.VK_W) player.setUp(false);
-        if(k == KeyEvent.VK_S) player.setDown(false);
-        if(k == KeyEvent.VK_W) player.setJumping(false);
-        if(k == KeyEvent.VK_SHIFT) player.setGliding(false);
-        if(k == KeyEvent.VK_R) player.setScratching(false);
-        if(k == KeyEvent.VK_F) player.setFiring(false);
+        if (!isTyping && !terminal.isActive()) {
+            if(k == KeyEvent.VK_A) player.setLeft(false);
+            if(k == KeyEvent.VK_D) player.setRight(false);
+            if(k == KeyEvent.VK_W) player.setUp(false);
+            if(k == KeyEvent.VK_S) player.setDown(false);
+            if(k == KeyEvent.VK_W) player.setJumping(false);
+            if(k == KeyEvent.VK_SHIFT) player.setGliding(false);
+            if(k == KeyEvent.VK_R) player.setScratching(false);
+            if(k == KeyEvent.VK_F) player.setFiring(false);
+        }
+    }
+
+    public void mousePressed(MouseEvent e) {
+        if (terminal.isActive()) {
+            int mouseX = e.getX() / GamePanel.SCALE;
+            int mouseY = e.getY() / GamePanel.SCALE;
+            terminal.mousePressed(mouseX, mouseY);
         }
     }
 
     public void bossDefeat() {
         gsm.setState(GameStateManager.WINNINGSTATE);
     }
-
 }

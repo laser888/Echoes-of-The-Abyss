@@ -2,6 +2,7 @@ package GameState;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import javax.swing.ImageIcon;
 import Main.GamePanel;
 
@@ -66,4 +67,6 @@ public class CatState extends GameState {
     }
 
     public void keyReleased(int k) {}
+
+    public void mousePressed(MouseEvent e) {}
 }

@@ -376,6 +376,8 @@ public class Player extends MapObject{
         if(god) {
             maxHealth = Integer.MAX_VALUE - 1;
             maxFire = Integer.MAX_VALUE - 1;
+            scratchDamage = Integer.MAX_VALUE - 1;
+            fireBallDamage = Integer.MAX_VALUE - 1;
             maxSpeed *= 3;
             fire = maxFire;
             health = maxHealth;
@@ -388,6 +390,8 @@ public class Player extends MapObject{
             maxFire = 2500;
             moveSpeed = 0.3;
             maxSpeed = 1.6;
+            fireBallDamage = 5;
+            scratchDamage = 8;
             fire = maxFire;
             health = maxHealth;
             flying = false;
