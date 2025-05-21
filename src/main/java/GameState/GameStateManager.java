@@ -1,5 +1,8 @@
 package GameState;
 
+import Main.GamePanel;
+import Main.KeybindManager;
+
 import java.util.ArrayList;
 
 
@@ -7,21 +10,29 @@ public class GameStateManager {
 
     private ArrayList<GameState> gameStates;
     private int currentState;
+    private KeybindManager keybindManager;
 
     public static final int WINNINGSTATE = 2;
     public static final int MENUSTATE = 0;
     public static final int LEVEL1STATE = 1;
     public static final int CATSTATE = 3;
+    public static final int SETTINGSSTATE = 4;
 
 
-    public GameStateManager() {
+    public GameStateManager(KeybindManager kbm, GamePanel gamePanel) {
+        this.keybindManager = kbm;
         gameStates = new ArrayList<GameState>();
 
         currentState = MENUSTATE;
-        gameStates.add(new MenuState(this));
-        gameStates.add(new Level1State(this));
-        gameStates.add(new WinState(this));
+        gameStates.add(new MenuState(this, gamePanel));
+        gameStates.add(new Level1State(this, gamePanel));
+        gameStates.add(new WinState(this, gamePanel));
         gameStates.add(new CatState(this));
+        gameStates.add(new SettingsState(this, gamePanel));
+    }
+
+    public KeybindManager getKeybindManager() {
+        return keybindManager;
     }
 
     public void setState(int state) {

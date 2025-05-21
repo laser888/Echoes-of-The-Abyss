@@ -8,6 +8,8 @@ import Main.GamePanel;
 
 public class SimonSays extends Terminal {
 
+    private GamePanel gamePanel;
+
     private static final int GRID_SIZE = 3;
     private static final int CELL_SIZE = 50;
     private static final int GAP = 5;
@@ -26,8 +28,9 @@ public class SimonSays extends Terminal {
     private Point clickedCell;
     private long clickTimer;
 
-    public SimonSays(int x, int y) {
+    public SimonSays(int x, int y, GamePanel gamePanel) {
 
+        this.gamePanel = gamePanel;
         triggerZone = new Rectangle(x, y, 50, 50);
         completed = false;
         active = false;
@@ -130,25 +133,35 @@ public class SimonSays extends Terminal {
     }
 
     public void mousePressed(int x, int y) {
-
         if (!active || !awaitingInput || completed) {
             System.out.println("Mouse click ignored: active=" + active + ", awaitingInput=" + awaitingInput + ", completed=" + completed);
             return;
         }
 
+        int panelWidth = gamePanel.getCurrentWidth();
+        int panelHeight = gamePanel.getCurrentHeight();
+
+        float scaleX = (float) (GamePanel.WIDTH * GamePanel.SCALE) / panelWidth;
+        float scaleY = (float) (GamePanel.HEIGHT * GamePanel.SCALE) / panelHeight;
+        int logicalX = (int) (x * scaleX);
+        int logicalY = (int) (y * scaleY);
+
         int offsetX = (GamePanel.WIDTH - PANEL_SIZE) / 2;
         int offsetY = (GamePanel.HEIGHT - PANEL_SIZE) / 2;
-        int gridX = (x - offsetX - GAP) / (CELL_SIZE + GAP);
-        int gridY = (y - offsetY - GAP) / (CELL_SIZE + GAP);
 
-        if (gridX >= 0 && gridX < GRID_SIZE && gridY >= 0 && gridY < GRID_SIZE && (x - offsetX - GAP) % (CELL_SIZE + GAP) < CELL_SIZE && (y - offsetY - GAP) % (CELL_SIZE + GAP) < CELL_SIZE) {
+        int gridX = (logicalX - offsetX - GAP) / (CELL_SIZE + GAP);
+        int gridY = (logicalY - offsetY - GAP) / (CELL_SIZE + GAP);
 
+        if (gridX >= 0 && gridX < GRID_SIZE && gridY >= 0 && gridY < GRID_SIZE &&
+                (logicalX - offsetX - GAP) % (CELL_SIZE + GAP) < CELL_SIZE &&
+                (logicalY - offsetY - GAP) % (CELL_SIZE + GAP) < CELL_SIZE) {
+
+            System.out.println("Valid click registered at grid position: ("+gridY+","+gridX+")");
             clickedCell = new Point(gridY, gridX);
             clickTimer = System.currentTimeMillis();
             playerInput.add(new Point(gridY, gridX));
 
             if (playerInput.get(playerInput.size() - 1).equals(sequence.get(playerInput.size() - 1))) {
-
                 if (playerInput.size() == currentSequenceLength) {
                     currentSequenceLength++;
                     currentIndex = 0;
@@ -159,7 +172,6 @@ public class SimonSays extends Terminal {
                         showingSequence = false;
                         awaitingInput = false;
                         System.out.println("Terminal completed");
-
                     } else {
                         generateSequence();
                         showingSequence = true;
@@ -169,7 +181,6 @@ public class SimonSays extends Terminal {
                     }
                 }
             } else {
-
                 System.out.println("Incorrect sequence, resetting");
                 currentSequenceLength = 1;
                 currentIndex = 0;
@@ -181,6 +192,8 @@ public class SimonSays extends Terminal {
                 awaitingInput = false;
                 flashTimer = System.currentTimeMillis();
             }
+        } else {
+            System.out.println("Click outside grid or in gap: gridX=" + gridX + ", gridY=" + gridY);
         }
     }
 

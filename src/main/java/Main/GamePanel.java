@@ -6,6 +6,8 @@ import javax.swing.JPanel;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
 
 public class GamePanel extends JPanel implements Runnable, KeyListener, MouseListener {
 
@@ -26,6 +28,8 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
 
     // game state manager
     private GameStateManager gsm;
+
+    private KeybindManager keybindManager;
 
     private int frameCount = 0;
     private long fpsTimer = System.nanoTime();
@@ -52,7 +56,8 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
         image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
         g = (Graphics2D) image.getGraphics();
         running = true;
-        gsm = new GameStateManager();
+        keybindManager = new KeybindManager();
+        gsm = new GameStateManager(keybindManager, this);
     }
 
     public void run() {
@@ -141,5 +146,17 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
 
     public static int getFPS() {
         return currentFPS;
+    }
+
+    public KeybindManager getKeybindManager() {
+        return keybindManager;
+    }
+
+    public int getCurrentWidth() {
+        return getWidth();
+    }
+
+    public int getCurrentHeight() {
+        return getHeight();
     }
 }

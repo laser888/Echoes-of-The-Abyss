@@ -1,5 +1,6 @@
 package GameState;
 
+import Main.GamePanel;
 import TileMap.Background;
 
 import java.awt.*;
@@ -9,6 +10,7 @@ import java.awt.event.MouseEvent;
 public class WinState extends GameState {
 
     private Background bg;
+    private GamePanel gamePanel;
 
     private int currentChoice = 0;
     private String[] options = { "Main Menu", "Quit"};
@@ -18,11 +20,11 @@ public class WinState extends GameState {
 
     private Font font;
 
-    public WinState(GameStateManager gsm) {
+    public WinState(GameStateManager gsm, GamePanel gamePanel) {
         this.gsm = gsm;
+        this.gamePanel = gamePanel;
 
         try {
-
             bg = new Background("/Backgrounds/menubg.gif", 1);
             bg.setVector(-0.1, 0);
 
@@ -34,15 +36,15 @@ public class WinState extends GameState {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
-    public  void init() {}
-    public  void update() {
+    public void init() {}
+
+    public void update() {
         bg.update();
     }
-    public  void draw(java.awt.Graphics2D g) {
 
+    public void draw(java.awt.Graphics2D g) {
         // draw bg
         bg.draw(g);
 
@@ -67,19 +69,19 @@ public class WinState extends GameState {
         if(currentChoice == 0) {
             gsm.setState(GameStateManager.MENUSTATE);
         }
-        if( currentChoice == 1) {
+        if(currentChoice == 1) {
             System.exit(0);
         }
     }
 
-    public  void keyPressed(int k) {
+    public void keyPressed(int k) {
         if(k == KeyEvent.VK_ENTER) {
             select();
         }
         if(k == KeyEvent.VK_UP) {
             currentChoice--;
             if(currentChoice == -1) {
-                currentChoice = options.length - 1 ;
+                currentChoice = options.length - 1;
             }
         }
         if(k == KeyEvent.VK_DOWN) {
@@ -90,8 +92,29 @@ public class WinState extends GameState {
         }
     }
 
-    public  void keyReleased(int k) {}
+    public void keyReleased(int k) {}
 
-    public void mousePressed(MouseEvent e) {}
+    public void mousePressed(MouseEvent e) {
+        int panelWidth = gamePanel.getCurrentWidth();
+        int panelHeight = gamePanel.getCurrentHeight();
 
+        float scaleX = (float) GamePanel.WIDTH / panelWidth;
+        float scaleY = (float) GamePanel.HEIGHT / panelHeight;
+        int logicalX = (int) (e.getX() * scaleX);
+        int logicalY = (int) (e.getY() * scaleY);
+
+        for (int i = 0; i < options.length; i++) {
+            int itemY = 140 + i * 15;
+            int itemHeight = 15; 
+            int textWidth = gamePanel.getFontMetrics(font).stringWidth(options[i]);
+            Rectangle itemBounds = new Rectangle(145, itemY - font.getSize(), textWidth, itemHeight);
+
+            if (itemBounds.contains(logicalX, logicalY)) {
+                currentChoice = i;
+                select();
+                System.out.println("Clicked option: " + options[i]);
+                break;
+            }
+        }
+    }
 }

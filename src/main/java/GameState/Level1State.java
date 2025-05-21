@@ -3,10 +3,13 @@ package GameState;
 import Entity.*;
 import Entity.Enemies.Slugger;
 import Entity.Enemies.SluggerBoss;
+import Main.GameAction;
 import Main.GamePanel;
 import Terminals.SimonSays;
 import TileMap.Background;
 import TileMap.TileMap;
+import Main.KeybindManager;
+import Terminals.SimonSays;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -17,6 +20,8 @@ import java.util.ArrayList;
 import javax.imageio.ImageIO;
 
 public class Level1State extends GameState {
+
+    private GamePanel gamePanel;
 
     private TileMap tileMap;
     private Background bg;
@@ -36,8 +41,12 @@ public class Level1State extends GameState {
     private ArrayList<String> chatHistory = new ArrayList<>();
     private int chatIndex = -1;
 
-    public Level1State(GameStateManager gsm) {
+    private KeybindManager keybindManager;
+
+    public Level1State(GameStateManager gsm, GamePanel gamePanel) {
         this.gsm = gsm;
+        this.gamePanel = gamePanel;
+        this.keybindManager = gsm.getKeybindManager();
         init();
     }
 
@@ -59,7 +68,7 @@ public class Level1State extends GameState {
 
         hud = new HUD(player);
 
-        terminal = new SimonSays(350, 115);
+        terminal = new SimonSays(350, 115, gamePanel);
 
         try {
             terminalTexture = ImageIO.read(getClass().getResourceAsStream("/Sprites/Terminal/terminal.png"));
@@ -99,7 +108,7 @@ public class Level1State extends GameState {
 
     public void update() {
         player.update();
-        tileMap.setPosition(GamePanel.WIDTH / 2 - player.getx(), GamePanel.HEIGHT / 2 - player.gety());
+        tileMap.setPosition(GamePanel.WIDTH / 2 - player.getx(), Main.GamePanel.HEIGHT / 2 - player.gety());
         bg.setPosition(tileMap.getx(), tileMap.gety());
         player.checkAttack(enemies);
 
@@ -275,7 +284,7 @@ public class Level1State extends GameState {
             return;
         }
 
-        if (k == KeyEvent.VK_SLASH) {
+        if (k == keybindManager.getKeyCode(GameAction.OPEN_CHAT)) {
             isTyping = true;
             typedText.setLength(0);
             chatIndex = chatHistory.size();
@@ -283,28 +292,28 @@ public class Level1State extends GameState {
         }
 
         if (!isTyping && !terminal.isActive()) {
-            if(k == KeyEvent.VK_A) player.setLeft(true);
-            if(k == KeyEvent.VK_D) player.setRight(true);
-            if(k == KeyEvent.VK_W) player.setUp(true);
-            if(k == KeyEvent.VK_S) player.setDown(true);
-            if(k == KeyEvent.VK_W) player.setJumping(true);
-            if(k == KeyEvent.VK_SHIFT) player.setGliding(true);
-            if(k == KeyEvent.VK_R) player.setScratching(true);
-            if(k == KeyEvent.VK_F) player.setFiring(true);
-            if(k == KeyEvent.VK_F3) HUD.toggleDebug();
+            if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) player.setLeft(true);
+            if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) player.setRight(true);
+            if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) player.setUp(true);
+            if (k == keybindManager.getKeyCode(GameAction.JUMP)) player.setJumping(true);
+            if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) player.setDown(true);
+            if (k == keybindManager.getKeyCode(GameAction.GLIDE)) player.setGliding(true);
+            if (k == keybindManager.getKeyCode(GameAction.SCRATCH)) player.setScratching(true);
+            if (k == keybindManager.getKeyCode(GameAction.FIRE)) player.setFiring(true);
+            if (k == keybindManager.getKeyCode(GameAction.DEBUG_TOGGLE)) HUD.toggleDebug();
         }
     }
 
     public void keyReleased(int k) {
         if (!isTyping && !terminal.isActive()) {
-            if(k == KeyEvent.VK_A) player.setLeft(false);
-            if(k == KeyEvent.VK_D) player.setRight(false);
-            if(k == KeyEvent.VK_W) player.setUp(false);
-            if(k == KeyEvent.VK_S) player.setDown(false);
-            if(k == KeyEvent.VK_W) player.setJumping(false);
-            if(k == KeyEvent.VK_SHIFT) player.setGliding(false);
-            if(k == KeyEvent.VK_R) player.setScratching(false);
-            if(k == KeyEvent.VK_F) player.setFiring(false);
+            if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) player.setLeft(false);
+            if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) player.setRight(false);
+            if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) player.setUp(false);
+            if (k == keybindManager.getKeyCode(GameAction.JUMP)) player.setJumping(false);
+            if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) player.setDown(false);
+            if (k == keybindManager.getKeyCode(GameAction.GLIDE)) player.setGliding(false);
+            if (k == keybindManager.getKeyCode(GameAction.SCRATCH)) player.setScratching(false);
+            if (k == keybindManager.getKeyCode(GameAction.FIRE)) player.setFiring(false);
         }
     }
 
