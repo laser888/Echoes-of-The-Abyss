@@ -13,6 +13,16 @@ public class Player extends MapObject{
     // player stuff
     private int health;
     private int maxHealth;
+    private int defence;
+    private int strength;
+    private double CC;
+    private double critDMG;
+    private double regen;
+    private double finalDMG;
+    private double regenAmount;
+    private double lastRegenTime;
+    private double abilityDMG;
+    private int intelligence;
     private int fire;
     private int maxFire;
     private boolean dead;
@@ -30,6 +40,7 @@ public class Player extends MapObject{
     private boolean scratching;
     private int scratchDamage;
     private int scratchRange;
+    private boolean scratchDamageDealt = false;
 
     // gliding
     private boolean gliding;
@@ -66,15 +77,24 @@ public class Player extends MapObject{
 
         facingRight = true;
 
-        health = maxHealth = 500;
+        lastRegenTime = System.nanoTime();
+        health = maxHealth = 100;
+        defence = 10;
+
         fire = maxFire = 2500;
 
         fireCost = 200;
-        fireBallDamage = 5;
+        fireBallDamage = 20;
+        intelligence = 50;
+        abilityDMG = 30.0;
         fireBalls = new ArrayList<FireBall>();
 
-        scratchDamage = 8;
+        scratchDamage = 10;
         scratchRange = 40;
+        strength = 20;
+        CC = 15.0;
+        critDMG = 50.0;
+        regen = 2.0;
 
         // load sprites
         try {
@@ -113,7 +133,10 @@ public class Player extends MapObject{
     }
 
     public void setScratching(boolean b) {
-        scratching = true;
+        if (b && !scratching) {
+            scratching = true;
+            scratchDamageDealt = false;
+        }
     }
 
     public void setGliding(boolean b) {
@@ -127,15 +150,21 @@ public class Player extends MapObject{
 
             Enemy e = enemies.get(i);
 
-            // scratch attack
-            if (scratching) {
+            if (scratching && !scratchDamageDealt) {
+
                 if (facingRight) {
+
                     if (e.getx() > x && e.getx() < x + scratchRange && e.gety() > y - height / 2 && e.gety() < y + height / 2) {
-                        e.hit(scratchDamage);
+                        int dmg = calculateDamage(scratchDamage, strength, CC, critDMG, null);
+                        e.hit(dmg);
+                        scratchDamageDealt = true;
                     }
                 } else {
+
                     if (e.getx() < x && e.getx() > x - scratchRange && e.gety() > y - height / 2 && e.gety() < y + height / 2) {
-                        e.hit(scratchDamage);
+                        int dmg = calculateDamage(scratchDamage, strength, CC, critDMG, null);
+                        e.hit(dmg);
+                        scratchDamageDealt = true;
                     }
                 }
             }
@@ -143,7 +172,8 @@ public class Player extends MapObject{
             for (int j = 0; j < fireBalls.size(); j++) {
 
                 if(fireBalls.get(j).intersects(e)) {
-                    e.hit(fireBallDamage);
+                    int dmg = calculateMagicDamage(fireBallDamage, intelligence, abilityDMG, null);
+                    e.hit(dmg);
                     fireBalls.get(j).setHit();
                     break;
                 }
@@ -154,13 +184,13 @@ public class Player extends MapObject{
                 hit(e.getDamage());
             }
         }
-
     }
 
     public void hit(int damage) {
         if(flinching) return;
         dead = false;
-        health -= damage;
+        finalDMG = damage * 100 / (100 + defence);
+        health -= finalDMG;
         if(health < 0) health = 0;
         if(health == 0) dead = true;
         respawn(dead);
@@ -277,7 +307,16 @@ public class Player extends MapObject{
             }
         }
 
-        health += 1;
+        double now = System.nanoTime();
+        double elapsedMillis = (now - lastRegenTime) / 1000000;
+
+        if(elapsedMillis >= 1000) {
+            regenAmount = maxHealth * (regen/100);
+            health += regenAmount;
+            if(health > maxHealth) health = maxHealth;
+            lastRegenTime = now;
+        }
+
         if(health > maxHealth) health = maxHealth;
 
         // set animation
@@ -386,11 +425,11 @@ public class Player extends MapObject{
             falling = false;
             jumping = false;
         } else {
-            maxHealth = 500;
+            maxHealth = 100;
             maxFire = 2500;
             moveSpeed = 0.3;
             maxSpeed = 1.6;
-            fireBallDamage = 5;
+            fireBallDamage = 20;
             scratchDamage = 8;
             fire = maxFire;
             health = maxHealth;
@@ -411,5 +450,34 @@ public class Player extends MapObject{
             jumping = true;
         }
     }
+
+    public int calculateDamage(int scratchDamage, int strength, double critChance, double critMultiplier, Integer targetDefence) {
+
+        int defence = (targetDefence == null) ? 0 : targetDefence;
+
+        double damage = scratchDamage + strength;
+
+        if(Math.random() < (critChance / 100)) {
+            damage *= (1.0 + (critMultiplier / 100));
+            System.out.println("CRIT");
+        }
+
+        double finalDMG = damage * 100 / (100 + defence);
+
+        return (int) finalDMG;
+
+    }
+
+    public int calculateMagicDamage(int baseDamage, int intelligence, double abilityDamagePercent, Integer targetDefence) {
+        int defence = (targetDefence == null) ? 0 : targetDefence;
+
+        double scaledDamage = baseDamage + (intelligence * 1.5);
+        scaledDamage *= (1.0 + (abilityDamagePercent / 100.0));
+
+        double finalDMG = scaledDamage * 100 / (100 + defence);
+
+        return (int) finalDMG;
+    }
+
 
 }
