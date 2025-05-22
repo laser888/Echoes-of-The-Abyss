@@ -11,6 +11,7 @@ public enum GameAction {
     FIRE,
     INTERACT,
     OPEN_CHAT,
-    DEBUG_TOGGLE
+    DEBUG_TOGGLE,
+    TAB_TOGGLE
 
 }

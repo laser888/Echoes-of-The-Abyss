@@ -9,7 +9,7 @@ import Terminals.SimonSays;
 import TileMap.Background;
 import TileMap.TileMap;
 import Main.KeybindManager;
-import Terminals.SimonSays;
+import Effects.DamageNumber;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -20,6 +20,12 @@ import java.util.ArrayList;
 import javax.imageio.ImageIO;
 
 public class Level1State extends GameState {
+
+    private boolean showStatsScreen = false;
+    private Font statsFont;
+    private Font statsTitleFont;
+
+    private ArrayList<DamageNumber> damageNumbers;
 
     private GamePanel gamePanel;
 
@@ -59,7 +65,8 @@ public class Level1State extends GameState {
 
         bg = new Background("/Backgrounds/grassbg1.gif", 0.1);
 
-        player = new Player(tileMap);
+        player = new Player(tileMap, this);
+        damageNumbers = new ArrayList<DamageNumber>();
         player.setPosition(100, 100);
 
         populateEnemies();
@@ -69,6 +76,9 @@ public class Level1State extends GameState {
         hud = new HUD(player);
 
         terminal = new SimonSays(350, 115, gamePanel);
+
+        statsFont = new Font("Arial", Font.PLAIN, 12);
+        statsTitleFont = new Font("Arial", Font.BOLD, 16);
 
         try {
             terminalTexture = ImageIO.read(getClass().getResourceAsStream("/Sprites/Terminal/terminal.png"));
@@ -92,8 +102,6 @@ public class Level1State extends GameState {
                 new Point(1800, 200),
                 new Point(3050, 200)
         };
-        s = new Slugger(tileMap);
-        sb = new SluggerBoss(tileMap);
 
         for(int i = 0; i < points.length - 1; i++) {
             s = new Slugger(tileMap);
@@ -108,6 +116,16 @@ public class Level1State extends GameState {
 
     public void update() {
         player.update();
+
+        for (int i = damageNumbers.size() - 1; i >= 0; i--) {
+
+            DamageNumber dn = damageNumbers.get(i);
+            dn.update();
+
+            if (dn.shouldRemove()) {
+                damageNumbers.remove(i);
+            }
+        }
         tileMap.setPosition(GamePanel.WIDTH / 2 - player.getx(), Main.GamePanel.HEIGHT / 2 - player.gety());
         bg.setPosition(tileMap.getx(), tileMap.gety());
         player.checkAttack(enemies);
@@ -122,9 +140,6 @@ public class Level1State extends GameState {
                 explosions.add(new Explosion(e.getx(), e.gety()));
 
                 if(e instanceof SluggerBoss) {
-
-                    enemies.remove(i);
-                    i--;
                     explosions.add(new Explosion(e.getx(), e.gety()));
                     bossDefeat();
                 }
@@ -149,9 +164,58 @@ public class Level1State extends GameState {
         }
     }
 
+    private void drawStatsScreen(Graphics2D g) {
+
+        g.setColor(new Color(0, 0, 0, 150));
+        g.fillRect(0, 0, GamePanel.WIDTH, GamePanel.HEIGHT);
+
+        // Stats Panel
+        int boxWidth = 200;
+        int boxHeight = 180;
+        int boxX = (GamePanel.WIDTH - boxWidth) / 2;
+        int boxY = (GamePanel.HEIGHT - boxHeight) / 2;
+
+        g.setColor(new Color(50, 50, 100, 200));
+        g.fillRect(boxX, boxY, boxWidth, boxHeight);
+        g.setColor(Color.WHITE);
+        g.drawRect(boxX, boxY, boxWidth, boxHeight);
+
+        // Title
+        g.setFont(statsTitleFont);
+        String title = "Player Stats";
+        int titleWidth = g.getFontMetrics().stringWidth(title);
+        g.drawString(title, boxX + (boxWidth - titleWidth) / 2, boxY + 20);
+
+        // Stats
+        g.setFont(statsFont);
+        int lineY = boxY + 40;
+        int lineHeight = 15;
+        int paddingLeft = boxX + 10;
+
+        g.drawString("Health: " + player.getHealth() + " / " + player.getMaxHealth(), paddingLeft, lineY); lineY += lineHeight;
+        g.drawString("Mana/Fire: " + player.getIntelligence() + " / " + player.getMaxIntelligence(), paddingLeft, lineY); lineY += lineHeight;
+        g.drawString("Defence: " + player.getDefence(), paddingLeft, lineY); lineY += lineHeight;
+        g.drawString("Strength: " + player.getStrength(), paddingLeft, lineY); lineY += lineHeight;
+        g.drawString("Crit Chance: " + String.format("%.1f%%", player.getCritChance()), paddingLeft, lineY); lineY += lineHeight;
+        g.drawString("Crit Damage: " + String.format("+%.1f%%", player.getCritDamageMultiplier()), paddingLeft, lineY); lineY += lineHeight;
+        g.drawString("Regen: " + String.format("%.1f%%/s", player.getRegenRate()), paddingLeft, lineY); lineY += lineHeight;
+        g.drawString("Intelligence: " + player.getIntelligence(), paddingLeft, lineY); lineY += lineHeight;
+        g.drawString("Ability DMG Bonus: " + String.format("+%.1f%%", player.getAbilityDamageBonus()), paddingLeft, lineY); lineY += lineHeight;
+
+        g.setFont(new Font("Arial", Font.ITALIC, 10));
+        String closeMsg = "Press " + KeyEvent.getKeyText(keybindManager.getKeyCode(GameAction.TAB_TOGGLE)) + " or ESC to close";
+        int closeMsgWidth = g.getFontMetrics().stringWidth(closeMsg);
+        g.drawString(closeMsg, boxX + (boxWidth - closeMsgWidth) / 2, boxY + boxHeight - 10);
+
+    }
+
     public void draw(Graphics2D g) {
         bg.draw(g);
         tileMap.draw(g);
+
+        for (DamageNumber dn : damageNumbers) {
+            dn.draw(g);
+        }
 
         int drawSize = 24;
         int x = (int)(terminal.getTriggerZone().x + terminal.getTriggerZone().width / 2 + tileMap.getx());
@@ -179,6 +243,10 @@ public class Level1State extends GameState {
         }
 
         hud.draw(g);
+
+        if (showStatsScreen) {
+            drawStatsScreen(g);
+        }
     }
 
     private void executeCommand(String command) {
@@ -301,6 +369,14 @@ public class Level1State extends GameState {
             if (k == keybindManager.getKeyCode(GameAction.SCRATCH)) player.setScratching(true);
             if (k == keybindManager.getKeyCode(GameAction.FIRE)) player.setFiring(true);
             if (k == keybindManager.getKeyCode(GameAction.DEBUG_TOGGLE)) HUD.toggleDebug();
+            if (k == keybindManager.getKeyCode(GameAction.TAB_TOGGLE)) {
+                showStatsScreen = !showStatsScreen;
+                return;
+            }
+            if(k == KeyEvent.VK_ESCAPE && showStatsScreen) {
+                showStatsScreen = false;
+                return;
+            }
         }
     }
 
@@ -323,6 +399,12 @@ public class Level1State extends GameState {
             int mouseY = e.getY() / GamePanel.SCALE;
             terminal.mousePressed(mouseX, mouseY);
         }
+    }
+
+    public void addDamageNumber(int damage, double x, double y, boolean isCrit) {
+        String text = String.valueOf(damage);
+        Color color = isCrit ? Color.YELLOW : Color.WHITE;
+        damageNumbers.add(new DamageNumber(text, x, y, color, tileMap));
     }
 
     public void bossDefeat() {

@@ -33,6 +33,7 @@ public class KeybindManager {
         keybinds.put(GameAction.INTERACT, KeyEvent.VK_E);
         keybinds.put(GameAction.OPEN_CHAT, KeyEvent.VK_SLASH);
         keybinds.put(GameAction.DEBUG_TOGGLE, KeyEvent.VK_F3);
+        keybinds.put(GameAction.TAB_TOGGLE, KeyEvent.VK_TAB);
 
         System.out.println("Default keybinds set.");
         saveKeybinds();
@@ -101,6 +102,7 @@ public class KeybindManager {
             case INTERACT: keybinds.put(GameAction.INTERACT, KeyEvent.VK_E); break;
             case OPEN_CHAT: keybinds.put(GameAction.OPEN_CHAT, KeyEvent.VK_SLASH); break;
             case DEBUG_TOGGLE: keybinds.put(GameAction.DEBUG_TOGGLE, KeyEvent.VK_F3); break;
+            case TAB_TOGGLE: keybinds.put(GameAction.TAB_TOGGLE, KeyEvent.VK_TAB); break;
             default: System.err.println("No specific default for action: " + action.name()); break;
         }
     }

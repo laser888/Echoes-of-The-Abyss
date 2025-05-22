@@ -1,14 +1,17 @@
 package Entity;
 
+import Effects.DamageResult;
+import GameState.Level1State;
 import TileMap.*;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class Player extends MapObject{
+
+    private Level1State levelState;
 
     // player stuff
     private int health;
@@ -21,10 +24,12 @@ public class Player extends MapObject{
     private double finalDMG;
     private double regenAmount;
     private double lastRegenTime;
+    private double lastIntelRegenTime;
+    private double intelRegenAmount;
+    private double intelRegen;
     private double abilityDMG;
     private int intelligence;
-    private int fire;
-    private int maxFire;
+    private int maxIntelligence;
     private boolean dead;
     private boolean flinching;
     private long flinchTimer;
@@ -58,9 +63,10 @@ public class Player extends MapObject{
     private static final int FIREBALL = 5;
     private static final int SCRATCHING = 6;
 
-    public Player(TileMap tm) {
+    public Player(TileMap tm, Level1State levelState) {
 
         super(tm);
+        this.levelState = levelState;
 
         width = 30;
         height = 30;
@@ -77,15 +83,17 @@ public class Player extends MapObject{
 
         facingRight = true;
 
+
+
         lastRegenTime = System.nanoTime();
         health = maxHealth = 100;
         defence = 10;
 
-        fire = maxFire = 2500;
+        lastIntelRegenTime = System.nanoTime();
+        intelligence = maxIntelligence = 100;
 
-        fireCost = 200;
+        fireCost = 10;
         fireBallDamage = 20;
-        intelligence = 50;
         abilityDMG = 30.0;
         fireBalls = new ArrayList<FireBall>();
 
@@ -95,6 +103,7 @@ public class Player extends MapObject{
         CC = 15.0;
         critDMG = 50.0;
         regen = 2.0;
+        intelRegen = 1.0;
 
         // load sprites
         try {
@@ -125,8 +134,7 @@ public class Player extends MapObject{
 
     public int getHealth() { return health; }
     public int getMaxHealth() { return maxHealth; }
-    public int getFire() { return fire; }
-    public int getMaxFire() { return maxFire; }
+    public int getMaxIntelligence() { return maxIntelligence; }
 
     public void setFiring(boolean b) {
         firing = true;
@@ -144,43 +152,46 @@ public class Player extends MapObject{
     }
 
     public void checkAttack(ArrayList<Enemy> enemies) {
-
-        // loop through enemies
         for (int i = 0; i < enemies.size(); i++) {
-
             Enemy e = enemies.get(i);
 
             if (scratching && !scratchDamageDealt) {
-
+                boolean hitEnemy = false;
                 if (facingRight) {
-
                     if (e.getx() > x && e.getx() < x + scratchRange && e.gety() > y - height / 2 && e.gety() < y + height / 2) {
-                        int dmg = calculateDamage(scratchDamage, strength, CC, critDMG, null);
-                        e.hit(dmg);
-                        scratchDamageDealt = true;
+                        hitEnemy = true;
                     }
                 } else {
-
                     if (e.getx() < x && e.getx() > x - scratchRange && e.gety() > y - height / 2 && e.gety() < y + height / 2) {
-                        int dmg = calculateDamage(scratchDamage, strength, CC, critDMG, null);
-                        e.hit(dmg);
-                        scratchDamageDealt = true;
+                        hitEnemy = true;
                     }
                 }
+                if (hitEnemy) {
+                    DamageResult result = calculateDamage(scratchDamage, strength, CC, critDMG, null); // Pass enemy defence
+                    e.hit(result.damage);
+                    if (levelState != null) { // Check if levelState is set
+                        levelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
+                    }
+                    scratchDamageDealt = true; // Ensure damage is dealt only once per scratch animation
+                }
             }
-            // fireballs
-            for (int j = 0; j < fireBalls.size(); j++) {
 
-                if(fireBalls.get(j).intersects(e)) {
-                    int dmg = calculateMagicDamage(fireBallDamage, intelligence, abilityDMG, null);
-                    e.hit(dmg);
-                    fireBalls.get(j).setHit();
+            for (int j = 0; j < fireBalls.size(); j++) {
+                FireBall fb = fireBalls.get(j);
+
+                if (fb.intersects(e)) {
+                    DamageResult result = calculateMagicDamage(fireBallDamage, intelligence, abilityDMG, null);
+                    e.hit(result.damage);
+
+                    if (levelState != null) {
+                        levelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
+                    }
+                    fireBalls.remove(j);
                     break;
                 }
             }
 
-            // check enemy collision
-            if(intersects(e)) {
+            if (intersects(e)) {
                 hit(e.getDamage());
             }
         }
@@ -278,12 +289,22 @@ public class Player extends MapObject{
             if(animation.hasPlayedOnce()) firing = false;
         }
 
+        double now = System.nanoTime();
+        double elapsedMillis = (now - lastRegenTime) / 1000000;
+
         // fireball attack
-        fire += 1;
-        if(fire > maxFire) fire = maxFire;
+        if(elapsedMillis >= 1000) {
+            regenAmount = maxIntelligence * (intelRegen/100);
+            intelligence += regenAmount;
+            if(intelligence > maxIntelligence) intelligence = maxIntelligence;
+            lastIntelRegenTime = now;
+        }
+
+        if(intelligence > maxIntelligence) intelligence = maxIntelligence;
+
         if(firing && currentAction != FIREBALL) {
-            if(fire > fireCost) {
-                fire -= fireCost;
+            if(intelligence > fireCost) {
+                intelligence -= fireCost;
                 FireBall fb = new FireBall(tileMap, facingRight);
                 fb.setPosition(x, y);
                 fireBalls.add(fb);
@@ -306,9 +327,6 @@ public class Player extends MapObject{
                 flinching = false;
             }
         }
-
-        double now = System.nanoTime();
-        double elapsedMillis = (now - lastRegenTime) / 1000000;
 
         if(elapsedMillis >= 1000) {
             regenAmount = maxHealth * (regen/100);
@@ -414,11 +432,11 @@ public class Player extends MapObject{
     public void godMode(boolean god) {
         if(god) {
             maxHealth = Integer.MAX_VALUE - 1;
-            maxFire = Integer.MAX_VALUE - 1;
+            maxIntelligence = Integer.MAX_VALUE - 1;
             scratchDamage = Integer.MAX_VALUE - 1;
             fireBallDamage = Integer.MAX_VALUE - 1;
             maxSpeed *= 3;
-            fire = maxFire;
+            intelligence = maxIntelligence;
             health = maxHealth;
             moveSpeed = maxSpeed;
             flying = true;
@@ -426,12 +444,12 @@ public class Player extends MapObject{
             jumping = false;
         } else {
             maxHealth = 100;
-            maxFire = 2500;
+            maxIntelligence = 2500;
             moveSpeed = 0.3;
             maxSpeed = 1.6;
             fireBallDamage = 20;
             scratchDamage = 8;
-            fire = maxFire;
+            intelligence = maxIntelligence;
             health = maxHealth;
             flying = false;
             falling = true;
@@ -451,33 +469,39 @@ public class Player extends MapObject{
         }
     }
 
-    public int calculateDamage(int scratchDamage, int strength, double critChance, double critMultiplier, Integer targetDefence) {
+    public DamageResult calculateDamage(int baseScratchDamage, int strength, double critChance, double critMultiplier, Integer targetDefence) {
 
-        int defence = (targetDefence == null) ? 0 : targetDefence;
+        int defenceValue = (targetDefence == null) ? 0 : targetDefence;
+        double rawDamage = baseScratchDamage + strength;
+        boolean crit = false;
 
-        double damage = scratchDamage + strength;
+        if (Math.random() * 100 < critChance) {
+            rawDamage *= (1.0 + (critMultiplier / 100.0));
+            crit = true;
 
-        if(Math.random() < (critChance / 100)) {
-            damage *= (1.0 + (critMultiplier / 100));
-            System.out.println("CRIT");
         }
 
-        double finalDMG = damage * 100 / (100 + defence);
-
-        return (int) finalDMG;
-
+        double finalDamageDouble = rawDamage * 100.0 / (100.0 + defenceValue);
+        return new DamageResult((int) finalDamageDouble, crit, rawDamage);
     }
 
-    public int calculateMagicDamage(int baseDamage, int intelligence, double abilityDamagePercent, Integer targetDefence) {
-        int defence = (targetDefence == null) ? 0 : targetDefence;
+    public DamageResult calculateMagicDamage(int baseDamage, int intelligence, double abilityDamagePercent, Integer targetDefence) {
 
-        double scaledDamage = baseDamage + (intelligence * 1.5);
-        scaledDamage *= (1.0 + (abilityDamagePercent / 100.0));
+        int defenceValue = (targetDefence == null) ? 0 : targetDefence;
+        double rawDamage = baseDamage + (intelligence * 1.5);
+        rawDamage *= (1.0 + (abilityDamagePercent / 100.0));
+        boolean crit = false;
 
-        double finalDMG = scaledDamage * 100 / (100 + defence);
-
-        return (int) finalDMG;
+        double finalDamageDouble = rawDamage * 100.0 / (100.0 + defenceValue);
+        return new DamageResult((int) finalDamageDouble, crit, rawDamage);
     }
 
+    public int getDefence() { return defence; }
+    public int getStrength() { return strength; }
+    public double getCritChance() { return CC; }
+    public double getCritDamageMultiplier() { return critDMG; }
+    public double getRegenRate() { return regen; }
+    public int getIntelligence() { return intelligence; }
+    public double getAbilityDamageBonus() { return abilityDMG; }
 
 }

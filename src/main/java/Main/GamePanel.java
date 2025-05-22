@@ -40,6 +40,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
         setPreferredSize(new Dimension(WIDTH * SCALE, HEIGHT * SCALE));
         setFocusable(true);
         requestFocus();
+        setFocusTraversalKeysEnabled(false); // this is stupid
     }
 
     public void addNotify() {
