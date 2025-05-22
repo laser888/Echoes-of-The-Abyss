@@ -109,7 +109,7 @@ public class Level1State extends GameState {
             enemies.add(s);
         }
 
-        sb = new SluggerBoss(tileMap);
+        sb = new SluggerBoss(tileMap, player);
         sb.setPosition(points[points.length - 1].x, points[points.length - 1].y);
         enemies.add(sb);
     }

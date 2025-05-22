@@ -495,7 +495,7 @@ public class Player extends MapObject{
         double finalDamageDouble = rawDamage * 100.0 / (100.0 + defenceValue);
         return new DamageResult((int) finalDamageDouble, crit, rawDamage);
     }
-
+    public double getPositionX() {return xtemp;}
     public int getDefence() { return defence; }
     public int getStrength() { return strength; }
     public double getCritChance() { return CC; }
