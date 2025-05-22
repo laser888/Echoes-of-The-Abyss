@@ -37,8 +37,9 @@ public class HUD {
         g.drawImage(image, 0, 10, null);
         g.setFont(font);
         g.setColor(Color.WHITE);
-        g.drawString(player.getHealth() + "/" + player.getMaxHealth(), 30, 25);
-        g.drawString(player.getIntelligence() + "/" + player.getMaxIntelligence(), 30,45);
+        g.drawString(player.getHealth() + "/" + player.getMaxHealth(), 17, 25);
+        g.drawString(Integer.toString(player.getDefence()), 20, 45);
+        g.drawString(player.getIntelligence() + "/" + player.getMaxIntelligence(), 17,67);
 
         if(debug) {
             g.setColor(Color.WHITE);
