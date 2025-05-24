@@ -31,6 +31,10 @@ public class GameStateManager {
         gameStates.add(new SettingsState(this, gamePanel));
     }
 
+    public GameState getState(int stateIndex) {
+            return gameStates.get(stateIndex);
+    }
+
     public KeybindManager getKeybindManager() {
         return keybindManager;
     }

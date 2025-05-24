@@ -5,6 +5,8 @@ import Entity.Enemies.Slugger;
 import Entity.Enemies.SluggerBoss;
 import Main.GameAction;
 import Main.GamePanel;
+import Score.ScoreData;
+import Score.ScoreManager;
 import Terminals.SimonSays;
 import TileMap.Background;
 import TileMap.TileMap;
@@ -34,6 +36,16 @@ public class Level1State extends GameState {
 
     private Player player;
 
+    private ScoreManager scoreManager;
+    private long levelStartTimeMillis;
+    private int enemiesKilledCount;
+    private int totalEnemiesAtStart;
+    private int puzzlesSolvedCount;
+    private int totalPuzzlesInLevel = 1;
+    private int playerDeathCount;
+    private static final double PAR_TIME_SECONDS = 300.0;
+
+
     private boolean bossDoorIsOpen = false;
     private Point[] doorTileCoordinates;
     private Enemy keyMob;
@@ -58,6 +70,7 @@ public class Level1State extends GameState {
         this.gsm = gsm;
         this.gamePanel = gamePanel;
         this.keybindManager = gsm.getKeybindManager();
+        this.scoreManager = new ScoreManager();
         init();
     }
 
@@ -71,8 +84,14 @@ public class Level1State extends GameState {
         bg = new Background("/Backgrounds/grassbg1.gif", 0.1);
 
         player = new Player(tileMap, this);
-        damageNumbers = new ArrayList<DamageNumber>();
+        damageNumbers = new ArrayList<>();
         player.setPosition(100, 100);
+
+        levelStartTimeMillis = System.currentTimeMillis();
+        enemiesKilledCount = 0;
+        totalEnemiesAtStart = 0;
+        puzzlesSolvedCount = 0;
+        playerDeathCount = 0;
 
         int doorColumn = 96;
         doorTileCoordinates = new Point[] {
@@ -130,6 +149,12 @@ public class Level1State extends GameState {
         sb = new SluggerBoss(tileMap, player);
         sb.setPosition(points[points.length - 1].x, points[points.length - 1].y);
         enemies.add(sb);
+
+        totalEnemiesAtStart = enemies.size();
+    }
+
+    public void recordPlayerDeath() {
+        this.playerDeathCount++;
     }
 
     private void openBossDoor() {
@@ -172,10 +197,11 @@ public class Level1State extends GameState {
         player.checkAttack(enemies);
 
         for(int i = 0; i < enemies.size(); i++) {
-
             Enemy e = enemies.get(i);
             e.update();
+
             if(e.isDead()) {
+                enemiesKilledCount++;
                 if (e == keyMob && !bossDoorIsOpen) {
                     openBossDoor();
                     keyMob = null;
@@ -188,16 +214,15 @@ public class Level1State extends GameState {
                     explosions.add(new Explosion(e.getx(), e.gety()));
                     bossDefeat();
                 }
-                if(enemies.size() == 0) {
-                    bossDefeat();
-                }
             }
         }
 
         terminal.update();
         if (terminal.isActive() && terminal.isCompleted()) {
+            if (puzzlesSolvedCount == 0) {
+                puzzlesSolvedCount++;
+            }
             terminal.close();
-            executeCommand("/cat");
         }
 
         for(int i = 0; i < explosions.size(); i++) {
@@ -459,6 +484,24 @@ public class Level1State extends GameState {
     }
 
     public void bossDefeat() {
-        gsm.setState(GameStateManager.WINNINGSTATE);
+        long levelEndTimeMillis = System.currentTimeMillis();
+        double actualTimeTakenSeconds = (levelEndTimeMillis - levelStartTimeMillis) / 1000.0;
+        boolean playerDidNotDie = (playerDeathCount == 0);
+
+        ScoreData finalScores = scoreManager.calculateScore(
+                enemiesKilledCount,
+                totalEnemiesAtStart,
+                puzzlesSolvedCount,
+                totalPuzzlesInLevel,
+                PAR_TIME_SECONDS,
+                actualTimeTakenSeconds,
+                playerDidNotDie
+        );
+
+        GameState potentialWinState = gsm.getState(GameStateManager.WINNINGSTATE);
+         WinState winState = (WinState) potentialWinState;
+         winState.setScoreData(finalScores);
+
+         gsm.setState(GameStateManager.WINNINGSTATE);
     }
 }

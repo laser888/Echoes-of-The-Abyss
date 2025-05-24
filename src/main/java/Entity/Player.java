@@ -203,7 +203,10 @@ public class Player extends MapObject{
         finalDMG = damage * 100 / (100 + defence);
         health -= finalDMG;
         if(health < 0) health = 0;
-        if(health == 0) dead = true;
+        if(health == 0) {
+            dead = true;
+            levelState.recordPlayerDeath();
+        }
         respawn(dead);
         flinching = true;
         flinchTimer = System.nanoTime();
@@ -422,6 +425,7 @@ public class Player extends MapObject{
         if(!dead) return;
         setPosition(100, 100);
         health = maxHealth;
+        intelligence = maxIntelligence;
     }
 
     public void setSpeed(double speed) {
@@ -444,7 +448,7 @@ public class Player extends MapObject{
             jumping = false;
         } else {
             maxHealth = 100;
-            maxIntelligence = 2500;
+            maxIntelligence = 100;
             moveSpeed = 0.3;
             maxSpeed = 1.6;
             fireBallDamage = 20;
