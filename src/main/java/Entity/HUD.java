@@ -23,7 +23,7 @@ public class HUD {
         player = p;
         try {
 
-            image = ImageIO.read(getClass().getResourceAsStream("/HUD/hud.gif"));
+            image = ImageIO.read(getClass().getResourceAsStream("/HUD/hud - Copy (2).gif"));
             font = new Font("Arial", Font.PLAIN, 14);
 
 
@@ -36,7 +36,7 @@ public class HUD {
 
         g.drawImage(image, 0, 10, null);
         g.setFont(font);
-        g.setColor(Color.WHITE);
+        g.setColor(Color.BLACK);
         g.drawString(player.getHealth() + "/" + player.getMaxHealth(), 17, 25);
         g.drawString(Integer.toString(player.getDefence()), 20, 45);
         g.drawString(player.getIntelligence() + "/" + player.getMaxIntelligence(), 17,67);

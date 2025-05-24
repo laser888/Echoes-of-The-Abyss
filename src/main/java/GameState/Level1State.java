@@ -34,6 +34,11 @@ public class Level1State extends GameState {
 
     private Player player;
 
+    private boolean bossDoorIsOpen = false;
+    private Point[] doorTileCoordinates;
+    private Enemy keyMob;
+
+
     private ArrayList<Enemy> enemies;
     private ArrayList<Explosion> explosions;
 
@@ -68,6 +73,15 @@ public class Level1State extends GameState {
         player = new Player(tileMap, this);
         damageNumbers = new ArrayList<DamageNumber>();
         player.setPosition(100, 100);
+
+        int doorColumn = 96;
+        doorTileCoordinates = new Point[] {
+                new Point(doorColumn, 5),
+                new Point(doorColumn, 6)
+        };
+
+        bossDoorIsOpen = false;
+        setDoorState(false);
 
         populateEnemies();
 
@@ -109,9 +123,36 @@ public class Level1State extends GameState {
             enemies.add(s);
         }
 
+        keyMob = new Slugger(tileMap);
+        keyMob.setPosition(2750, 200);
+        enemies.add(keyMob);
+
         sb = new SluggerBoss(tileMap, player);
         sb.setPosition(points[points.length - 1].x, points[points.length - 1].y);
         enemies.add(sb);
+    }
+
+    private void openBossDoor() {
+        if (!bossDoorIsOpen) {
+            bossDoorIsOpen = true;
+            setDoorState(true);
+        }
+    }
+
+    private void setDoorState(boolean open) {
+        if (doorTileCoordinates != null && tileMap != null) {
+            for (Point p : doorTileCoordinates) {
+                if (open) {
+                    if (p.y == 5) {
+                        tileMap.setTile(p.y, p.x, 17); // Top tile ID: 17
+                    } else {
+                        tileMap.setTile(p.y, p.x, 0); // Bottom tile ID: 0
+                    }
+                } else {
+                    tileMap.setTile(p.y, p.x, 26);
+                }
+            }
+        }
     }
 
     public void update() {
@@ -135,6 +176,10 @@ public class Level1State extends GameState {
             Enemy e = enemies.get(i);
             e.update();
             if(e.isDead()) {
+                if (e == keyMob && !bossDoorIsOpen) {
+                    openBossDoor();
+                    keyMob = null;
+                }
                 enemies.remove(i);
                 i--;
                 explosions.add(new Explosion(e.getx(), e.gety()));
@@ -297,6 +342,12 @@ public class Level1State extends GameState {
                 break;
             case "/win":
                 bossDefeat();
+                break;
+            case "/getkey":
+            case "/opendoor":
+                if (!bossDoorIsOpen) {
+                    openBossDoor();
+                }
                 break;
         }
     }

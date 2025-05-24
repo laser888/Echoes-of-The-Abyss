@@ -159,6 +159,12 @@ public class TileMap {
         tween = i;
     }
 
+    public void setTile(int row, int col, int tileValue) {
+        if (row >= 0 && row < numRows && col >= 0 && col < numCols) {
+            map[row][col] = tileValue;
+        }
+    }
+
     public int getNumCols() { return numCols; }
     public int getNumRows() { return numRows; }
 }
