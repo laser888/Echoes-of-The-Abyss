@@ -262,7 +262,7 @@ public class Level1State extends GameState {
         int paddingLeft = boxX + 10;
 
         g.drawString("Health: " + player.getHealth() + " / " + player.getMaxHealth(), paddingLeft, lineY); lineY += lineHeight;
-        g.drawString("Mana/Fire: " + player.getIntelligence() + " / " + player.getMaxIntelligence(), paddingLeft, lineY); lineY += lineHeight;
+        g.drawString("Mana: " + player.getIntelligence() + " / " + player.getMaxIntelligence(), paddingLeft, lineY); lineY += lineHeight;
         g.drawString("Defence: " + player.getDefence(), paddingLeft, lineY); lineY += lineHeight;
         g.drawString("Strength: " + player.getStrength(), paddingLeft, lineY); lineY += lineHeight;
         g.drawString("Crit Chance: " + String.format("%.1f%%", player.getCritChance()), paddingLeft, lineY); lineY += lineHeight;
