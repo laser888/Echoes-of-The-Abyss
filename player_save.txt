@@ -1,0 +1,3 @@
+mageLevel=1
+mageXP=0
+mageXPToNextLevel=150

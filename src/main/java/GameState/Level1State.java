@@ -235,13 +235,12 @@ public class Level1State extends GameState {
     }
 
     private void drawStatsScreen(Graphics2D g) {
-
         g.setColor(new Color(0, 0, 0, 150));
         g.fillRect(0, 0, GamePanel.WIDTH, GamePanel.HEIGHT);
 
         // Stats Panel
         int boxWidth = 200;
-        int boxHeight = 180;
+        int boxHeight = 250;
         int boxX = (GamePanel.WIDTH - boxWidth) / 2;
         int boxY = (GamePanel.HEIGHT - boxHeight) / 2;
 
@@ -272,11 +271,37 @@ public class Level1State extends GameState {
         g.drawString("Intelligence: " + player.getIntelligence(), paddingLeft, lineY); lineY += lineHeight;
         g.drawString("Ability DMG Bonus: " + String.format("+%.1f%%", player.getAbilityDamageBonus()), paddingLeft, lineY); lineY += lineHeight;
 
+        lineY += lineHeight / 2;
+        g.setColor(Color.CYAN);
+        g.drawString("Class: Mage", paddingLeft, lineY); lineY += lineHeight;
+        g.drawString("Level: " + player.getMageLevel(), paddingLeft, lineY); lineY += lineHeight;
+        g.drawString(String.format("XP: %d / %d", player.getMageXP(), player.getMageXPToNextLevel()), paddingLeft, lineY); lineY += lineHeight;
+
+        // XP Bar
+        int barWidth = boxWidth - 30;
+        int barHeight = 10;
+        int barX = paddingLeft;
+        int barY = lineY;
+
+        double xpProgress = 0;
+
+        if (player.getMageXPToNextLevel() > 0) {
+            xpProgress = (double) player.getMageXP() / player.getMageXPToNextLevel();
+        }
+
+        int progressWidth = (int) (barWidth * xpProgress);
+
+        g.setColor(Color.DARK_GRAY);
+        g.fillRect(barX, barY, barWidth, barHeight);
+        g.setColor(Color.GREEN);
+        g.fillRect(barX, barY, progressWidth, barHeight);
+        g.setColor(Color.WHITE);
+        g.drawRect(barX, barY, barWidth, barHeight);
+
         g.setFont(new Font("Arial", Font.ITALIC, 10));
         String closeMsg = "Press " + KeyEvent.getKeyText(keybindManager.getKeyCode(GameAction.TAB_TOGGLE)) + " or ESC to close";
         int closeMsgWidth = g.getFontMetrics().stringWidth(closeMsg);
         g.drawString(closeMsg, boxX + (boxWidth - closeMsgWidth) / 2, boxY + boxHeight - 10);
-
     }
 
     public void draw(Graphics2D g) {
@@ -498,10 +523,14 @@ public class Level1State extends GameState {
                 playerDidNotDie
         );
 
-        GameState potentialWinState = gsm.getState(GameStateManager.WINNINGSTATE);
-         WinState winState = (WinState) potentialWinState;
-         winState.setScoreData(finalScores);
+        player.addMageXP(finalScores.xpAwarded);
+//        System.out.println("Awarded " + finalScores.xpAwarded + " Mage XP to player.");
 
-         gsm.setState(GameStateManager.WINNINGSTATE);
+        GameState potentialWinState = gsm.getState(GameStateManager.WINNINGSTATE);
+
+            WinState winState = (WinState) potentialWinState;
+            winState.setScoreData(finalScores);
+
+            gsm.setState(GameStateManager.WINNINGSTATE);
     }
 }

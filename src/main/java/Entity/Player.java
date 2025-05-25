@@ -7,6 +7,7 @@ import TileMap.*;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.*;
 import java.util.ArrayList;
 
 public class Player extends MapObject{
@@ -34,6 +35,21 @@ public class Player extends MapObject{
     private boolean flinching;
     private long flinchTimer;
     private boolean flying;
+
+    private int mageLevel;
+    private int mageXP;
+    private int mageXPToNextLevel;
+
+    public static final int MAGE_STARTING_LEVEL = 1;
+    public static final int MAGE_INITIAL_XP_TO_NEXT_LEVEL = 100;
+    public static final double MAGE_XP_CURVE_MULTIPLIER = 1.5; // XP needed for next level
+
+    private static final int BASE_MAX_INTELLIGENCE_PRE_CLASS = 95;
+    private static final double BASE_ABILITY_DMG_PRE_CLASS = 28.0;
+
+    // Per level mage bonus
+    public static final int MAGE_INTELLIGENCE_GAIN_PER_LEVEL = 5;
+    public static final double MAGE_ABILITY_DMG_GAIN_PER_LEVEL = 2.0;
 
     // fireball
     private boolean firing;
@@ -96,6 +112,14 @@ public class Player extends MapObject{
         fireBallDamage = 20;
         abilityDMG = 30.0;
         fireBalls = new ArrayList<FireBall>();
+
+        // Default mage data
+        this.mageLevel = MAGE_STARTING_LEVEL;
+        this.mageXP = 0;
+        this.mageXPToNextLevel = MAGE_INITIAL_XP_TO_NEXT_LEVEL;
+
+        loadMageData();
+        applyMageLevelBonuses();
 
         scratchDamage = 10;
         scratchRange = 40;
@@ -448,7 +472,7 @@ public class Player extends MapObject{
             jumping = false;
         } else {
             maxHealth = 100;
-            maxIntelligence = 100;
+            applyMageLevelBonuses();
             moveSpeed = 0.3;
             maxSpeed = 1.6;
             fireBallDamage = 20;
@@ -499,6 +523,104 @@ public class Player extends MapObject{
         double finalDamageDouble = rawDamage * 100.0 / (100.0 + defenceValue);
         return new DamageResult((int) finalDamageDouble, crit, rawDamage);
     }
+
+    private void applyMageLevelBonuses() {
+        this.maxIntelligence = BASE_MAX_INTELLIGENCE_PRE_CLASS + (this.mageLevel * MAGE_INTELLIGENCE_GAIN_PER_LEVEL);
+        this.abilityDMG = BASE_ABILITY_DMG_PRE_CLASS + (this.mageLevel * MAGE_ABILITY_DMG_GAIN_PER_LEVEL);
+
+        this.intelligence = this.maxIntelligence;
+    }
+
+    public void addMageXP(int xpGained) {
+
+        if (xpGained <= 0) {
+            return;
+        }
+
+        this.mageXP += xpGained;
+//        System.out.println("Player gained " + xpGained + " Mage XP. Current: " + this.mageXP + "/" + this.mageXPToNextLevel);
+
+        boolean hasLeveledUp = false;
+
+        while (this.mageXP >= this.mageXPToNextLevel) {
+            this.mageXP -= this.mageXPToNextLevel;
+            this.mageLevel++;
+            this.mageXPToNextLevel = (int) (this.mageXPToNextLevel * MAGE_XP_CURVE_MULTIPLIER);
+            hasLeveledUp = true;
+//            System.out.println("Mage Leveled Up! New Level: " + this.mageLevel);
+        }
+
+        if (hasLeveledUp) {
+            applyMageLevelBonuses();
+//            System.out.println("Stats updated: Max Int: " + maxIntelligence + ", Ability DMG: " + abilityDMG + "%");
+        }
+        saveMageData();
+    }
+
+    public int getMageLevel() {return mageLevel; }
+
+    public int getMageXP() {return mageXP; }
+
+    public int getMageXPToNextLevel() {return mageXPToNextLevel; }
+
+    public void saveMageData() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("player_save.txt"))) {
+            writer.write("mageLevel=" + mageLevel);
+            writer.newLine();
+            writer.write("mageXP=" + mageXP);
+            writer.newLine();
+            writer.write("mageXPToNextLevel=" + mageXPToNextLevel);
+            writer.newLine();
+//            System.out.println("Mage data saved: Level=" + mageLevel + ", XP=" + mageXP + "/" + mageXPToNextLevel);
+        } catch (IOException e) {
+            System.err.println("Error saving Mage data");
+            e.printStackTrace();
+        }
+    }
+
+    public void loadMageData() {
+        File saveFile = new File("player_save.txt");
+        if (!saveFile.exists()) {
+            System.out.println("No save file found, using default Mage data.");
+            return;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(saveFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split("=");
+
+                if (parts.length == 2) {
+                    switch (parts[0]) {
+                        case "mageLevel":
+                            this.mageLevel = Integer.parseInt(parts[1]);
+                            break;
+
+                        case "mageXP":
+                            this.mageXP = Integer.parseInt(parts[1]);
+                            break;
+
+                        case "mageXPToNextLevel":
+                            this.mageXPToNextLevel = Integer.parseInt(parts[1]);
+                            break;
+                    }
+                }
+            }
+//            System.out.println("Mage data loaded: Level=" + mageLevel + ", XP=" + mageXP + "/" + mageXPToNextLevel);
+            applyMageLevelBonuses();
+
+        } catch (IOException | NumberFormatException e) {
+            System.err.println("Error loading Mage data");
+            e.printStackTrace();
+
+            // Resetting to default mage data
+            this.mageLevel = MAGE_STARTING_LEVEL;
+            this.mageXP = 0;
+            this.mageXPToNextLevel = MAGE_INITIAL_XP_TO_NEXT_LEVEL;
+            applyMageLevelBonuses();
+        }
+    }
+
     public double getPositionX() {return xtemp;}
     public int getDefence() { return defence; }
     public int getStrength() { return strength; }
