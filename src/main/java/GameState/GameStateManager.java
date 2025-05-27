@@ -17,7 +17,9 @@ public class GameStateManager {
     public static final int LEVEL1STATE = 1;
     public static final int CATSTATE = 3;
     public static final int SETTINGSSTATE = 4;
+    public static final int CLASSSELECTIONSTATE = 5;
 
+    private Entity.Player.PlayerClass currentPlayerClassSelection = Entity.Player.PlayerClass.NONE; // Default
 
     public GameStateManager(KeybindManager kbm, GamePanel gamePanel) {
         this.keybindManager = kbm;
@@ -29,6 +31,15 @@ public class GameStateManager {
         gameStates.add(new WinState(this, gamePanel));
         gameStates.add(new CatState(this));
         gameStates.add(new SettingsState(this, gamePanel));
+        gameStates.add(new ClassSelectionState(this, gamePanel));
+    }
+
+    public void setSelectedPlayerClass(Entity.Player.PlayerClass playerClass) {
+        this.currentPlayerClassSelection = playerClass;
+    }
+
+    public Entity.Player.PlayerClass getSelectedPlayerClass() {
+        return this.currentPlayerClassSelection;
     }
 
     public GameState getState(int stateIndex) {

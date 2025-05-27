@@ -1,3 +1,9 @@
-mageLevel=1
-mageXP=0
-mageXPToNextLevel=150
+MAGE_level=50
+MAGE_xp=0
+MAGE_xpToNext=100
+BERSERKER_level=50
+BERSERKER_xp=25
+BERSERKER_xpToNext=120
+ARCHER_level=50
+ARCHER_xp=10
+ARCHER_xpToNext=110

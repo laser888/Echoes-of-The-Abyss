@@ -83,7 +83,8 @@ public class Level1State extends GameState {
 
         bg = new Background("/Backgrounds/grassbg1.gif", 0.1);
 
-        player = new Player(tileMap, this);
+        Player.PlayerClass selectedClass = gsm.getSelectedPlayerClass();
+        player = new Player(tileMap, this, selectedClass);
         damageNumbers = new ArrayList<>();
         player.setPosition(100, 100);
 
@@ -266,16 +267,16 @@ public class Level1State extends GameState {
         g.drawString("Defence: " + player.getDefence(), paddingLeft, lineY); lineY += lineHeight;
         g.drawString("Strength: " + player.getStrength(), paddingLeft, lineY); lineY += lineHeight;
         g.drawString("Crit Chance: " + String.format("%.1f%%", player.getCritChance()), paddingLeft, lineY); lineY += lineHeight;
-        g.drawString("Crit Damage: " + String.format("+%.1f%%", player.getCritDamageMultiplier()), paddingLeft, lineY); lineY += lineHeight;
+        g.drawString("Crit Damage: " + String.format("+%.1f%%", player.getCritDamage()), paddingLeft, lineY); lineY += lineHeight;
         g.drawString("Regen: " + String.format("%.1f%%/s", player.getRegenRate()), paddingLeft, lineY); lineY += lineHeight;
         g.drawString("Intelligence: " + player.getIntelligence(), paddingLeft, lineY); lineY += lineHeight;
         g.drawString("Ability DMG Bonus: " + String.format("+%.1f%%", player.getAbilityDamageBonus()), paddingLeft, lineY); lineY += lineHeight;
 
         lineY += lineHeight / 2;
         g.setColor(Color.CYAN);
-        g.drawString("Class: Mage", paddingLeft, lineY); lineY += lineHeight;
-        g.drawString("Level: " + player.getMageLevel(), paddingLeft, lineY); lineY += lineHeight;
-        g.drawString(String.format("XP: %d / %d", player.getMageXP(), player.getMageXPToNextLevel()), paddingLeft, lineY); lineY += lineHeight;
+        g.drawString("Class: " + gsm.getSelectedPlayerClass(), paddingLeft, lineY); lineY += lineHeight;
+        g.drawString("Level: " + player.getCurrentClassLevel(), paddingLeft, lineY); lineY += lineHeight;
+        g.drawString(String.format("XP: %d / %d", player.getCurrentClassXP(), player.getCurrentClassXPToNextLevel()), paddingLeft, lineY); lineY += lineHeight;
 
         // XP Bar
         int barWidth = boxWidth - 30;
@@ -285,8 +286,8 @@ public class Level1State extends GameState {
 
         double xpProgress = 0;
 
-        if (player.getMageXPToNextLevel() > 0) {
-            xpProgress = (double) player.getMageXP() / player.getMageXPToNextLevel();
+        if (player.getCurrentClassXPToNextLevel() > 0) {
+            xpProgress = (double) player.getCurrentClassXP() / player.getCurrentClassXPToNextLevel();
         }
 
         int progressWidth = (int) (barWidth * xpProgress);
@@ -298,15 +299,17 @@ public class Level1State extends GameState {
         g.setColor(Color.WHITE);
         g.drawRect(barX, barY, barWidth, barHeight);
 
-        g.setFont(new Font("Arial", Font.ITALIC, 10));
-        String closeMsg = "Press " + KeyEvent.getKeyText(keybindManager.getKeyCode(GameAction.TAB_TOGGLE)) + " or ESC to close";
-        int closeMsgWidth = g.getFontMetrics().stringWidth(closeMsg);
-        g.drawString(closeMsg, boxX + (boxWidth - closeMsgWidth) / 2, boxY + boxHeight - 10);
+//        g.setFont(new Font("Arial", Font.ITALIC, 10));
+//        String closeMsg = "Press " + KeyEvent.getKeyText(keybindManager.getKeyCode(GameAction.TAB_TOGGLE)) + " or ESC to close";
+//        int closeMsgWidth = g.getFontMetrics().stringWidth(closeMsg);
+//        g.drawString(closeMsg, boxX + (boxWidth - closeMsgWidth) / 2, boxY + boxHeight - 10);
     }
 
     public void draw(Graphics2D g) {
         bg.draw(g);
         tileMap.draw(g);
+
+        player.draw(g);
 
         for (DamageNumber dn : damageNumbers) {
             dn.draw(g);
@@ -316,8 +319,6 @@ public class Level1State extends GameState {
         int x = (int)(terminal.getTriggerZone().x + terminal.getTriggerZone().width / 2 + tileMap.getx());
         int y = (int)(terminal.getTriggerZone().y + terminal.getTriggerZone().height / 2 + tileMap.gety());
         g.drawImage(terminalTexture, x - drawSize / 2, y - drawSize / 2, drawSize, drawSize, null);
-
-        player.draw(g);
 
         for(int i = 0; i < enemies.size(); i++) {
             enemies.get(i).draw(g);
@@ -398,6 +399,9 @@ public class Level1State extends GameState {
                 if (!bossDoorIsOpen) {
                     openBossDoor();
                 }
+                break;
+            case "/menu":
+                gsm.setState(GameStateManager.MENUSTATE);
                 break;
         }
     }
@@ -523,8 +527,8 @@ public class Level1State extends GameState {
                 playerDidNotDie
         );
 
-        player.addMageXP(finalScores.xpAwarded);
-//        System.out.println("Awarded " + finalScores.xpAwarded + " Mage XP to player.");
+        player.addXP(finalScores.xpAwarded);
+        //System.out.println("Awarded " + finalScores.xpAwarded + " Mage XP to player.");
 
         GameState potentialWinState = gsm.getState(GameStateManager.WINNINGSTATE);
 

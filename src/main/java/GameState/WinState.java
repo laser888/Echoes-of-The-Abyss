@@ -103,7 +103,7 @@ public class WinState extends GameState {
 
         g.setFont(xpFont);
         g.setColor(new Color(150, 255, 150));
-        String xpText = "Mage XP Gained: +" + scoreData.xpAwarded;
+        String xpText = gsm.getSelectedPlayerClass() + " Gained: +" + scoreData.xpAwarded;
 
         statsY += lineHeight - 18;
         g.drawString(xpText, 20, statsY);

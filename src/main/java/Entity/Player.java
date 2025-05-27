@@ -9,12 +9,77 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
-public class Player extends MapObject{
+public class Player extends MapObject {
 
     private Level1State levelState;
 
-    // player stuff
+    public enum PlayerClass {
+        NONE, MAGE, BERSERKER, ARCHER
+    }
+    private PlayerClass chosenClass;
+
+    private static class ClassProgress {
+        int level;
+        int xp;
+        int xpToNextLevel;
+        double xpCurveMultiplier;
+
+        ClassProgress(int initialLevel, int initialXp, int initialXpToNextLevel, double curveMultiplier) {
+            this.level = initialLevel;
+            this.xp = initialXp;
+            this.xpToNextLevel = initialXpToNextLevel;
+            this.xpCurveMultiplier = curveMultiplier;
+        }
+    }
+    private Map<PlayerClass, ClassProgress> classProgressData;
+
+    // Base Stats
+    private static final int TRUE_BASE_MAX_HEALTH = 100;
+    private static final int TRUE_BASE_DEFENSE = 10;
+    private static final int TRUE_BASE_STRENGTH = 10;
+    private static final int TRUE_BASE_MAX_INTELLIGENCE = 100;
+    private static final double TRUE_BASE_ABILITY_DMG = 0.0;
+    private static final double TRUE_BASE_MOVESPEED = 0.3;
+    private static final double TRUE_BASE_MAXSPEED = 1.6;
+    private static final int TRUE_BASE_SCRATCH_DAMAGE_VALUE = 8;
+    private static final int TRUE_BASE_SCRATCH_RANGE = 35;
+    private static final double TRUE_BASE_CC = 15.0;
+    private static final double TRUE_BASE_CRIT_DAMAGE = 50.0;
+    private static final int TRUE_BASE_ARROW_DMG = 10;
+
+    // Mage Stats
+    public static final int MAGE_STARTING_LEVEL = 1;
+    public static final int MAGE_INITIAL_XP_TO_NEXT_LEVEL = 100;
+    public static final double MAGE_XP_CURVE_MULTIPLIER = 1.5;
+    public static final int MAGE_INTELLIGENCE_GAIN_PER_LEVEL = 5;
+    public static final double MAGE_ABILITY_DMG_GAIN_PER_LEVEL = 2.5;
+
+    // Berserk Stats
+    public static final int BERSERKER_STARTING_LEVEL = 1;
+    public static final int BERSERKER_INITIAL_XP_TO_NEXT_LEVEL = 120;
+
+    public static final double BERSERKER_XP_CURVE_MULTIPLIER = 1.55;
+    public static final int BERSERKER_STRENGTH_GAIN_PER_LEVEL = 4;
+    public static final int BERSERKER_DEFENSE_GAIN_PER_LEVEL = 2;
+    public static final double BERSERKER_MOVESPEED_GAIN_PER_LEVEL = 0.03;
+    public static final int BERSERKER_SCRATCH_DAMAGE_GAIN_PER_LEVEL = 2;
+    public static final int BERSERKER_MELEE_RANGE_GAIN_PER_LEVEL = 3;
+    public static final int BERSERKER_HEALTH_GAIN_PER_LEVEL = 5;
+
+    // Archer Stats
+    public static final int ARCHER_STARTING_LEVEL = 1;
+    public static final int ARCHER_INITIAL_XP_TO_NEXT_LEVEL = 110;
+    public static final double ARCHER_XP_CURVE_MULTIPLIER = 1.5;
+    public static final int ARCHER_PROJECTILE_DMG_BASE_BOOST = 5;
+    public static final int ARCHER_MAX_JUMPS = 2;
+    public static final int ARCHER_ARROW_DMG_GAIN_PER_LEVEL = 2;
+    public static final double ARCHER_CC_GAIN_PER_LEVEL = 1.0;
+    public static final double ARCHER_CD_GAIN_PER_LEVEL = 5.0;
+
+    // Player Stats
     private int health;
     private int maxHealth;
     private int defence;
@@ -36,41 +101,30 @@ public class Player extends MapObject{
     private long flinchTimer;
     private boolean flying;
 
-    private int mageLevel;
-    private int mageXP;
-    private int mageXPToNextLevel;
-
-    public static final int MAGE_STARTING_LEVEL = 1;
-    public static final int MAGE_INITIAL_XP_TO_NEXT_LEVEL = 100;
-    public static final double MAGE_XP_CURVE_MULTIPLIER = 1.5; // XP needed for next level
-
-    private static final int BASE_MAX_INTELLIGENCE_PRE_CLASS = 95;
-    private static final double BASE_ABILITY_DMG_PRE_CLASS = 28.0;
-
-    // Per level mage bonus
-    public static final int MAGE_INTELLIGENCE_GAIN_PER_LEVEL = 5;
-    public static final double MAGE_ABILITY_DMG_GAIN_PER_LEVEL = 2.0;
-
-    // fireball
+    // Abilities
     private boolean firing;
     private int fireCost;
     private int fireBallDamage;
     private ArrayList<FireBall> fireBalls;
 
-    // scratch
     private boolean scratching;
     private int scratchDamage;
     private int scratchRange;
     private boolean scratchDamageDealt = false;
 
-    // gliding
+    private boolean shootingArrow;
+    private int arrowCost;
+    private ArrayList<Arrow> arrows;
+    private int arrowDMG;
+
+    // Movement
     private boolean gliding;
+    private int jumpsAvailable;
+    private int maxJumps;
 
-    // animations
+    // Animations
     private ArrayList<BufferedImage[]> sprites;
-    private final int[] numFrames = { 2, 8, 1, 2, 4, 2, 5};
-
-    // animation actions
+    private final int[] numFrames = {2, 8, 1, 2, 4, 2, 5};
     private static final int IDLE = 0;
     private static final int WALKING = 1;
     private static final int JUMPING = 2;
@@ -79,66 +133,67 @@ public class Player extends MapObject{
     private static final int FIREBALL = 5;
     private static final int SCRATCHING = 6;
 
-    public Player(TileMap tm, Level1State levelState) {
-
+    public Player(TileMap tm, Level1State levelState, PlayerClass selectedClass) {
         super(tm);
         this.levelState = levelState;
+        this.chosenClass = selectedClass != null ? selectedClass : PlayerClass.NONE;
 
         width = 30;
         height = 30;
         cwidth = 20;
         cheight = 20;
 
-        moveSpeed = 0.3;
-        maxSpeed = 1.6;
         stopSpeed = 0.4;
         fallSpeed = 0.15;
         maxFallSpeed = 4.0;
         jumpStart = -4.8;
         stopJumpSpeed = 0.3;
-
         facingRight = true;
 
-
+        this.maxHealth = TRUE_BASE_MAX_HEALTH;
+        this.health = this.maxHealth;
+        this.defence = TRUE_BASE_DEFENSE;
+        this.strength = TRUE_BASE_STRENGTH;
+        this.maxIntelligence = TRUE_BASE_MAX_INTELLIGENCE;
+        this.intelligence = this.maxIntelligence;
+        this.abilityDMG = TRUE_BASE_ABILITY_DMG;
+        this.moveSpeed = TRUE_BASE_MOVESPEED;
+        this.maxSpeed = TRUE_BASE_MAXSPEED;
+        this.scratchDamage = TRUE_BASE_SCRATCH_DAMAGE_VALUE;
+        this.scratchRange = TRUE_BASE_SCRATCH_RANGE;
 
         lastRegenTime = System.nanoTime();
-        health = maxHealth = 100;
-        defence = 10;
-
         lastIntelRegenTime = System.nanoTime();
-        intelligence = maxIntelligence = 100;
-
-        fireCost = 10;
-        fireBallDamage = 20;
-        abilityDMG = 30.0;
-        fireBalls = new ArrayList<FireBall>();
-
-        // Default mage data
-        this.mageLevel = MAGE_STARTING_LEVEL;
-        this.mageXP = 0;
-        this.mageXPToNextLevel = MAGE_INITIAL_XP_TO_NEXT_LEVEL;
-
-        loadMageData();
-        applyMageLevelBonuses();
-
-        scratchDamage = 10;
-        scratchRange = 40;
-        strength = 20;
-        CC = 15.0;
-        critDMG = 50.0;
+        this.CC = TRUE_BASE_CC;
+        this.critDMG = TRUE_BASE_CRIT_DAMAGE;
         regen = 2.0;
         intelRegen = 1.0;
+        fireCost = 10;
+        fireBallDamage = 20;
+        arrowCost = 8;
+        this.arrowDMG = TRUE_BASE_ARROW_DMG;
 
-        // load sprites
+        fireBalls = new ArrayList<>();
+        arrows = new ArrayList<>();
+        maxJumps = (chosenClass == PlayerClass.ARCHER) ? ARCHER_MAX_JUMPS : 1;
+        jumpsAvailable = maxJumps;
+
+        classProgressData = new HashMap<>();
+        classProgressData.put(PlayerClass.MAGE, new ClassProgress(MAGE_STARTING_LEVEL, 0, MAGE_INITIAL_XP_TO_NEXT_LEVEL, MAGE_XP_CURVE_MULTIPLIER));
+        classProgressData.put(PlayerClass.BERSERKER, new ClassProgress(BERSERKER_STARTING_LEVEL, 0, BERSERKER_INITIAL_XP_TO_NEXT_LEVEL, BERSERKER_XP_CURVE_MULTIPLIER));
+        classProgressData.put(PlayerClass.ARCHER, new ClassProgress(ARCHER_STARTING_LEVEL, 0, ARCHER_INITIAL_XP_TO_NEXT_LEVEL, ARCHER_XP_CURVE_MULTIPLIER));
+
+        loadAllClassData();
+        applyCurrentClassLevelBonuses();
+
+        // Load sprites
         try {
-
             BufferedImage spritesheet = ImageIO.read(getClass().getResourceAsStream("/Sprites/Player/playersprites.gif"));
-
-            sprites = new ArrayList<BufferedImage[]>();
-            for(int i = 0; i < 7; i++) {
+            sprites = new ArrayList<>();
+            for (int i = 0; i < 7; i++) {
                 BufferedImage[] bi = new BufferedImage[numFrames[i]];
-                for(int j = 0; j < numFrames[i]; j++) {
-                    if(i != SCRATCHING) {
+                for (int j = 0; j < numFrames[i]; j++) {
+                    if (i != SCRATCHING) {
                         bi[j] = spritesheet.getSubimage(j * width, i * height, width, height);
                     } else {
                         bi[j] = spritesheet.getSubimage(j * width * 2, i * height, width * 2, height);
@@ -160,8 +215,15 @@ public class Player extends MapObject{
     public int getMaxHealth() { return maxHealth; }
     public int getMaxIntelligence() { return maxIntelligence; }
 
-    public void setFiring(boolean b) {
-        firing = true;
+    public void setFiring(boolean shooting) {
+        if(shooting) {
+
+            if (chosenClass == PlayerClass.MAGE) {
+                firing = true;
+            } else if (chosenClass == PlayerClass.ARCHER) {
+                shootingArrow = true;
+            }
+        }
     }
 
     public void setScratching(boolean b) {
@@ -178,7 +240,6 @@ public class Player extends MapObject{
     public void checkAttack(ArrayList<Enemy> enemies) {
         for (int i = 0; i < enemies.size(); i++) {
             Enemy e = enemies.get(i);
-
             if (scratching && !scratchDamageDealt) {
                 boolean hitEnemy = false;
                 if (facingRight) {
@@ -206,15 +267,22 @@ public class Player extends MapObject{
                 if (fb.intersects(e)) {
                     DamageResult result = calculateMagicDamage(fireBallDamage, intelligence, abilityDMG, null);
                     e.hit(result.damage);
-
-                    if (levelState != null) {
-                        levelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
-                    }
+                     levelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
                     fireBalls.remove(j);
-                    break;
+                    j--;
                 }
             }
 
+            for (int j = 0; j < arrows.size(); j++) {
+                Arrow a = arrows.get(j);
+                if(a.intersects(e)) {
+                    DamageResult result = calculateDamage(ARCHER_PROJECTILE_DMG_BASE_BOOST + arrowDMG, strength, CC, critDMG, null);
+                    e.hit(result.damage);
+                    levelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
+                    arrows.remove(j);
+                    j--;
+                }
+            }
             if (intersects(e)) {
                 hit(e.getDamage());
             }
@@ -238,178 +306,167 @@ public class Player extends MapObject{
     }
 
     private void getNextPosition() {
-
-        if(flying) {
-            dx = 0;
-            dy = 0;
-            if(left) dx = -maxSpeed;
-            if(right) dx = maxSpeed;
-            if(up) dy = -maxSpeed;
-            if(down) dy = maxSpeed;
-            return; // Don't process fall/jump physics
+        if (flying) {
+            dx = 0; dy = 0;
+            if (left) dx = -maxSpeed; else if (right) dx = maxSpeed;
+            if (up) dy = -maxSpeed; else if (down) dy = maxSpeed;
+            return;
         }
 
-        // movement
-        if(left) {
+        if (left) {
             dx -= moveSpeed;
-            if(dx < -maxSpeed) {
-                dx = -maxSpeed;
-            }
-        } else if(right) {
+            if (dx < -maxSpeed) dx = -maxSpeed;
+        } else if (right) {
             dx += moveSpeed;
-            if(dx > maxSpeed) {
-                dx = maxSpeed;
-            }
+            if (dx > maxSpeed) dx = maxSpeed;
         } else {
-            if(dx > 0) {
-                dx -= stopSpeed;
-                if(dx < 0) {
-                    dx = 0;
-                }
-            } else if (dx < 0) {
-                dx += stopSpeed;
-                if(dx > 0) {
-                    dx = 0;
-                }
-            }
+            if (dx > 0) { dx -= stopSpeed; if (dx < 0) dx = 0; }
+            else if (dx < 0) { dx += stopSpeed; if (dx > 0) dx = 0; }
         }
 
-        // cannot move while attacking, except in air
-        if((currentAction == SCRATCHING || currentAction == FIREBALL) && !(jumping || falling)) {
+        if ((currentAction == SCRATCHING || currentAction == FIREBALL) && !falling) {
             dx = 0;
         }
 
-        // jumping
-        if(jumping && !falling) {
-            dy = jumpStart;
+        if (jumping && jumpsAvailable > 0) {
             falling = true;
         }
 
-        // falling
-        if(falling) {
+        if (falling) {
+            if (gliding && dy > 0) {
+                dy += fallSpeed * 0.1;
+            } else {
+                dy += fallSpeed;
+            }
 
-            if(dy > 0 && gliding) dy += fallSpeed * 0.1;
-            else dy += fallSpeed;
+            if (dy < 0 && !jumping) {
+                dy += stopJumpSpeed;
+            }
 
-            if(dy > 0) jumping = false;
-            if(dy < 0 && !jumping) dy += stopJumpSpeed;
-
-            if(dy > maxFallSpeed) dy = maxFallSpeed;
-
+            if (dy > maxFallSpeed) {
+                dy = maxFallSpeed;
+            }
         }
-
     }
 
     public void update() {
-
-        // update position
-        if(outOfMap) respawn(true);
+        if (outOfMap) respawn(true);
         getNextPosition();
         checkTileMapCollision();
         setPosition(xtemp, ytemp);
 
-        // check attack has stopped
-        if(currentAction == SCRATCHING) {
-            if(animation.hasPlayedOnce()) scratching = false;
+        if (currentAction == SCRATCHING && animation.hasPlayedOnce()) {
+            scratching = false;
         }
-        if(currentAction == FIREBALL) {
-            if(animation.hasPlayedOnce()) firing = false;
+        if (currentAction == FIREBALL && animation.hasPlayedOnce()) {
+            firing = false;
+            shootingArrow = false;
         }
 
         double now = System.nanoTime();
-        double elapsedMillis = (now - lastRegenTime) / 1000000;
+        double healthElapsedMillis = (now - lastRegenTime) / 1_000_000;
+        double intelElapsedMillis = (now - lastIntelRegenTime) / 1_000_000;
 
-        // fireball attack
-        if(elapsedMillis >= 1000) {
-            regenAmount = maxIntelligence * (intelRegen/100);
-            intelligence += regenAmount;
-            if(intelligence > maxIntelligence) intelligence = maxIntelligence;
+        if (intelElapsedMillis >= 1000) {
+            intelRegenAmount = maxIntelligence * (intelRegen / 100.0);
+            intelligence += intelRegenAmount;
+            if (intelligence > maxIntelligence) intelligence = maxIntelligence;
             lastIntelRegenTime = now;
         }
 
-        if(intelligence > maxIntelligence) intelligence = maxIntelligence;
-
-        if(firing && currentAction != FIREBALL) {
-            if(intelligence > fireCost) {
-                intelligence -= fireCost;
-                FireBall fb = new FireBall(tileMap, facingRight);
-                fb.setPosition(x, y);
-                fireBalls.add(fb);
-            }
+        if (healthElapsedMillis >= 1000) {
+            regenAmount = maxHealth * (regen / 100.0);
+            health += regenAmount;
+            if (health > maxHealth) health = maxHealth;
+            lastRegenTime = now;
         }
 
-        // update fireballs
-        for(int i = 0; i < fireBalls.size(); i++){
+        // Fireball attack
+        if (firing && currentAction != FIREBALL && intelligence >= fireCost) {
+            intelligence -= fireCost;
+            FireBall fb = new FireBall(tileMap, facingRight);
+            fb.setPosition(x, y);
+            fireBalls.add(fb);
+            firing = false;
+        }
+
+        // Arrow attack
+        if (shootingArrow && chosenClass == PlayerClass.ARCHER && currentAction != FIREBALL && intelligence >= arrowCost) {
+            intelligence -= arrowCost;
+            Arrow a = new Arrow(tileMap, facingRight);
+            a.setPosition(x, y);
+            arrows.add(a);
+            shootingArrow = false;
+        }
+
+        // Update fireballs
+        for (int i = 0; i < fireBalls.size(); i++) {
             fireBalls.get(i).update();
-            if(fireBalls.get(i).shouldRemove()) {
+            if (fireBalls.get(i).shouldRemove()) {
                 fireBalls.remove(i);
                 i--;
             }
         }
 
-        // check done flinching
-        if(flinching) {
-            long elapsed = (System.nanoTime() - flinchTimer) / 1000000;
-            if(elapsed > 1000) {
+        for(int i = 0; i < arrows.size(); i++) {
+            arrows.get(i).update();
+            if(arrows.get(i).shouldRemove()) {
+                arrows.remove(i);
+                i--;
+            }
+        }
+
+        // Check flinching
+        if (flinching) {
+            long elapsed = (System.nanoTime() - flinchTimer) / 1_000_000;
+            if (elapsed > 1000) {
                 flinching = false;
             }
         }
 
-        if(elapsedMillis >= 1000) {
-            regenAmount = maxHealth * (regen/100);
-            health += regenAmount;
-            if(health > maxHealth) health = maxHealth;
-            lastRegenTime = now;
-        }
-
-        if(health > maxHealth) health = maxHealth;
-
-        // set animation
-        if(scratching) {
-            if(currentAction != SCRATCHING) {
+        // Set animation
+        if (scratching) {
+            if (currentAction != SCRATCHING) {
                 currentAction = SCRATCHING;
                 animation.setFrames(sprites.get(SCRATCHING));
                 animation.setDelay(50);
                 width = 60;
             }
-        } else if(firing) {
-            if(currentAction != FIREBALL) {
+        } else if ((firing && chosenClass == PlayerClass.MAGE) || (shootingArrow && chosenClass == PlayerClass.ARCHER)) {
+            if (currentAction != FIREBALL) {
                 currentAction = FIREBALL;
                 animation.setFrames(sprites.get(FIREBALL));
                 animation.setDelay(100);
                 width = 30;
             }
-        } else if(dy > 0) {
-            if(gliding) {
-                if(currentAction != GLIDING) {
-                    currentAction = GLIDING;
-                    animation.setFrames(sprites.get(GLIDING));
-                    animation.setDelay(100);
-                    width = 30;
-                }
-            } else if(currentAction != FALLING) {
-                currentAction = FALLING;
-                animation.setFrames(sprites.get(FALLING));
-                animation.setDelay(100);
-                width = 30;
-            }
-        } else if(dy < 0) {
-            if(currentAction != JUMPING) {
+        } else if (dy < 0) {
+            if (currentAction != JUMPING) {
                 currentAction = JUMPING;
                 animation.setFrames(sprites.get(JUMPING));
                 animation.setDelay(-1);
                 width = 30;
             }
-        } else if(left || right) {
-            if(currentAction != WALKING) {
+        } else if (dy > 0) {
+            if (gliding && currentAction != GLIDING) {
+                currentAction = GLIDING;
+                animation.setFrames(sprites.get(GLIDING));
+                animation.setDelay(100);
+                width = 30;
+            } else if (!gliding && currentAction != FALLING) {
+                currentAction = FALLING;
+                animation.setFrames(sprites.get(FALLING));
+                animation.setDelay(100);
+                width = 30;
+            }
+        } else if (left || right) {
+            if (currentAction != WALKING) {
                 currentAction = WALKING;
                 animation.setFrames(sprites.get(WALKING));
                 animation.setDelay(40);
                 width = 30;
             }
-        }
-        else {
-            if(currentAction != IDLE) {
+        } else {
+            if (currentAction != IDLE) {
                 currentAction = IDLE;
                 animation.setFrames(sprites.get(IDLE));
                 animation.setDelay(400);
@@ -419,10 +476,10 @@ public class Player extends MapObject{
 
         animation.update();
 
-        // set direction
-        if(currentAction != SCRATCHING && currentAction != FIREBALL) {
-            if(right) facingRight = true;
-            if(left) facingRight = false;
+        // Set direction
+        if (currentAction != SCRATCHING && currentAction != FIREBALL) {
+            if (right) facingRight = true;
+            if (left) facingRight = false;
         }
     }
 
@@ -433,6 +490,11 @@ public class Player extends MapObject{
         // draw fireballs
         for(int i = 0; i < fireBalls.size(); i++) {
             fireBalls.get(i).draw(g);
+        }
+
+        // draw arrow
+        for (int i = 0; i < arrows.size(); i++) {
+            arrows.get(i).draw(g);
         }
 
         // draw player
@@ -471,14 +533,21 @@ public class Player extends MapObject{
             falling = false;
             jumping = false;
         } else {
-            maxHealth = 100;
-            applyMageLevelBonuses();
-            moveSpeed = 0.3;
-            maxSpeed = 1.6;
-            fireBallDamage = 20;
-            scratchDamage = 8;
-            intelligence = maxIntelligence;
-            health = maxHealth;
+            this.maxHealth = TRUE_BASE_MAX_HEALTH;
+            this.defence = TRUE_BASE_DEFENSE;
+            this.strength = TRUE_BASE_STRENGTH;
+            this.maxIntelligence = TRUE_BASE_MAX_INTELLIGENCE;
+            this.abilityDMG = TRUE_BASE_ABILITY_DMG;
+            this.moveSpeed = TRUE_BASE_MOVESPEED;
+            this.maxSpeed = TRUE_BASE_MAXSPEED;
+            this.scratchDamage = TRUE_BASE_SCRATCH_DAMAGE_VALUE;
+            this.scratchRange = TRUE_BASE_SCRATCH_RANGE;
+            this.CC = TRUE_BASE_CC;
+            this.critDMG = TRUE_BASE_CRIT_DAMAGE;
+            this.arrowDMG = TRUE_BASE_ARROW_DMG;
+            applyCurrentClassLevelBonuses();
+            this.health = this.maxHealth;
+            this.intelligence = this.maxIntelligence;
             flying = false;
             falling = true;
             jumping = true;
@@ -524,64 +593,109 @@ public class Player extends MapObject{
         return new DamageResult((int) finalDamageDouble, crit, rawDamage);
     }
 
-    private void applyMageLevelBonuses() {
-        this.maxIntelligence = BASE_MAX_INTELLIGENCE_PRE_CLASS + (this.mageLevel * MAGE_INTELLIGENCE_GAIN_PER_LEVEL);
-        this.abilityDMG = BASE_ABILITY_DMG_PRE_CLASS + (this.mageLevel * MAGE_ABILITY_DMG_GAIN_PER_LEVEL);
+    private void applyCurrentClassLevelBonuses() {
+        this.maxHealth = TRUE_BASE_MAX_HEALTH;
+        this.defence = TRUE_BASE_DEFENSE;
+        this.strength = TRUE_BASE_STRENGTH;
+        this.maxIntelligence = TRUE_BASE_MAX_INTELLIGENCE;
+        this.abilityDMG = TRUE_BASE_ABILITY_DMG;
+        this.moveSpeed = TRUE_BASE_MOVESPEED;
+        this.maxSpeed = TRUE_BASE_MAXSPEED;
+        this.scratchRange = TRUE_BASE_SCRATCH_RANGE;
+        this.maxJumps = 1;
 
-        this.intelligence = this.maxIntelligence;
-    }
-
-    public void addMageXP(int xpGained) {
-
-        if (xpGained <= 0) {
+        ClassProgress progress = classProgressData.get(this.chosenClass);
+        if (progress == null || this.chosenClass == PlayerClass.NONE) {
+            this.intelligence = this.maxIntelligence;
+            this.health = this.maxHealth;
             return;
         }
 
-        this.mageXP += xpGained;
-//        System.out.println("Player gained " + xpGained + " Mage XP. Current: " + this.mageXP + "/" + this.mageXPToNextLevel);
+        int levelPoints = progress.level;
+
+        if (this.chosenClass == PlayerClass.MAGE) {
+            this.maxIntelligence += levelPoints * MAGE_INTELLIGENCE_GAIN_PER_LEVEL;
+            this.abilityDMG += levelPoints * MAGE_ABILITY_DMG_GAIN_PER_LEVEL;
+        } else if (this.chosenClass == PlayerClass.BERSERKER) {
+            this.strength += levelPoints * BERSERKER_STRENGTH_GAIN_PER_LEVEL;
+            this.defence += levelPoints * BERSERKER_DEFENSE_GAIN_PER_LEVEL;
+            this.moveSpeed += levelPoints * BERSERKER_MOVESPEED_GAIN_PER_LEVEL;
+            this.maxSpeed += levelPoints * BERSERKER_MOVESPEED_GAIN_PER_LEVEL;
+            this.scratchRange += levelPoints * BERSERKER_MELEE_RANGE_GAIN_PER_LEVEL;
+            this.maxHealth += levelPoints * BERSERKER_HEALTH_GAIN_PER_LEVEL;
+            this.scratchDamage += levelPoints * BERSERKER_SCRATCH_DAMAGE_GAIN_PER_LEVEL;
+        } else if (this.chosenClass == PlayerClass.ARCHER) {
+            this.maxJumps = ARCHER_MAX_JUMPS;
+            this.arrowDMG += levelPoints * ARCHER_ARROW_DMG_GAIN_PER_LEVEL;
+            this.CC += levelPoints * ARCHER_CC_GAIN_PER_LEVEL;
+            this.critDMG += levelPoints * ARCHER_CD_GAIN_PER_LEVEL;
+        }
+
+        this.health = this.maxHealth;
+        this.intelligence = this.maxIntelligence;
+        this.maxSpeed = Math.max(this.maxSpeed, this.moveSpeed);
+
+    }
+
+    public void addXP(int xpGained) {
+        if (xpGained <= 0 || this.chosenClass == PlayerClass.NONE) {
+            return;
+        }
+        ClassProgress currentClassProg = classProgressData.get(this.chosenClass);
+        if (currentClassProg == null) return;
+
+        currentClassProg.xp += xpGained;
+        // System.out.println(chosenClass + " gained " + xpGained + " XP. Current: " + currentClassProg.xp + "/" + currentClassProg.xpToNextLevel);
 
         boolean hasLeveledUp = false;
-
-        while (this.mageXP >= this.mageXPToNextLevel) {
-            this.mageXP -= this.mageXPToNextLevel;
-            this.mageLevel++;
-            this.mageXPToNextLevel = (int) (this.mageXPToNextLevel * MAGE_XP_CURVE_MULTIPLIER);
+        while (currentClassProg.xp >= currentClassProg.xpToNextLevel) {
+            currentClassProg.xp -= currentClassProg.xpToNextLevel;
+            currentClassProg.level++;
+            currentClassProg.xpToNextLevel = (int) (currentClassProg.xpToNextLevel * currentClassProg.xpCurveMultiplier);
             hasLeveledUp = true;
-//            System.out.println("Mage Leveled Up! New Level: " + this.mageLevel);
+            // System.out.println(chosenClass + " Leveled Up! New Level: " + currentClassProg.level);
         }
 
         if (hasLeveledUp) {
-            applyMageLevelBonuses();
-//            System.out.println("Stats updated: Max Int: " + maxIntelligence + ", Ability DMG: " + abilityDMG + "%");
+            applyCurrentClassLevelBonuses();
         }
-        saveMageData();
+        saveAllClassData();
     }
 
-    public int getMageLevel() {return mageLevel; }
+    public int getCurrentClassLevel() {
+        if (chosenClass == PlayerClass.NONE || !classProgressData.containsKey(chosenClass)) return 0;
+        return classProgressData.get(chosenClass).level;
+    }
+    public int getCurrentClassXP() {
+        if (chosenClass == PlayerClass.NONE || !classProgressData.containsKey(chosenClass)) return 0;
+        return classProgressData.get(chosenClass).xp;
+    }
+    public int getCurrentClassXPToNextLevel() {
+        if (chosenClass == PlayerClass.NONE || !classProgressData.containsKey(chosenClass)) return 100; // Default
+        return classProgressData.get(chosenClass).xpToNextLevel;
+    }
+    public PlayerClass getChosenClass() { return chosenClass; }
 
-    public int getMageXP() {return mageXP; }
-
-    public int getMageXPToNextLevel() {return mageXPToNextLevel; }
-
-    public void saveMageData() {
+    public void saveAllClassData() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("player_save.txt"))) {
-            writer.write("mageLevel=" + mageLevel);
-            writer.newLine();
-            writer.write("mageXP=" + mageXP);
-            writer.newLine();
-            writer.write("mageXPToNextLevel=" + mageXPToNextLevel);
-            writer.newLine();
-//            System.out.println("Mage data saved: Level=" + mageLevel + ", XP=" + mageXP + "/" + mageXPToNextLevel);
+            for (Map.Entry<PlayerClass, ClassProgress> entry : classProgressData.entrySet()) {
+                if (entry.getKey() == PlayerClass.NONE) continue;
+                PlayerClass pc = entry.getKey();
+                ClassProgress prog = entry.getValue();
+                writer.write(pc.name() + "_level=" + prog.level); writer.newLine();
+                writer.write(pc.name() + "_xp=" + prog.xp); writer.newLine();
+                writer.write(pc.name() + "_xpToNext=" + prog.xpToNextLevel); writer.newLine();
+            }
+            // System.out.println("All class data saved.");
         } catch (IOException e) {
-            System.err.println("Error saving Mage data");
-            e.printStackTrace();
+            System.err.println("Error saving class data: " + e.getMessage());
         }
     }
 
-    public void loadMageData() {
+    public void loadAllClassData() {
         File saveFile = new File("player_save.txt");
         if (!saveFile.exists()) {
-            System.out.println("No save file found, using default Mage data.");
+            // System.out.println("No class save file found. Using default values for all classes.");
             return;
         }
 
@@ -589,35 +703,59 @@ public class Player extends MapObject{
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split("=");
-
                 if (parts.length == 2) {
-                    switch (parts[0]) {
-                        case "mageLevel":
-                            this.mageLevel = Integer.parseInt(parts[1]);
-                            break;
+                    String key = parts[0];
+                    int value = Integer.parseInt(parts[1]);
 
-                        case "mageXP":
-                            this.mageXP = Integer.parseInt(parts[1]);
-                            break;
-
-                        case "mageXPToNextLevel":
-                            this.mageXPToNextLevel = Integer.parseInt(parts[1]);
-                            break;
+                    if (key.endsWith("_level")) {
+                        PlayerClass pc = PlayerClass.valueOf(key.substring(0, key.indexOf("_level")).toUpperCase());
+                        if (classProgressData.containsKey(pc)) classProgressData.get(pc).level = value;
+                    } else if (key.endsWith("_xp")) {
+                        PlayerClass pc = PlayerClass.valueOf(key.substring(0, key.indexOf("_xp")).toUpperCase());
+                        if (classProgressData.containsKey(pc)) classProgressData.get(pc).xp = value;
+                    } else if (key.endsWith("_xpToNext")) {
+                        PlayerClass pc = PlayerClass.valueOf(key.substring(0, key.indexOf("_xpToNext")).toUpperCase());
+                        if (classProgressData.containsKey(pc)) classProgressData.get(pc).xpToNextLevel = value;
                     }
                 }
             }
-//            System.out.println("Mage data loaded: Level=" + mageLevel + ", XP=" + mageXP + "/" + mageXPToNextLevel);
-            applyMageLevelBonuses();
+        } catch (IOException | IllegalArgumentException e) {
+            System.err.println("Error loading class data, resetting to defaults: " + e.getMessage());
+            classProgressData.clear();
+            classProgressData.put(PlayerClass.MAGE, new ClassProgress(MAGE_STARTING_LEVEL, 0, MAGE_INITIAL_XP_TO_NEXT_LEVEL, MAGE_XP_CURVE_MULTIPLIER));
+            classProgressData.put(PlayerClass.BERSERKER, new ClassProgress(BERSERKER_STARTING_LEVEL, 0, BERSERKER_INITIAL_XP_TO_NEXT_LEVEL, BERSERKER_XP_CURVE_MULTIPLIER));
+            classProgressData.put(PlayerClass.ARCHER, new ClassProgress(ARCHER_STARTING_LEVEL, 0, ARCHER_INITIAL_XP_TO_NEXT_LEVEL, ARCHER_XP_CURVE_MULTIPLIER));
+        }
+    }
 
-        } catch (IOException | NumberFormatException e) {
-            System.err.println("Error loading Mage data");
-            e.printStackTrace();
 
-            // Resetting to default mage data
-            this.mageLevel = MAGE_STARTING_LEVEL;
-            this.mageXP = 0;
-            this.mageXPToNextLevel = MAGE_INITIAL_XP_TO_NEXT_LEVEL;
-            applyMageLevelBonuses();
+    @Override
+    public void setJumping(boolean b) {
+        if (b) {
+            if (jumpsAvailable > 0 && !jumping) {
+                this.jumping = true;
+                this.dy = jumpStart;
+                this.falling = true;
+                this.jumpsAvailable--;
+                // System.out.println("Jumped! Jumps left: " + jumpsAvailable);
+            }
+        } else {
+            this.jumping = false;
+        }
+    }
+
+    @Override
+    public void checkTileMapCollision() {
+        double oldDy = dy;
+        boolean wasFalling = falling;
+
+        super.checkTileMapCollision();
+
+        if ((wasFalling && !falling) || (wasFalling && dy == 0 && oldDy > 0)) {
+            falling = false;
+            jumpsAvailable = maxJumps;
+            jumping = false;
+            // System.out.println("Landed! Jumps  to: " + jumpsAvailable);
         }
     }
 
@@ -625,7 +763,7 @@ public class Player extends MapObject{
     public int getDefence() { return defence; }
     public int getStrength() { return strength; }
     public double getCritChance() { return CC; }
-    public double getCritDamageMultiplier() { return critDMG; }
+    public double getCritDamage() { return critDMG; }
     public double getRegenRate() { return regen; }
     public int getIntelligence() { return intelligence; }
     public double getAbilityDamageBonus() { return abilityDMG; }
