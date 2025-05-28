@@ -176,4 +176,7 @@ public class WinState extends GameState {
             }
         }
     }
+
+    public int getSpawnX() {return 0;}
+    public  int getSpawnY() { return 0;}
 }

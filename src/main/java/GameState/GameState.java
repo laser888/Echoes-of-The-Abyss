@@ -11,6 +11,8 @@ public abstract class GameState {
     public abstract void keyPressed(int k);
     public abstract void keyReleased(int k);
     public abstract void mousePressed(MouseEvent e);
+    public abstract int getSpawnX();
+    public abstract int getSpawnY();
 
 
 }

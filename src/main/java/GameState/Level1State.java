@@ -35,6 +35,8 @@ public class Level1State extends GameState {
     private Background bg;
 
     private Player player;
+    private int spawnX, spawnY;
+
 
     private ScoreManager scoreManager;
     private long levelStartTimeMillis;
@@ -83,10 +85,13 @@ public class Level1State extends GameState {
 
         bg = new Background("/Backgrounds/grassbg1.gif", 0.1);
 
+        spawnX = 100;
+        spawnY = 100;
+
         Player.PlayerClass selectedClass = gsm.getSelectedPlayerClass();
-        player = new Player(tileMap, this, selectedClass);
+        player = new Player(tileMap, this, selectedClass, gsm);
         damageNumbers = new ArrayList<>();
-        player.setPosition(100, 100);
+        player.setPosition(spawnX, spawnY);
 
         levelStartTimeMillis = System.currentTimeMillis();
         enemiesKilledCount = 0;
@@ -537,4 +542,12 @@ public class Level1State extends GameState {
 
             gsm.setState(GameStateManager.WINNINGSTATE);
     }
+
+    public int getSpawnX() {
+        return spawnX;
+    }
+    public int getSpawnY() {
+        return spawnY;
+    }
+
 }

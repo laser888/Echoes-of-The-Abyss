@@ -1,6 +1,7 @@
 package Entity;
 
 import Effects.DamageResult;
+import GameState.GameStateManager;
 import GameState.Level1State;
 import TileMap.*;
 
@@ -15,6 +16,8 @@ import java.util.Map;
 public class Player extends MapObject {
 
     private Level1State levelState;
+    private GameStateManager gsm;
+
 
     public enum PlayerClass {
         NONE, MAGE, BERSERKER, ARCHER
@@ -123,19 +126,22 @@ public class Player extends MapObject {
     private int maxJumps;
 
     // Animations
+    private String spriteFilePath;
     private ArrayList<BufferedImage[]> sprites;
-    private final int[] numFrames = {2, 8, 1, 2, 4, 2, 5};
+    private final int[] numFrames = {1, 3, 3, 4, 8};
     private static final int IDLE = 0;
-    private static final int WALKING = 1;
-    private static final int JUMPING = 2;
-    private static final int FALLING = 3;
-    private static final int GLIDING = 4;
-    private static final int FIREBALL = 5;
-    private static final int SCRATCHING = 6;
+    private static final int WALKING = 3;
+    private static final int JUMPING = 1;
+    private static final int FALLING = 2;
+    private static final int GLIDING = 2;
+    private static final int FIREBALL = 4;
+    private static final int FIRING = 4;
+    private static final int SCRATCHING = 4;
 
-    public Player(TileMap tm, Level1State levelState, PlayerClass selectedClass) {
+    public Player(TileMap tm, Level1State levelState, PlayerClass selectedClass, GameStateManager gsm) {
         super(tm);
         this.levelState = levelState;
+        this.gsm = gsm;
         this.chosenClass = selectedClass != null ? selectedClass : PlayerClass.NONE;
 
         width = 30;
@@ -186,18 +192,26 @@ public class Player extends MapObject {
         loadAllClassData();
         applyCurrentClassLevelBonuses();
 
+        if(gsm.getSelectedPlayerClass() == PlayerClass.MAGE) {
+            spriteFilePath = "/Sprites/Player/playersprites.gif";
+        } else if(gsm.getSelectedPlayerClass() == PlayerClass.BERSERKER) {
+            spriteFilePath = "/Sprites/Player/playersprites.gif";
+        } else if (gsm.getSelectedPlayerClass() == PlayerClass.ARCHER) {
+            spriteFilePath = "/Sprites/Player/playersprites.gif";
+        } else {
+            spriteFilePath = "/Sprites/Player/playersprites.gif";
+        }
+
         // Load sprites
         try {
-            BufferedImage spritesheet = ImageIO.read(getClass().getResourceAsStream("/Sprites/Player/playersprites.gif"));
+            BufferedImage spritesheet = ImageIO.read(getClass().getResourceAsStream(spriteFilePath));
+
             sprites = new ArrayList<>();
-            for (int i = 0; i < 7; i++) {
+
+            for (int i = 0; i < numFrames.length; i++) { // Should loop 5 times
                 BufferedImage[] bi = new BufferedImage[numFrames[i]];
-                for (int j = 0; j < numFrames[i]; j++) {
-                    if (i != SCRATCHING) {
-                        bi[j] = spritesheet.getSubimage(j * width, i * height, width, height);
-                    } else {
-                        bi[j] = spritesheet.getSubimage(j * width * 2, i * height, width * 2, height);
-                    }
+                for (int j = 0; j < numFrames[i]; j++) { // Corrected loop bound
+                    bi[j] = spritesheet.getSubimage(j * width, i * height, width, height);
                 }
                 sprites.add(bi);
             }
@@ -227,9 +241,11 @@ public class Player extends MapObject {
     }
 
     public void setScratching(boolean b) {
-        if (b && !scratching) {
-            scratching = true;
-            scratchDamageDealt = false;
+        if(gsm.getSelectedPlayerClass() == PlayerClass.BERSERKER) {
+            if (b && !scratching) {
+                scratching = true;
+                scratchDamageDealt = false;
+            }
         }
     }
 
@@ -267,7 +283,7 @@ public class Player extends MapObject {
                 if (fb.intersects(e)) {
                     DamageResult result = calculateMagicDamage(fireBallDamage, intelligence, abilityDMG, null);
                     e.hit(result.damage);
-                     levelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
+                    levelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
                     fireBalls.remove(j);
                     j--;
                 }
@@ -387,7 +403,6 @@ public class Player extends MapObject {
             FireBall fb = new FireBall(tileMap, facingRight);
             fb.setPosition(x, y);
             fireBalls.add(fb);
-            firing = false;
         }
 
         // Arrow attack
@@ -396,7 +411,7 @@ public class Player extends MapObject {
             Arrow a = new Arrow(tileMap, facingRight);
             a.setPosition(x, y);
             arrows.add(a);
-            shootingArrow = false;
+
         }
 
         // Update fireballs
@@ -443,7 +458,7 @@ public class Player extends MapObject {
             if (currentAction != JUMPING) {
                 currentAction = JUMPING;
                 animation.setFrames(sprites.get(JUMPING));
-                animation.setDelay(-1);
+                animation.setDelay(100);
                 width = 30;
             }
         } else if (dy > 0) {
@@ -509,7 +524,8 @@ public class Player extends MapObject {
 
     public void respawn(boolean dead) {
         if(!dead) return;
-        setPosition(100, 100);
+
+        setPosition(gsm.getCurrentState().getSpawnX(), gsm.getCurrentState().getSpawnY());
         health = maxHealth;
         intelligence = maxIntelligence;
     }

@@ -69,4 +69,7 @@ public class CatState extends GameState {
     public void keyReleased(int k) {}
 
     public void mousePressed(MouseEvent e) {}
+
+    public int getSpawnX() {return 0;}
+    public  int getSpawnY() { return 0;}
 }
