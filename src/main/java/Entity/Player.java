@@ -128,7 +128,7 @@ public class Player extends MapObject {
     // Animations
     private String spriteFilePath;
     private ArrayList<BufferedImage[]> sprites;
-    private final int[] numFrames = {1, 3, 3, 4, 8};
+    private final int[] numFrames = {1, 2, 3, 4, 8};
     private static final int IDLE = 0;
     private static final int WALKING = 3;
     private static final int JUMPING = 1;
@@ -193,11 +193,13 @@ public class Player extends MapObject {
         applyCurrentClassLevelBonuses();
 
         if(gsm.getSelectedPlayerClass() == PlayerClass.MAGE) {
-            spriteFilePath = "/Sprites/Player/playersprites.gif";
+            spriteFilePath = "/Sprites/Player/playersprites_mage.gif";
         } else if(gsm.getSelectedPlayerClass() == PlayerClass.BERSERKER) {
-            spriteFilePath = "/Sprites/Player/playersprites.gif";
+            spriteFilePath = "/Sprites/Player/playersprites_bers.gif";
+            numFrames[4] = 6;
         } else if (gsm.getSelectedPlayerClass() == PlayerClass.ARCHER) {
-            spriteFilePath = "/Sprites/Player/playersprites.gif";
+            spriteFilePath = "/Sprites/Player/playersprites_archer.gif";
+            numFrames[4] = 4;
         } else {
             spriteFilePath = "/Sprites/Player/playersprites.gif";
         }
@@ -208,9 +210,9 @@ public class Player extends MapObject {
 
             sprites = new ArrayList<>();
 
-            for (int i = 0; i < numFrames.length; i++) { // Should loop 5 times
+            for (int i = 0; i < numFrames.length; i++) {
                 BufferedImage[] bi = new BufferedImage[numFrames[i]];
-                for (int j = 0; j < numFrames[i]; j++) { // Corrected loop bound
+                for (int j = 0; j < numFrames[i]; j++) {
                     bi[j] = spritesheet.getSubimage(j * width, i * height, width, height);
                 }
                 sprites.add(bi);
@@ -445,7 +447,7 @@ public class Player extends MapObject {
                 currentAction = SCRATCHING;
                 animation.setFrames(sprites.get(SCRATCHING));
                 animation.setDelay(50);
-                width = 60;
+                width = 30;
             }
         } else if ((firing && chosenClass == PlayerClass.MAGE) || (shootingArrow && chosenClass == PlayerClass.ARCHER)) {
             if (currentAction != FIREBALL) {
