@@ -69,7 +69,7 @@ public class Player extends MapObject {
     public static final int BERSERKER_DEFENSE_GAIN_PER_LEVEL = 2;
     public static final double BERSERKER_MOVESPEED_GAIN_PER_LEVEL = 0.03;
     public static final int BERSERKER_SCRATCH_DAMAGE_GAIN_PER_LEVEL = 2;
-    public static final int BERSERKER_MELEE_RANGE_GAIN_PER_LEVEL = 3;
+    public static final double BERSERKER_MELEE_RANGE_GAIN_PER_LEVEL = 0.75;
     public static final int BERSERKER_HEALTH_GAIN_PER_LEVEL = 5;
 
     // Archer Stats
@@ -112,7 +112,7 @@ public class Player extends MapObject {
 
     private boolean scratching;
     private int scratchDamage;
-    private int scratchRange;
+    private double scratchRange;
     private boolean scratchDamageDealt = false;
 
     private boolean shootingArrow;
