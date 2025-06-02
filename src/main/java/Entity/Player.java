@@ -135,7 +135,6 @@ public class Player extends MapObject {
     private static final int FALLING = 2;
     private static final int GLIDING = 2;
     private static final int FIREBALL = 4;
-    private static final int FIRING = 4;
     private static final int SCRATCHING = 4;
 
     public Player(TileMap tm, Level1State levelState, PlayerClass selectedClass, GameStateManager gsm) {
@@ -410,7 +409,7 @@ public class Player extends MapObject {
         // Arrow attack
         if (shootingArrow && chosenClass == PlayerClass.ARCHER && currentAction != FIREBALL && intelligence >= arrowCost) {
             intelligence -= arrowCost;
-            Arrow a = new Arrow(tileMap, facingRight);
+            Arrow a = new Arrow(tileMap, facingRight, false);
             a.setPosition(x, y);
             arrows.add(a);
 

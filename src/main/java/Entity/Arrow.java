@@ -13,14 +13,17 @@ public class Arrow extends MapObject {
     private BufferedImage sprite;
     private long flightTimer;
     private boolean falling;
-    private static final long FLIGHT_DURATION = 1_000_000_000; // 1 second
-    private static final double FALL_SPEED = 0.15; // Player fall speed
-    private static final double MAX_FALL_SPEED = 4.0; // Player max fall speed
+    private static final long FLIGHT_DURATION_NANO = 1_000_000_000L; // 1 second
+    private static final double FALL_SPEED = 0.15;
+    private static final double MAX_FALL_SPEED = 4.0;
 
-    public Arrow(TileMap tm, boolean right) {
+    private boolean isEnemyArrow;
+
+    public Arrow(TileMap tm, boolean right, boolean isEnemyArrow) {
         super(tm);
 
-        facingRight = right;
+        this.facingRight = right;
+        this.isEnemyArrow = isEnemyArrow;
 
         moveSpeed = 3.8;
         if (right) dx = moveSpeed;
@@ -45,7 +48,6 @@ public class Arrow extends MapObject {
         if (hit) return;
         hit = true;
         dx = 0;
-        dy = 0;
         remove = true;
     }
 
@@ -53,9 +55,13 @@ public class Arrow extends MapObject {
         return remove;
     }
 
+    public boolean isEnemyArrow() {
+        return isEnemyArrow;
+    }
+
     public void update() {
-        long elapsed = System.nanoTime() - flightTimer;
-        if (elapsed > FLIGHT_DURATION && !hit) {
+        long elapsedNanos = System.nanoTime() - flightTimer;
+        if (!hit && elapsedNanos > FLIGHT_DURATION_NANO) {
             falling = true;
         }
 
@@ -72,6 +78,10 @@ public class Arrow extends MapObject {
         if (dx == 0 && !hit) {
             setHit();
         }
+
+//        if (!hit && (x < -width || x > tileMap.getWidth() + width || y < -height || y > tileMap.getHeight() + height) ) {
+//            remove = true;
+//        }
     }
 
     public void draw(Graphics2D g) {

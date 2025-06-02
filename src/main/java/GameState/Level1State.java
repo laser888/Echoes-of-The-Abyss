@@ -1,8 +1,10 @@
 package GameState;
 
 import Entity.*;
+import Entity.Enemies.Skeleton;
 import Entity.Enemies.Slugger;
 import Entity.Enemies.SluggerBoss;
+import Entity.Enemies.Zombie;
 import Main.GameAction;
 import Main.GamePanel;
 import Score.ScoreData;
@@ -133,13 +135,15 @@ public class Level1State extends GameState {
 
         Slugger s;
         SluggerBoss sb;
+        Zombie z;
+        Skeleton sk;
+
         Point[] points = new Point[] {
-                new Point(200, 200),
+                //new Point(200, 200),
                 new Point(860, 200),
                 new Point(1525, 200),
                 new Point(1680, 200),
                 new Point(1800, 200),
-                new Point(3050, 200)
         };
 
         for(int i = 0; i < points.length - 1; i++) {
@@ -153,8 +157,16 @@ public class Level1State extends GameState {
         enemies.add(keyMob);
 
         sb = new SluggerBoss(tileMap, player);
-        sb.setPosition(points[points.length - 1].x, points[points.length - 1].y);
+        sb.setPosition(3050, 200);
         enemies.add(sb);
+
+        z = new Zombie(tileMap);
+        z.setPosition(200, 200);
+        enemies.add(z);
+
+        sk = new Skeleton(tileMap, player);
+        sk.setPosition(150, 200);
+        enemies.add(sk);
 
         totalEnemiesAtStart = enemies.size();
     }
@@ -202,23 +214,35 @@ public class Level1State extends GameState {
         bg.setPosition(tileMap.getx(), tileMap.gety());
         player.checkAttack(enemies);
 
-        for(int i = 0; i < enemies.size(); i++) {
+        for (int i = 0; i < enemies.size(); i++) {
             Enemy e = enemies.get(i);
             e.update();
 
-            if(e.isDead()) {
-                enemiesKilledCount++;
-                if (e == keyMob && !bossDoorIsOpen) {
-                    openBossDoor();
-                    keyMob = null;
-                }
+            if (e.isDead()) {
                 enemies.remove(i);
                 i--;
                 explosions.add(new Explosion(e.getx(), e.gety()));
+                continue;
+            }
 
-                if(e instanceof SluggerBoss) {
-                    explosions.add(new Explosion(e.getx(), e.gety()));
-                    bossDefeat();
+            if (e instanceof Skeleton) {
+                Skeleton skeleton = (Skeleton) e;
+                ArrayList<Arrow> skeletonArrows = skeleton.getArrows();
+
+                for (int j = 0; j < skeletonArrows.size(); j++) {
+                    Arrow arrow = skeletonArrows.get(j);
+
+                    if (arrow.isEnemyArrow() && arrow.intersects(player)) {
+
+                        player.hit(skeleton.getDamage());
+                        arrow.setHit();
+                        // System.out.println("Player hit by skeleton arrow!");
+                    }
+
+                    if (arrow.shouldRemove()) {
+                        skeletonArrows.remove(j);
+                        j--;
+                    }
                 }
             }
         }
