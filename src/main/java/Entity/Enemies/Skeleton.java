@@ -44,7 +44,7 @@ public class Skeleton extends Enemy {
 
         try {
             BufferedImage spritesheet = ImageIO.read(getClass().getResourceAsStream("/Sprites/Enemies/skeleton.gif"));
-            sprites = new BufferedImage[10];
+            sprites = new BufferedImage[9];
 
             for (int i = 0; i < sprites.length; i++) {
                 sprites[i] = spritesheet.getSubimage(i * width, 0, width, height);

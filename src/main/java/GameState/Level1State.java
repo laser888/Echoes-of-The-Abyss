@@ -219,11 +219,21 @@ public class Level1State extends GameState {
             e.update();
 
             if (e.isDead()) {
+                enemiesKilledCount++;
+                if(e == keyMob && !bossDoorIsOpen) {
+                    openBossDoor();
+                    keyMob = null;
+                }
                 enemies.remove(i);
                 i--;
                 explosions.add(new Explosion(e.getx(), e.gety()));
-                continue;
+                if(e instanceof SluggerBoss) {
+                    explosions.add(new Explosion(e.getx(), e.gety()));
+                    bossDefeat();
+                }
             }
+
+
 
             if (e instanceof Skeleton) {
                 Skeleton skeleton = (Skeleton) e;
@@ -561,10 +571,10 @@ public class Level1State extends GameState {
 
         GameState potentialWinState = gsm.getState(GameStateManager.WINNINGSTATE);
 
-            WinState winState = (WinState) potentialWinState;
-            winState.setScoreData(finalScores);
+        WinState winState = (WinState) potentialWinState;
+        winState.setScoreData(finalScores);
 
-            gsm.setState(GameStateManager.WINNINGSTATE);
+        gsm.setState(GameStateManager.WINNINGSTATE);
     }
 
     public int getSpawnX() {
