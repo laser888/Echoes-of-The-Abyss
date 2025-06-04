@@ -23,7 +23,7 @@ public class HUD {
         player = p;
         try {
 
-            image = ImageIO.read(getClass().getResourceAsStream("/HUD/hud - Copy (2).gif"));
+            image = ImageIO.read(getClass().getResourceAsStream("/HUD/hud.gif"));
             font = new Font("Arial", Font.PLAIN, 14);
 
 
@@ -48,7 +48,7 @@ public class HUD {
             g.drawString("Y: " + player.gety(), 80, 50);
         }
 
-        g.setColor(Color.BLUE);
+        g.setColor(Color.PINK);
         g.setFont(new Font("Arial", Font.PLAIN, 14));
         g.drawString("FPS: " + GamePanel.getFPS(), 269, 20);
 
