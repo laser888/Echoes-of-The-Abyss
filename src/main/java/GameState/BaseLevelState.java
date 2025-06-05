@@ -332,6 +332,12 @@ public abstract class BaseLevelState extends GameState {
                     gsm.setState(GameStateManager.CATSTATE);
                 }
                 break;
+            case "/level2state":
+                gsm.setState(GameStateManager.LEVEL2STATE);
+                break;
+            case "/level1state":
+                gsm.setState(GameStateManager.LEVEL1STATE);
+                break;
             default:
                 handleLevelSpecificCommand(token);
         }

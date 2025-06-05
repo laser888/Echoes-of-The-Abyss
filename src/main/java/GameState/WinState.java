@@ -14,7 +14,7 @@ public class WinState extends GameState {
     private GamePanel gamePanel;
 
     private int currentChoice = 0;
-    private String[] options = { "Main Menu", "Quit"};
+    private String[] options = { "Next Level", "Main Menu", "Quit"};
 
     private Color titleColor;
     private Font titleFont;
@@ -111,8 +111,8 @@ public class WinState extends GameState {
         g.setFont(font);
         int optionsY = statsY + 20;
 
-        for (int i = 0; i < options.length; i++) {
-            if (i == currentChoice) {
+        for(int i = 0; i < options.length; i++) {
+            if(i == currentChoice) {
                 g.setColor(Color.YELLOW);
             } else {
                 g.setColor(Color.BLACK);
@@ -121,12 +121,14 @@ public class WinState extends GameState {
         }
     }
 
-    // TODO: FIX THIS
     private void select() {
+        if(currentChoice == 0) {
+            gsm.setState(GameStateManager.LEVEL2STATE);
+        }
         if(currentChoice == 1) {
             gsm.setState(GameStateManager.MENUSTATE);
         }
-        if(currentChoice == 0) {
+        if(currentChoice == 2) {
             System.exit(0);
         }
     }
@@ -138,7 +140,7 @@ public class WinState extends GameState {
         if(k == KeyEvent.VK_UP) {
             currentChoice--;
             if(currentChoice == -1) {
-                currentChoice = options.length - 1;
+                currentChoice = options.length - 1 ;
             }
         }
         if(k == KeyEvent.VK_DOWN) {

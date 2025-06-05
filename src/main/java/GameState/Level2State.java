@@ -18,7 +18,7 @@ import javax.imageio.ImageIO;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Level1State extends BaseLevelState {
+public class Level2State extends BaseLevelState {
 
     private LevelConfiguration levelConfig;
 
@@ -28,7 +28,7 @@ public class Level1State extends BaseLevelState {
     private Point[] doorTileCoordinates;
     private Enemy keyMob;
 
-    public Level1State(GameStateManager gsm, GamePanel gamePanel) {
+    public Level2State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
     }
 
@@ -50,10 +50,10 @@ public class Level1State extends BaseLevelState {
         Point[] doorCoords = {new Point(96, 5), new Point(96, 6)};
 
         this.levelConfig = new LevelConfiguration(
-                "Level 1 - Grassy Plains",
-                "/Maps/level1-1.map",
+                "Level 2 - Cassy Castle",
+                "/Maps/level2-1.map",
                 "/TileSets/grasstileset.gif",
-                "/Backgrounds/stagebg1.gif",
+                "/Backgrounds/castlebg.gif",
                 playerSpawn,
                 enemySpawns,
                 doorCoords,

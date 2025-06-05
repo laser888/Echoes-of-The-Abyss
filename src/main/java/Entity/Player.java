@@ -2,7 +2,7 @@ package Entity;
 
 import Effects.DamageResult;
 import GameState.GameStateManager;
-import GameState.Level1State;
+import GameState.BaseLevelState;
 import TileMap.*;
 
 import javax.imageio.ImageIO;
@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class Player extends MapObject {
 
-    private Level1State levelState;
+    private BaseLevelState currentLevelState;
     private GameStateManager gsm;
 
 
@@ -137,9 +137,9 @@ public class Player extends MapObject {
     private static final int FIREBALL = 4;
     private static final int SCRATCHING = 4;
 
-    public Player(TileMap tm, Level1State levelState, PlayerClass selectedClass, GameStateManager gsm) {
+    public Player(TileMap tm, BaseLevelState levelState, PlayerClass selectedClass, GameStateManager gsm) {
         super(tm);
-        this.levelState = levelState;
+        this.currentLevelState = levelState;
         this.gsm = gsm;
         this.chosenClass = selectedClass != null ? selectedClass : PlayerClass.NONE;
 
@@ -271,8 +271,8 @@ public class Player extends MapObject {
                 if (hitEnemy) {
                     DamageResult result = calculateDamage(scratchDamage, strength, CC, critDMG, null); // Pass enemy defence
                     e.hit(result.damage);
-                    if (levelState != null) { // Check if levelState is set
-                        levelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
+                    if (currentLevelState != null) { // Check if levelState is set
+                        currentLevelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
                     }
                     scratchDamageDealt = true; // Ensure damage is dealt only once per scratch animation
                 }
@@ -284,7 +284,7 @@ public class Player extends MapObject {
                 if (fb.intersects(e)) {
                     DamageResult result = calculateMagicDamage(fireBallDamage, intelligence, abilityDMG, null);
                     e.hit(result.damage);
-                    levelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
+                    currentLevelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
                     fireBalls.remove(j);
                     j--;
                 }
@@ -295,7 +295,7 @@ public class Player extends MapObject {
                 if(a.intersects(e)) {
                     DamageResult result = calculateDamage(ARCHER_PROJECTILE_DMG_BASE_BOOST + arrowDMG, strength, CC, critDMG, null);
                     e.hit(result.damage);
-                    levelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
+                    currentLevelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
                     arrows.remove(j);
                     j--;
                 }
@@ -314,7 +314,7 @@ public class Player extends MapObject {
         if(health < 0) health = 0;
         if(health == 0) {
             dead = true;
-            levelState.recordPlayerDeath();
+            currentLevelState.recordPlayerDeath();
         }
         respawn(dead);
         flinching = true;
