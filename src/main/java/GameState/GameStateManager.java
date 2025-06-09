@@ -19,6 +19,8 @@ public class GameStateManager {
     public static final int SETTINGSSTATE = 4;
     public static final int CLASSSELECTIONSTATE = 5;
     public static final int LEVEL2STATE = 6;
+    public static final int LevelSelectionState = 7;
+
 
     private Entity.Player.PlayerClass currentPlayerClassSelection = Entity.Player.PlayerClass.NONE; // Default
 
@@ -34,6 +36,8 @@ public class GameStateManager {
         gameStates.add(new SettingsState(this, gamePanel));
         gameStates.add(new ClassSelectionState(this, gamePanel));
         gameStates.add(new Level2State(this, gamePanel));
+        gameStates.add(new LevelSelectionState(this, gamePanel));
+
     }
 
     public void setSelectedPlayerClass(Entity.Player.PlayerClass playerClass) {

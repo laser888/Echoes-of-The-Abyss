@@ -240,8 +240,8 @@ public class Level1State extends BaseLevelState {
                     if (p.y == 5) tileMap.setTile(p.y, p.x, 17);
                     else tileMap.setTile(p.y, p.x, 0);
                 } else {
-                    if (p.y == 5) tileMap.setTile(p.y, p.x, 26);
-                    else tileMap.setTile(p.y, p.x, 27);
+                    if (p.y == 5) tileMap.setTile(p.y, p.x, 33);
+                    else tileMap.setTile(p.y, p.x, 34);
                 }
             }
         }

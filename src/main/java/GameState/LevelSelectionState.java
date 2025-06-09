@@ -7,31 +7,28 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
-public class MenuState extends GameState {
+public class LevelSelectionState extends GameState {
 
     private Background bg;
     private GamePanel gamePanel;
 
     private int currentChoice = 0;
-    private String[] options = { "Start", "Settings", "Quit"};
+    private String[] options = { "Level 1", "Level 2", "~=[,,_,,]:3"};
 
     private Color titleColor;
     private Font titleFont;
 
     private Font font;
 
-    public MenuState(GameStateManager gsm, GamePanel gamePanel) {
+    public LevelSelectionState(GameStateManager gsm, GamePanel gamePanel) {
         this.gsm = gsm;
         this.gamePanel = gamePanel;
 
         try {
-            bg = new Background("/Backgrounds/titlescreen.gif", 1);
+            bg = new Background("/Backgrounds/levelscreen.gif", 1);
             //bg.setVector(-0.1, 0);
 
-            titleColor = new Color(128, 0, 0);
-            titleFont = new Font("Century Gothic", Font.PLAIN, 28);
-
-            font = new Font("Arial", Font.PLAIN, 12);
+            font = new Font("Arial", Font.PLAIN, 28);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -48,32 +45,27 @@ public class MenuState extends GameState {
         // draw bg
         bg.draw(g);
 
-        // draw title
-        g.setColor(titleColor);
-        g.setFont(titleFont);
-        g.drawString("Dragon Tale", 80, 70);
-
         // draw menu options
         g.setFont(font);
         for(int i = 0; i < options.length; i++) {
             if(i == currentChoice) {
-                g.setColor(Color.WHITE);
-            } else {
                 g.setColor(Color.RED);
+            } else {
+                g.setColor(Color.BLACK);
             }
-            g.drawString(options[i], 145, 140 + i * 15);
+            g.drawString(options[i], 120, 68 + i * 50);
         }
     }
 
     private void select() {
         if(currentChoice == 0) {
-            gsm.setState(GameStateManager.CLASSSELECTIONSTATE);
+            gsm.setState(GameStateManager.LEVEL1STATE);
         }
         if(currentChoice == 1) {
-            gsm.setState(GameStateManager.SETTINGSSTATE);
+            gsm.setState(GameStateManager.LEVEL2STATE);
         }
         if(currentChoice == 2) {
-            System.exit(0);
+            gsm.setState(GameStateManager.CATSTATE);
         }
     }
 

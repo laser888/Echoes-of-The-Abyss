@@ -31,7 +31,7 @@ public class ClassSelectionState extends GameState {
 
         try {
             bg = new Background("/Backgrounds/menubg.gif", 0.8);
-            bg.setVector(-0.05, 0);
+            //bg.setVector(-0.05, 0);
 
             titleColor = new Color(220, 180, 50);
             titleFont = new Font("Century Gothic", Font.BOLD, 28);
@@ -104,7 +104,7 @@ public class ClassSelectionState extends GameState {
 
         if (proceedToGame) {
             gsm.setSelectedPlayerClass(selectedClass);
-            gsm.setState(GameStateManager.LEVEL1STATE);
+            gsm.setState(GameStateManager.LevelSelectionState);
         }
     }
 

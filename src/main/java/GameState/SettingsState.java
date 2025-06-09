@@ -49,7 +49,7 @@ public class SettingsState extends GameState {
         try {
 
             bg = new Background("/Backgrounds/menubg.gif", 1);
-            bg.setVector(-0.1, 0);
+            //bg.setVector(-0.1, 0);
 
             titleFont = new Font("Century Gothic", Font.BOLD, 20);
             optionFont = new Font("Arial", Font.PLAIN, 11);
