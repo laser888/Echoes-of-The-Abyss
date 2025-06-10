@@ -50,6 +50,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
         addMouseMotionListener(this);
         requestFocus();
         setFocusTraversalKeysEnabled(false); // this is stupid
+        setDoubleBuffered(true);
     }
 
     public void addNotify() {
@@ -93,7 +94,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
 
             update();
             draw();
-            drawToScreen();
+            repaint();
 
             elapsed = System.nanoTime() - start;
             wait = targetTime - elapsed / 1000000;
@@ -115,16 +116,14 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
     }
 
     protected void paintComponent(Graphics g) {
-
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
 
-        if (gsm != null) {
-            gsm.draw(g2);
+        int panelWidth = getWidth();
+        int panelHeight = getHeight();
 
-        } else {
-            System.out.println("Warning: gsm is null in paintComponent");
-        }
+        g2.drawImage(image, 0, 0, panelWidth, panelHeight, null);
+
         g2.dispose();
     }
 

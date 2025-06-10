@@ -299,13 +299,13 @@ public abstract class BaseLevelState extends GameState {
             if (k == KeyEvent.VK_EQUALS || k == KeyEvent.VK_PLUS) {
                 selectedTile++;
                 if (selectedTile > 2 * tileMap.getNumTilesAcross() - 1) selectedTile = 1;
-                System.out.println("Selected Tile ID: " + selectedTile);
+                //System.out.println("Selected Tile ID: " + selectedTile);
             }
 
             if (k == KeyEvent.VK_MINUS) {
                 selectedTile--;
                 if (selectedTile < 1) selectedTile = 2 * tileMap.getNumTilesAcross() - 1;
-                System.out.println("Selected Tile ID: " + selectedTile);
+                //System.out.println("Selected Tile ID: " + selectedTile);
             }
 
             if (controlPressed && k == KeyEvent.VK_Z && !undoStack.isEmpty()) {
