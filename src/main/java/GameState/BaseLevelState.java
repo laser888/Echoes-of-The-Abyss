@@ -474,6 +474,9 @@ public abstract class BaseLevelState extends GameState {
             case "/level1state":
                 gsm.setState(GameStateManager.LEVEL1STATE);
                 break;
+            case "/edit":
+                editMode = !editMode;
+                break;
             default:
                 handleLevelSpecificCommand(token);
         }

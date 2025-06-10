@@ -1,10 +1,11 @@
 package Main;
 
-import Data.GameData;
-import Data.SaveManager;
 import GameState.BaseLevelState;
 import GameState.GameState;
 import GameState.GameStateManager;
+
+import Data.GameData;
+import Data.SaveManager;
 
 import javax.swing.JPanel;
 import java.awt.*;
@@ -67,7 +68,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
         g = (Graphics2D) image.getGraphics();
         running = true;
         GameData gameData = SaveManager.loadGame();
-        System.out.println("GamePanel: Loaded GameData with keybinds: " + gameData.keybinds);
+        //System.out.println("GamePanel: Loaded GameData with keybinds: " + gameData.keybinds);
         keybindManager = new KeybindManager(gameData);
         gsm = new GameStateManager(keybindManager, this, gameData);
     }
@@ -114,15 +115,17 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
     }
 
     protected void paintComponent(Graphics g) {
+
         super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g;
 
-        if (gsm == null) {
+        if (gsm != null) {
+            gsm.draw(g2);
+
+        } else {
             System.out.println("Warning: gsm is null in paintComponent");
-            return;
         }
-
-        this.g = (Graphics2D) g;
-        gsm.draw(this.g);
+        g2.dispose();
     }
 
     private void draw() {
@@ -150,9 +153,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
 
         public void mousePressed(MouseEvent e) {
             Object state = gsm.getCurrentState();
-            //
-            // System.out.println("Current state: " + state);
-
+            //System.out.println("Current state: " + state);
             if (state != null) {
                 gsm.getCurrentState().mousePressed(e);
             } else {
@@ -193,8 +194,8 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
     @Override
     public void mouseDragged(MouseEvent e) {
         //System.out.println("GamePanel.mouseDragged fired: x=" + e.getX() + " y=" + e.getY());
-        GameState state = gsm.getCurrentState();
 
+        GameState state = gsm.getCurrentState();
         if (state instanceof BaseLevelState) {
             ((BaseLevelState)state).mouseDragged(e);
         }
