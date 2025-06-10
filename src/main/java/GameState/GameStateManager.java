@@ -2,14 +2,16 @@ package GameState;
 
 import Main.GamePanel;
 import Main.KeybindManager;
-
+import Data.GameData;
+import Data.SaveManager;
+import Entity.Player;
 import java.util.ArrayList;
-
 
 public class GameStateManager {
 
     private ArrayList<GameState> gameStates;
     private int currentState;
+    private GameData gameData;
     private KeybindManager keybindManager;
 
     public static final int WINNINGSTATE = 2;
@@ -21,13 +23,13 @@ public class GameStateManager {
     public static final int LEVEL2STATE = 6;
     public static final int LevelSelectionState = 7;
 
+    private Entity.Player.PlayerClass currentPlayerClassSelection = Entity.Player.PlayerClass.NONE;
 
-    private Entity.Player.PlayerClass currentPlayerClassSelection = Entity.Player.PlayerClass.NONE; // Default
-
-    public GameStateManager(KeybindManager kbm, GamePanel gamePanel) {
+    public GameStateManager(KeybindManager kbm, GamePanel gamePanel, GameData gameData) {
         this.keybindManager = kbm;
-        gameStates = new ArrayList<GameState>();
+        this.gameData = gameData;
 
+        gameStates = new ArrayList<GameState>();
         currentState = MENUSTATE;
         gameStates.add(new MenuState(this, gamePanel));
         gameStates.add(new Level1State(this, gamePanel));
@@ -38,6 +40,29 @@ public class GameStateManager {
         gameStates.add(new Level2State(this, gamePanel));
         gameStates.add(new LevelSelectionState(this, gamePanel));
 
+    }
+
+    public void saveGameData() {
+
+        keybindManager.saveKeybindsToGameData();
+        //System.out.println("GameStateManager: Keybinds before save: " + gameData.keybinds);
+
+        GameState state = getCurrentState();
+
+        if (state instanceof BaseLevelState) {
+            Player player = ((BaseLevelState) state).getPlayer();
+
+            if (player != null) {
+                player.saveAllClassData();
+                //System.out.println("GameStateManager: Player progress updated: " + gameData.playerClassProgress);
+            }
+        }
+
+        SaveManager.saveGame(gameData);
+    }
+
+    public GameData getGameData() {
+        return this.gameData;
     }
 
     public void setSelectedPlayerClass(Entity.Player.PlayerClass playerClass) {
@@ -79,6 +104,10 @@ public class GameStateManager {
 
     public GameState getCurrentState() {
         return gameStates.get(currentState);
+    }
+
+    public void saveProgress() {
+        SaveManager.saveGame(this.gameData);
     }
 
 }

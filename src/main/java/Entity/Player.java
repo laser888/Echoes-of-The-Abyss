@@ -4,11 +4,11 @@ import Effects.DamageResult;
 import GameState.GameStateManager;
 import GameState.BaseLevelState;
 import TileMap.*;
+import Data.GameData;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +17,7 @@ public class Player extends MapObject {
 
     private BaseLevelState currentLevelState;
     private GameStateManager gsm;
-
+    private GameData gameData;
 
     public enum PlayerClass {
         NONE, MAGE, BERSERKER, ARCHER
@@ -137,10 +137,11 @@ public class Player extends MapObject {
     private static final int FIREBALL = 4;
     private static final int SCRATCHING = 4;
 
-    public Player(TileMap tm, BaseLevelState levelState, PlayerClass selectedClass, GameStateManager gsm) {
+    public Player(TileMap tm, BaseLevelState levelState, PlayerClass selectedClass, GameStateManager gsm, GameData gameData) {
         super(tm);
         this.currentLevelState = levelState;
         this.gsm = gsm;
+        this.gameData = gameData;
         this.chosenClass = selectedClass != null ? selectedClass : PlayerClass.NONE;
 
         width = 30;
@@ -271,10 +272,10 @@ public class Player extends MapObject {
                 if (hitEnemy) {
                     DamageResult result = calculateDamage(scratchDamage, strength, CC, critDMG, null); // Pass enemy defence
                     e.hit(result.damage);
-                    if (currentLevelState != null) { // Check if levelState is set
+                    if (currentLevelState != null) {
                         currentLevelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
                     }
-                    scratchDamageDealt = true; // Ensure damage is dealt only once per scratch animation
+                    scratchDamageDealt = true; // Ensures damage is only dealt once per animation
                 }
             }
 
@@ -694,54 +695,53 @@ public class Player extends MapObject {
     public PlayerClass getChosenClass() { return chosenClass; }
 
     public void saveAllClassData() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("player_save.txt"))) {
-            for (Map.Entry<PlayerClass, ClassProgress> entry : classProgressData.entrySet()) {
-                if (entry.getKey() == PlayerClass.NONE) continue;
-                PlayerClass pc = entry.getKey();
-                ClassProgress prog = entry.getValue();
-                writer.write(pc.name() + "_level=" + prog.level); writer.newLine();
-                writer.write(pc.name() + "_xp=" + prog.xp); writer.newLine();
-                writer.write(pc.name() + "_xpToNext=" + prog.xpToNextLevel); writer.newLine();
-            }
-            // System.out.println("All class data saved.");
-        } catch (IOException e) {
-            System.err.println("Error saving class data: " + e.getMessage());
+        if (gameData == null) {
+            System.err.println("Cannot save player data, GameData object is null.");
+            return;
+        }
+
+        gameData.playerClassProgress.clear();
+
+        for (Map.Entry<PlayerClass, ClassProgress> entry : classProgressData.entrySet()) {
+
+            if (entry.getKey() == PlayerClass.NONE) continue;
+
+            String className = entry.getKey().name();
+            ClassProgress prog = entry.getValue();
+
+            Map<String, Integer> singleClassData = new HashMap<>();
+            singleClassData.put("level", prog.level);
+            singleClassData.put("xp", prog.xp);
+            singleClassData.put("xpToNextLevel", prog.xpToNextLevel);
+
+            gameData.playerClassProgress.put(className, singleClassData);
         }
     }
 
     public void loadAllClassData() {
-        File saveFile = new File("player_save.txt");
-        if (!saveFile.exists()) {
-            // System.out.println("No class save file found. Using default values for all classes.");
+
+        if (gameData == null || gameData.playerClassProgress == null || gameData.playerClassProgress.isEmpty()) {
+            System.out.println("No player class data found in GameData object. Using default values.");
             return;
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(saveFile))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split("=");
-                if (parts.length == 2) {
-                    String key = parts[0];
-                    int value = Integer.parseInt(parts[1]);
+        //System.out.println("Loading player class data from GameData object...");
 
-                    if (key.endsWith("_level")) {
-                        PlayerClass pc = PlayerClass.valueOf(key.substring(0, key.indexOf("_level")).toUpperCase());
-                        if (classProgressData.containsKey(pc)) classProgressData.get(pc).level = value;
-                    } else if (key.endsWith("_xp")) {
-                        PlayerClass pc = PlayerClass.valueOf(key.substring(0, key.indexOf("_xp")).toUpperCase());
-                        if (classProgressData.containsKey(pc)) classProgressData.get(pc).xp = value;
-                    } else if (key.endsWith("_xpToNext")) {
-                        PlayerClass pc = PlayerClass.valueOf(key.substring(0, key.indexOf("_xpToNext")).toUpperCase());
-                        if (classProgressData.containsKey(pc)) classProgressData.get(pc).xpToNextLevel = value;
-                    }
+        for (Map.Entry<String, Map<String, Integer>> entry : gameData.playerClassProgress.entrySet()) {
+
+            try {
+                PlayerClass pc = PlayerClass.valueOf(entry.getKey());
+                Map<String, Integer> savedProgress = entry.getValue();
+
+                if (classProgressData.containsKey(pc)) {
+                    ClassProgress targetProgress = classProgressData.get(pc);
+                    targetProgress.level = savedProgress.getOrDefault("level", 1);
+                    targetProgress.xp = savedProgress.getOrDefault("xp", 0);
+                    targetProgress.xpToNextLevel = savedProgress.getOrDefault("xpToNextLevel", 100);
                 }
+            } catch (IllegalArgumentException e) {
+                System.err.println("Warning: Found unknown class '" + entry.getKey() + "' in save data. Ignoring.");
             }
-        } catch (IOException | IllegalArgumentException e) {
-            System.err.println("Error loading class data, resetting to defaults: " + e.getMessage());
-            classProgressData.clear();
-            classProgressData.put(PlayerClass.MAGE, new ClassProgress(MAGE_STARTING_LEVEL, 0, MAGE_INITIAL_XP_TO_NEXT_LEVEL, MAGE_XP_CURVE_MULTIPLIER));
-            classProgressData.put(PlayerClass.BERSERKER, new ClassProgress(BERSERKER_STARTING_LEVEL, 0, BERSERKER_INITIAL_XP_TO_NEXT_LEVEL, BERSERKER_XP_CURVE_MULTIPLIER));
-            classProgressData.put(PlayerClass.ARCHER, new ClassProgress(ARCHER_STARTING_LEVEL, 0, ARCHER_INITIAL_XP_TO_NEXT_LEVEL, ARCHER_XP_CURVE_MULTIPLIER));
         }
     }
 

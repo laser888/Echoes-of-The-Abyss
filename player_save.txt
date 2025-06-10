@@ -1,9 +1,0 @@
-BERSERKER_level=51
-BERSERKER_xp=5
-BERSERKER_xpToNext=186
-MAGE_level=51
-MAGE_xp=25
-MAGE_xpToNext=150
-ARCHER_level=50
-ARCHER_xp=10
-ARCHER_xpToNext=110

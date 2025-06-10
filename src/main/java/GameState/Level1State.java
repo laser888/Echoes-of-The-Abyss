@@ -70,7 +70,7 @@ public class Level1State extends BaseLevelState {
         this.bg = new Background(levelConfig.getBackgroundPath(), 0.1);
 
         Player.PlayerClass selectedClass = gsm.getSelectedPlayerClass();
-        this.player = new Player(tileMap, this, selectedClass, gsm);
+        this.player = new Player(tileMap, this, selectedClass, gsm, gsm.getGameData());
         this.player.setPosition(levelConfig.getPlayerSpawnPoint().x, levelConfig.getPlayerSpawnPoint().y);
 
         this.doorTileCoordinates = levelConfig.getDoorCoordinates();
@@ -201,13 +201,15 @@ public class Level1State extends BaseLevelState {
 
     protected void handleLevelSpecificKeyReleased(int k) {}
 
-    @Override
+
     public void mousePressed(MouseEvent e) {
         if (terminal != null && terminal.isActive()) {
             int mouseX = e.getX() / GamePanel.SCALE;
             int mouseY = e.getY() / GamePanel.SCALE;
             terminal.mousePressed(mouseX, mouseY);
+            return;
         }
+        super.mousePressed(e);
     }
 
     @Override

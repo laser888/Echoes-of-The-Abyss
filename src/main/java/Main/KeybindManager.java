@@ -1,157 +1,95 @@
 package Main;
 
+import Data.GameData;
 import java.awt.event.KeyEvent;
-import java.io.*;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.Properties;
 
 public class KeybindManager {
 
-    private EnumMap<GameAction, Integer> keybinds;
-    private final Properties properties;
-    private final String configFile = "keybinds.properties";
+    private final GameData gameData;
+    private final Map<GameAction, Integer> defaultKeybinds;
+    private Map<GameAction, Integer> currentKeybinds;
 
-    public KeybindManager() {
-        keybinds = new EnumMap<>(GameAction.class);
-        properties = new Properties();
-        loadKeybinds();
+    public KeybindManager(GameData gameData) {
+        this.gameData = gameData;
+        this.currentKeybinds = new EnumMap<>(GameAction.class);
+        this.defaultKeybinds = new EnumMap<>(GameAction.class);
+
+        initializeDefaults();
+
+        loadKeybindsFromGameData();
     }
 
-    private void setDefaultKeybinds() {
-
-        keybinds.clear();
-
-        keybinds.put(GameAction.MOVE_LEFT, KeyEvent.VK_A);
-        keybinds.put(GameAction.MOVE_RIGHT, KeyEvent.VK_D);
-        keybinds.put(GameAction.MOVE_UP, KeyEvent.VK_W);
-        keybinds.put(GameAction.JUMP, KeyEvent.VK_W);
-        keybinds.put(GameAction.MOVE_DOWN, KeyEvent.VK_S);
-        keybinds.put(GameAction.GLIDE, KeyEvent.VK_SHIFT);
-        keybinds.put(GameAction.SCRATCH, KeyEvent.VK_R);
-        keybinds.put(GameAction.FIRE, KeyEvent.VK_F);
-        keybinds.put(GameAction.INTERACT, KeyEvent.VK_E);
-        keybinds.put(GameAction.OPEN_CHAT, KeyEvent.VK_SLASH);
-        keybinds.put(GameAction.DEBUG_TOGGLE, KeyEvent.VK_F3);
-        keybinds.put(GameAction.TAB_TOGGLE, KeyEvent.VK_TAB);
-
-        System.out.println("Default keybinds set.");
-        saveKeybinds();
+    private void initializeDefaults() {
+        defaultKeybinds.put(GameAction.MOVE_LEFT, KeyEvent.VK_A);
+        defaultKeybinds.put(GameAction.MOVE_RIGHT, KeyEvent.VK_D);
+        defaultKeybinds.put(GameAction.MOVE_UP, KeyEvent.VK_W);
+        defaultKeybinds.put(GameAction.JUMP, KeyEvent.VK_W);
+        defaultKeybinds.put(GameAction.MOVE_DOWN, KeyEvent.VK_S);
+        defaultKeybinds.put(GameAction.GLIDE, KeyEvent.VK_SHIFT);
+        defaultKeybinds.put(GameAction.SCRATCH, KeyEvent.VK_R);
+        defaultKeybinds.put(GameAction.FIRE, KeyEvent.VK_F);
+        defaultKeybinds.put(GameAction.INTERACT, KeyEvent.VK_E);
+        defaultKeybinds.put(GameAction.OPEN_CHAT, KeyEvent.VK_SLASH);
+        defaultKeybinds.put(GameAction.DEBUG_TOGGLE, KeyEvent.VK_F3);
+        defaultKeybinds.put(GameAction.TAB_TOGGLE, KeyEvent.VK_TAB);
     }
 
-    public void loadKeybinds() {
-        File configFile = new File(this.configFile);
+    private void loadKeybindsFromGameData() {
+        //System.out.println("Loading keybinds, gameData=" + (gameData != null ? gameData : "null"));
 
-        if (!configFile.exists()) {
-            System.out.println("Config file not found. Loading and saving default keybinds.");
-            setDefaultKeybinds();
+        if (gameData == null || gameData.keybinds == null || gameData.keybinds.isEmpty()) {
+            //System.out.println("No keybinds found in save data. Loading defaults.");
+
+            resetToDefaults();
+            return;
+        }
+       // System.out.println("Loading keybinds from save data: " + gameData.keybinds);
+
+        for (GameAction action : GameAction.values()) {
+            Integer keyCode = gameData.keybinds.get(action.name());
+            if (keyCode != null) {
+                currentKeybinds.put(action, keyCode);
+
+            } else {
+                currentKeybinds.put(action, defaultKeybinds.get(action));
+            }
+        }
+        //System.out.println("Current keybinds after loading: " + currentKeybinds);
+    }
+
+    public void saveKeybindsToGameData() {
+        if (gameData == null) {
+            //System.err.println("Cannot save keybinds, GameData object is null.");
             return;
         }
 
-        try (InputStream input = new FileInputStream(configFile)) {
+        //System.out.println("Before saving: currentKeybinds=" + currentKeybinds);
+        //System.out.println("Before saving: gameData.keybinds=" + gameData.keybinds);
+        gameData.keybinds.clear();
 
-            properties.load(input);
-            keybinds.clear();
-            boolean allKeysLoadedSuccessfully = true;
-
-            for (GameAction action : GameAction.values()) {
-                String keyCodeString = properties.getProperty(action.name());
-
-                if (keyCodeString != null) {
-
-                    try {
-                        keybinds.put(action, Integer.parseInt(keyCodeString));
-                    } catch (NumberFormatException e) {
-                        System.err.println("Error parsing keycode for " + action.name() + ": " + keyCodeString + ". Using default for this action.");
-                        setSpecificDefault(action);
-                        allKeysLoadedSuccessfully = false;
-                    }
-
-                } else {
-                    System.out.println("Keybind for " + action.name() + " not found in config. Using default for this action.");
-                    setSpecificDefault(action);
-                    allKeysLoadedSuccessfully = false;
-                }
-            }
-            if (allKeysLoadedSuccessfully) {
-                System.out.println("Keybinds loaded successfully from " + this.configFile);
-            } else {
-                System.out.println("Some keybinds were missing or invalid; defaults applied where necessary. Consider re-saving settings.");
-                saveKeybinds();
-            }
-
-
-        } catch (IOException e) {
-            System.err.println("Error loading keybinds from " + this.configFile + ". Loading default keybinds. " + e.getMessage());
-            setDefaultKeybinds();
+        for (Map.Entry<GameAction, Integer> entry : currentKeybinds.entrySet()) {
+            gameData.keybinds.put(entry.getKey().name(), entry.getValue());
         }
-    }
-
-    private void setSpecificDefault(GameAction action) {
-
-        switch (action) {
-
-            case MOVE_LEFT: keybinds.put(GameAction.MOVE_LEFT, KeyEvent.VK_A); break;
-            case MOVE_RIGHT: keybinds.put(GameAction.MOVE_RIGHT, KeyEvent.VK_D); break;
-            case MOVE_UP: keybinds.put(GameAction.MOVE_UP, KeyEvent.VK_W); break;
-            case JUMP: keybinds.put(GameAction.JUMP, KeyEvent.VK_W); break;
-            case MOVE_DOWN: keybinds.put(GameAction.MOVE_DOWN, KeyEvent.VK_S); break;
-            case GLIDE: keybinds.put(GameAction.GLIDE, KeyEvent.VK_SHIFT); break;
-            case SCRATCH: keybinds.put(GameAction.SCRATCH, KeyEvent.VK_R); break;
-            case FIRE: keybinds.put(GameAction.FIRE, KeyEvent.VK_F); break;
-            case INTERACT: keybinds.put(GameAction.INTERACT, KeyEvent.VK_E); break;
-            case OPEN_CHAT: keybinds.put(GameAction.OPEN_CHAT, KeyEvent.VK_SLASH); break;
-            case DEBUG_TOGGLE: keybinds.put(GameAction.DEBUG_TOGGLE, KeyEvent.VK_F3); break;
-            case TAB_TOGGLE: keybinds.put(GameAction.TAB_TOGGLE, KeyEvent.VK_TAB); break;
-            default: System.err.println("No specific default for action: " + action.name()); break;
-        }
-    }
-
-    public void saveKeybinds() {
-
-        properties.clear();
-
-        for (Map.Entry<GameAction, Integer> entry : keybinds.entrySet()) {
-            properties.setProperty(entry.getKey().name(), Integer.toString(entry.getValue()));
-        }
-
-        try (OutputStream output = new FileOutputStream(configFile)) {
-            properties.store(output, "Keybinds");
-            System.out.println("Keybinds saved to " + configFile);
-
-        } catch (IOException e) {
-            System.err.println("Error saving keybinds to " + configFile + ". " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    public int getKeyCode(GameAction action) {
-        return keybinds.getOrDefault(action, -1);
-    }
-
-    public boolean setKeybind(GameAction actionToChange, int newKeyCode) {
-
-        for (Map.Entry<GameAction, Integer> entry : keybinds.entrySet()) {
-
-            if (entry.getValue() == newKeyCode && entry.getKey() != actionToChange) {
-
-                System.out.println("Warning: Key " + KeyEvent.getKeyText(newKeyCode) +
-                        " is already bound to " + entry.getKey().name() +
-                        ". Assigning it to " + actionToChange.name() + " as well.");
-            }
-        }
-
-        keybinds.put(actionToChange, newKeyCode);
-        System.out.println(actionToChange.name() + " bound to " + KeyEvent.getKeyText(newKeyCode));
-        return true;
-    }
-
-    public Map<GameAction, Integer> getAllKeybinds() {
-        return new EnumMap<>(keybinds);
+        //System.out.println("After saving: gameData.keybinds=" + gameData.keybinds);
     }
 
     public void resetToDefaults() {
-        System.out.println("Resetting keybinds to default values.");
-        setDefaultKeybinds();
+        this.currentKeybinds.clear();
+        this.currentKeybinds.putAll(defaultKeybinds);
+        saveKeybindsToGameData();
+    }
+
+    public int getKeyCode(GameAction action) {
+        return currentKeybinds.getOrDefault(action, -1);
+    }
+
+    public Map<GameAction, Integer> getAllKeybinds() {
+        return new EnumMap<>(currentKeybinds);
+    }
+
+    public void setKeybind(GameAction action, int keyCode) {
+        currentKeybinds.put(action, keyCode);
     }
 }

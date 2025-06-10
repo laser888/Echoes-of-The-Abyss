@@ -31,6 +31,7 @@ public class SettingsState extends GameState {
     private boolean isWaitingForKey = false;
     private GameAction actionToChange = null;
     private String message = "";
+    private long messageTimer;
 
     private int topVisibleRow = 0;
     private int visibleRows;
@@ -60,6 +61,7 @@ public class SettingsState extends GameState {
 
             configurableActions = new ArrayList<>(List.of(GameAction.values()));
             buildDisplayOptionNames();
+            message = "";
 
             int availableHeight = GamePanel.HEIGHT - listStartY - 15;
             visibleRows = Math.max(1, availableHeight / lineHeight);
@@ -93,6 +95,11 @@ public class SettingsState extends GameState {
 
         if (bg == null) return;
 
+        if (messageTimer > 0 && System.currentTimeMillis() - messageTimer > 3000) {
+            message = "";
+            messageTimer = 0;
+        }
+
         bg.draw(g);
 
         g.setFont(titleFont);
@@ -100,6 +107,7 @@ public class SettingsState extends GameState {
         String title = "Keybind Settings";
         int titleWidth = g.getFontMetrics().stringWidth(title);
         g.drawString(title, (GamePanel.WIDTH - titleWidth) / 2, 30);
+
 
         g.setFont(instructionFont);
         g.setColor(messageColor);
@@ -109,6 +117,8 @@ public class SettingsState extends GameState {
         }
 
         if (message != null && !message.isEmpty()) {
+            g.setFont(instructionFont);
+            g.setColor(messageColor);
             int msgWidth = g.getFontMetrics().stringWidth(message);
             g.drawString(message, (GamePanel.WIDTH - msgWidth) / 2, 50);
         }
@@ -199,19 +209,27 @@ public class SettingsState extends GameState {
 
         } else if (k == KeyEvent.VK_ENTER) {
             if (currentSelection < configurableActions.size()) {
+
                 actionToChange = configurableActions.get(currentSelection);
                 isWaitingForKey = true;
-
+                message = "Press a key for: " + actionToChange.name().replace("_", " ") + " (ESC to cancel)";
             } else {
+
                 int specialOptionIndex = currentSelection - configurableActions.size();
 
                 if (specialOptionIndex == 0) {
-                    keybindManager.saveKeybinds();
-                    message = "Keybinds Saved!";
+
+                    keybindManager.saveKeybindsToGameData();
+
+                    gsm.saveGameData();
+                    message = "Settings Saved!";
+                    messageTimer = System.currentTimeMillis();
 
                 } else if (specialOptionIndex == 1) {
+
                     keybindManager.resetToDefaults();
-                    message = "Keybinds reset to defaults.";
+                    message = "Keybinds reset. Press 'Save Changes' to keep.";
+                    messageTimer = System.currentTimeMillis();
 
                 } else if (specialOptionIndex == 2) {
                     gsm.setState(GameStateManager.MENUSTATE);

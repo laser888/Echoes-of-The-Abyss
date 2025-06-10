@@ -27,6 +27,10 @@ public abstract class BaseLevelState extends GameState {
     protected EntityManager entityManager; // Manages enemies, explosions, damage numbers
     protected KeybindManager keybindManager;
 
+    private boolean controlPressed = false;
+    private final java.util.Deque<TileChange> undoStack = new java.util.ArrayDeque<>();
+
+
     // Score
     protected ScoreManager scoreManager;
     protected long levelStartTimeMillis;
@@ -48,12 +52,17 @@ public abstract class BaseLevelState extends GameState {
     protected ArrayList<String> chatHistory = new ArrayList<>();
     protected int chatIndex = -1;
 
+    protected boolean editMode = false;
+    protected int selectedTile = 1;
+
+    private boolean leftPressed = false, rightPressed = false, upPressed = false, downPressed = false;
 
     public BaseLevelState(GameStateManager gsm, GamePanel gamePanel) {
         this.gsm = gsm;
         this.gamePanel = gamePanel;
         this.keybindManager = gsm.getKeybindManager();
         this.scoreManager = new ScoreManager();
+        init();
     }
 
     protected void initCommonLevelComponents() {
@@ -88,30 +97,77 @@ public abstract class BaseLevelState extends GameState {
     public void update() {
         if (player == null) return;
 
-        player.update();
+        if (!editMode) {
 
-        tileMap.setPosition(
-                GamePanel.WIDTH / 2.0 - player.getx(),
-                GamePanel.HEIGHT / 2.0 - player.gety()
-        );
-        if (bg != null) {
-            bg.setPosition(tileMap.getx(), tileMap.gety());
+            player.update();
+
+            tileMap.setPosition(GamePanel.WIDTH / 2.0 - player.getx(), GamePanel.HEIGHT / 2.0 - player.gety());
+
+            if (bg != null) {
+                bg.setPosition(tileMap.getx(), tileMap.gety());
+            }
+
+            if (entityManager != null) {
+                entityManager.updateAll(tileMap, (this instanceof Level1State ? (Level1State) this : null));
+            }
+
+            updateLevelSpecificLogic();
+
+        } else {
+            // Camera
+            int moveSpeed = 5;
+            if (leftPressed) tileMap.setPosition(tileMap.getx() + moveSpeed, tileMap.gety());
+            if (rightPressed) tileMap.setPosition(tileMap.getx() - moveSpeed, tileMap.gety());
+            if (upPressed) tileMap.setPosition(tileMap.getx(), tileMap.gety() + moveSpeed);
+            if (downPressed) tileMap.setPosition(tileMap.getx(), tileMap.gety() - moveSpeed);
         }
-
-        if (entityManager != null) {
-            entityManager.updateAll(tileMap, (this instanceof Level1State ? (Level1State)this : null) ); // Pass context if needed
-        }
-
-        updateLevelSpecificLogic(); // Doors, terminals, skeletons (might change), bosses
     }
 
     @Override
     public void draw(Graphics2D g) {
-        if (tileMap == null || player == null) return;
 
+        if (tileMap == null || player == null) return;
         if (bg != null) bg.draw(g);
         tileMap.draw(g);
         player.draw(g);
+
+        if (editMode) {
+
+            // Edit GUI
+            g.setColor(new Color(0, 0, 0, 150));
+            g.fillRect(5, 5, 150, 40);
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.BOLD, 14));
+            g.drawString("EDIT MODE", 10, 20);
+            g.drawString("Selected Tile: " + selectedTile, 10, 40);
+
+            // Highlight
+            Point mousePos = gamePanel.getMousePosition();
+            if (mousePos != null) {
+                int panelW = gamePanel.getCurrentWidth();
+                int panelH = gamePanel.getCurrentHeight();
+                float scaleX = (float) GamePanel.WIDTH  / panelW;
+                float scaleY = (float) GamePanel.HEIGHT / panelH;
+                int logicalX = (int) (mousePos.x * scaleX);
+                int logicalY = (int) (mousePos.y * scaleY);
+                int tileCol = (int) ((logicalX - tileMap.getx()) / tileMap.getTileSize());
+                int tileRow = (int) ((logicalY - tileMap.gety()) / tileMap.getTileSize());
+
+                if (tileRow >= 0 && tileRow < tileMap.getNumRows()
+
+                        && tileCol >= 0 && tileCol < tileMap.getNumCols()) {
+
+                    g.setColor(new Color(255, 255, 255, 100));
+
+                    g.fillRect(
+                            (int) (tileCol * tileMap.getTileSize() + tileMap.getx()),
+                            (int) (tileRow * tileMap.getTileSize() + tileMap.gety()),
+                            tileMap.getTileSize(),
+                            tileMap.getTileSize()
+                    );
+                }
+            }
+        }
 
         if (entityManager != null) {
             entityManager.drawAll(g, tileMap);
@@ -205,6 +261,61 @@ public abstract class BaseLevelState extends GameState {
             handleTypingInput(k);
             return;
         }
+        if (k == KeyEvent.VK_F1) {
+
+            editMode = !editMode;
+            //System.out.println("Edit Mode: " + (editMode ? "ON" : "OFF"));
+
+            if (editMode && player != null) {
+                player.setVector(0, 0);
+            }
+            return;
+        }
+
+        // saving
+        if (k == KeyEvent.VK_CONTROL) controlPressed = true;
+        if (editMode && controlPressed && k == KeyEvent.VK_S) {
+            String savePath = "src/main/resources/Maps/edited.map";
+            tileMap.saveMap(savePath);
+            //System.out.println("Attempted to save map to " + savePath);
+        }
+
+        // Adds row
+        if (editMode && k == KeyEvent.VK_R) {
+            tileMap.addRow();
+            tileMap.fixBounds();
+            gamePanel.repaint();
+        }
+
+        // Adds column
+        if (editMode && k == KeyEvent.VK_C) {
+            tileMap.addColumn();
+            tileMap.fixBounds();
+            gamePanel.repaint();
+        }
+
+        if (editMode) {
+
+            if (k == KeyEvent.VK_EQUALS || k == KeyEvent.VK_PLUS) {
+                selectedTile++;
+                if (selectedTile > 2 * tileMap.getNumTilesAcross() - 1) selectedTile = 1;
+                System.out.println("Selected Tile ID: " + selectedTile);
+            }
+
+            if (k == KeyEvent.VK_MINUS) {
+                selectedTile--;
+                if (selectedTile < 1) selectedTile = 2 * tileMap.getNumTilesAcross() - 1;
+                System.out.println("Selected Tile ID: " + selectedTile);
+            }
+
+            if (controlPressed && k == KeyEvent.VK_Z && !undoStack.isEmpty()) {
+                TileChange last = undoStack.pop();
+                tileMap.setTile(last.row, last.col, last.oldId);
+                gamePanel.repaint();
+                return;
+            }
+
+        }
 
         // if (terminal != null && terminal.isActive()) {
         //    if (k == KeyEvent.VK_ESCAPE) terminal.close();
@@ -220,6 +331,13 @@ public abstract class BaseLevelState extends GameState {
         }
         if (k == KeyEvent.VK_ESCAPE && showStatsScreen) {
             showStatsScreen = false; return;
+        }
+
+        if (editMode) {
+            if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) leftPressed = true;
+            if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) rightPressed = true;
+            if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) upPressed = true;
+            if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) downPressed = true;
         }
 
         if (player != null && !showStatsScreen /* && (terminal == null || !terminal.isActive()) */) {
@@ -257,6 +375,13 @@ public abstract class BaseLevelState extends GameState {
     @Override
     public void keyReleased(int k) {
         if (player != null) {
+            if (editMode) {
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) leftPressed = false;
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) rightPressed = false;
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) upPressed = false;
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) downPressed = false;
+            }
+            if (k == KeyEvent.VK_CONTROL) controlPressed = false;
             if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) player.setLeft(false);
             if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) player.setRight(false);
             if (k == keybindManager.getKeyCode(GameAction.JUMP)) player.setJumping(false);
@@ -272,8 +397,17 @@ public abstract class BaseLevelState extends GameState {
     protected abstract void handleLevelSpecificKeyReleased(int k);
 
 
-    @Override
-    public abstract void mousePressed(MouseEvent e);
+    public void mousePressed(MouseEvent e) {
+        if (!editMode) return;
+
+        // LC
+        if (e.getButton() == MouseEvent.BUTTON1) {
+            paintTile(e, selectedTile);
+            // RC
+        } else if (e.getButton() == MouseEvent.BUTTON3) {
+            paintTile(e, 0);
+        }
+    }
 
     public void addDamageNumber(int damage, double x, double y, boolean isCrit) {
         if (entityManager != null) {
@@ -303,6 +437,8 @@ public abstract class BaseLevelState extends GameState {
         );
 
         if (player != null) player.addXP(finalScores.xpAwarded);
+
+        gsm.saveGameData();
 
         GameState potentialWinState = gsm.getState(GameStateManager.WINNINGSTATE);
         if (potentialWinState instanceof WinState) {
@@ -342,6 +478,57 @@ public abstract class BaseLevelState extends GameState {
                 handleLevelSpecificCommand(token);
         }
     }
+
+    private void paintTile(MouseEvent e, int tileId) {
+
+        int panelW = gamePanel.getCurrentWidth();
+        int panelH = gamePanel.getCurrentHeight();
+
+        float scaleX = (float) GamePanel.WIDTH  / panelW;
+        float scaleY = (float) GamePanel.HEIGHT / panelH;
+
+        int logicalX = (int) (e.getX() * scaleX);
+        int logicalY = (int) (e.getY() * scaleY);
+
+        int tileCol = (int) ((logicalX - tileMap.getx()) / tileMap.getTileSize());
+        int tileRow = (int) ((logicalY - tileMap.gety()) / tileMap.getTileSize());
+
+        if (tileRow < 0 || tileRow >= tileMap.getNumRows() || tileCol < 0 || tileCol >= tileMap.getNumCols()) return;
+
+        int old = tileMap.getMap()[tileRow][tileCol];
+
+        if (old != tileId) {
+            undoStack.push(new TileChange(tileRow, tileCol, old));
+            tileMap.setTile(tileRow, tileCol, tileId);
+            gamePanel.repaint();
+        }
+    }
+
+    public Player getPlayer() {
+        return player;
+    }
+
+    private static class TileChange {
+        final int row, col, oldId;
+
+        TileChange(int r, int c, int o) { row = r; col = c; oldId = o; }
+    }
+
+
+    public void mouseDragged(MouseEvent e) {
+        if (!editMode) return;
+
+        int mods = e.getModifiersEx();
+
+        if ((mods & MouseEvent.BUTTON1_DOWN_MASK) != 0) {
+            paintTile(e, selectedTile);
+
+        } else if ((mods & MouseEvent.BUTTON3_DOWN_MASK) != 0) {
+
+            paintTile(e, 0);
+        }
+    }
+
     protected abstract void handleLevelSpecificCommand(String[] token);
 
     public abstract int getSpawnX();
