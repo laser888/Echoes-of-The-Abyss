@@ -11,6 +11,7 @@ import TileMap.Background;
 import TileMap.TileMap;
 import Main.KeybindManager;
 import Effects.DamageNumber;
+import TileMap.TerminalTile;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -62,7 +63,6 @@ public abstract class BaseLevelState extends GameState {
         this.gamePanel = gamePanel;
         this.keybindManager = gsm.getKeybindManager();
         this.scoreManager = new ScoreManager();
-        init();
     }
 
     protected void initCommonLevelComponents() {
@@ -483,11 +483,10 @@ public abstract class BaseLevelState extends GameState {
     }
 
     private void paintTile(MouseEvent e, int tileId) {
-
         int panelW = gamePanel.getCurrentWidth();
         int panelH = gamePanel.getCurrentHeight();
 
-        float scaleX = (float) GamePanel.WIDTH  / panelW;
+        float scaleX = (float) GamePanel.WIDTH / panelW;
         float scaleY = (float) GamePanel.HEIGHT / panelH;
 
         int logicalX = (int) (e.getX() * scaleX);
@@ -501,8 +500,31 @@ public abstract class BaseLevelState extends GameState {
         int old = tileMap.getMap()[tileRow][tileCol];
 
         if (old != tileId) {
+            int px = tileCol * tileMap.getTileSize();
+            int py = tileRow * tileMap.getTileSize();
+
+            TerminalTile existing = null;
+            for (TerminalTile t : tileMap.getInteractiveTiles()) {
+                if (t.getPos().x == px && t.getPos().y == py) {
+                    existing = t;
+                    break;
+                }
+            }
+
+            if (tileId == 27) {
+                if (existing == null) {
+                    TerminalTile newTerminal = new TerminalTile(px, py, 27, tileMap, gamePanel);
+                    tileMap.getInteractiveTiles().add(newTerminal);
+                }
+                tileMap.setTile(tileRow, tileCol, 27);
+            } else {
+                if (existing != null) {
+                    tileMap.getInteractiveTiles().remove(existing);
+                }
+                tileMap.setTile(tileRow, tileCol, tileId);
+            }
+
             undoStack.push(new TileChange(tileRow, tileCol, old));
-            tileMap.setTile(tileRow, tileCol, tileId);
             gamePanel.repaint();
         }
     }

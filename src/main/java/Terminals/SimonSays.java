@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Random;
 import Main.GamePanel;
 
+
 public class SimonSays extends Terminal {
 
     private GamePanel gamePanel;
@@ -27,11 +28,13 @@ public class SimonSays extends Terminal {
     private boolean flashOn;
     private Point clickedCell;
     private long clickTimer;
+    private boolean puzzleSolved = false;
 
-    public SimonSays(int x, int y, GamePanel gamePanel) {
+    public SimonSays(int x, int y, GamePanel gamePanel, int tileSize) {
 
         this.gamePanel = gamePanel;
-        triggerZone = new Rectangle(x, y, 50, 50);
+        int interactionRadius = tileSize * 2;
+        this.triggerZone = new Rectangle(x - interactionRadius/2 + tileSize/2, y - interactionRadius/2 + tileSize/2, interactionRadius, interactionRadius);
         completed = false;
         active = false;
         sequence = new ArrayList<>();
@@ -206,5 +209,16 @@ public class SimonSays extends Terminal {
 
     public boolean isActive() {
         return active;
+    }
+    public boolean isPuzzleSolved() {
+        return puzzleSolved;
+    }
+
+    public void setPuzzleSolved(boolean solved) {
+        this.puzzleSolved = solved;
+    }
+
+    public boolean isCompleted() {
+        return completed;
     }
 }

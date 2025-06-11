@@ -6,24 +6,18 @@ import Entity.Enemies.Slugger;
 import Entity.Enemies.SluggerBoss;
 import Entity.Enemies.Zombie;
 import Main.GamePanel;
-import Terminals.SimonSays;
 import TileMap.Background;
 import TileMap.TileMap;
+import TileMap.TerminalTile;
 
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
-import javax.imageio.ImageIO;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Level2State extends BaseLevelState {
 
     private LevelConfiguration levelConfig;
-
-    private SimonSays terminal;
-    private BufferedImage terminalTexture;
     private boolean bossDoorIsOpen = false;
     private Point[] doorTileCoordinates;
     private Enemy keyMob;
@@ -34,9 +28,16 @@ public class Level2State extends BaseLevelState {
 
     @Override
     protected void loadLevelSpecifics() {
+
+        this.tileMap = new TileMap(30, gamePanel);
+        this.tileMap.loadTiles("/TileSets/grasstileset.gif");
+        this.tileMap.loadMap("/Maps/level2-1.map");
+        this.tileMap.setPosition(0, 0);
+        this.tileMap.setTween(1);
+
+
         Point playerSpawn = new Point(100, 100);
         java.util.List<LevelConfiguration.EnemySpawnData> enemySpawns = new ArrayList<>();
-
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(200, 200)));
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(150, 200)));
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(860, 200)));
@@ -46,26 +47,19 @@ public class Level2State extends BaseLevelState {
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(2750, 200), true)); // Key Mob
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("SluggerBoss", new Point(3050, 200)));
 
-
         Point[] doorCoords = {new Point(96, 5), new Point(96, 6)};
 
         this.levelConfig = new LevelConfiguration(
                 "Level 2 - Cassy Castle",
                 "/Maps/level2-1.map",
                 "/TileSets/grasstileset.gif",
-                "/Backgrounds/castlebg.gif",
+                "/Backgrounds/stagebg1.gif",
                 playerSpawn,
                 enemySpawns,
                 doorCoords,
-                new Point(2750,200),
+                new Point(2750, 200),
                 300.0
         );
-
-        this.tileMap = new TileMap(30);
-        this.tileMap.loadTiles(levelConfig.getTileSetPath());
-        this.tileMap.loadMap(levelConfig.getTileMapPath());
-        this.tileMap.setPosition(0, 0);
-        this.tileMap.setTween(1);
 
         this.bg = new Background(levelConfig.getBackgroundPath(), 0.1);
 
@@ -76,9 +70,7 @@ public class Level2State extends BaseLevelState {
         this.doorTileCoordinates = levelConfig.getDoorCoordinates();
         this.bossDoorIsOpen = false;
         setDoorState(false);
-
         this.parTimeSeconds = levelConfig.getParTimeSeconds();
-        this.totalPuzzlesInLevel = 1;
     }
 
     @Override
@@ -107,27 +99,19 @@ public class Level2State extends BaseLevelState {
             }
         }
         this.totalEnemiesAtStart = entityManager.getEnemies().size();
-
-        this.terminal = new SimonSays(350, 115, gamePanel);
-        try {
-            this.terminalTexture = ImageIO.read(getClass().getResourceAsStream("/Sprites/Terminal/terminal.png"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            this.terminalTexture = null;
-        }
     }
 
     @Override
     protected void updateLevelSpecificLogic() {
 
-        if (terminal != null) {
-            terminal.update();
-            if (terminal.isActive() && terminal.isCompleted()) {
+        tileMap.updateInteractive();
 
-                if (puzzlesSolvedCount == 0) {
-                    puzzlesSolvedCount++;
-                }
-                terminal.close();
+        for(TerminalTile t : tileMap.getInteractiveTiles()) {
+
+            if(t.isActive() && t.isCompleted() && !t.isSolved()) {
+                puzzlesSolvedCount++;
+                t.markSolved();
+                t.close();
             }
         }
 
@@ -167,50 +151,23 @@ public class Level2State extends BaseLevelState {
 
     @Override
     protected void drawLevelSpecificElements(Graphics2D g) {
-
-        if (terminal != null && terminalTexture != null) {
-            int drawSize = 24;
-            int tx = (int) (terminal.getTriggerZone().x + terminal.getTriggerZone().width / 2.0 + tileMap.getx());
-            int ty = (int) (terminal.getTriggerZone().y + terminal.getTriggerZone().height / 2.0 + tileMap.gety());
-            g.drawImage(terminalTexture, tx - drawSize / 2, ty - drawSize / 2, drawSize, drawSize, null);
-
-            terminal.render(g);
-
-            if (player != null && terminal.getTriggerZone().contains(player.getx(), player.gety()) && !terminal.isActive()) {
-                g.setColor(Color.WHITE);
-                g.setFont(new Font("Arial", Font.PLAIN, 12));
-
-                g.drawString("Press E to interact",
-                        (int) (player.getx() + tileMap.getx() - 30),
-                        (int) (player.gety() + tileMap.gety() - 20));
-            }
-        }
+        tileMap.drawInteractive(g, player);
     }
 
     @Override
     protected void handleLevelSpecificKeyPressed(int k) {
-        if (k == KeyEvent.VK_E && terminal != null && player != null &&
-                terminal.getTriggerZone().contains(player.getx(), player.gety()) &&
-                !terminal.isActive() && !isTyping) {
-            terminal.start();
-        }
-        if (k == KeyEvent.VK_ESCAPE && terminal != null && terminal.isActive()) {
-            terminal.close();
-        }
+        tileMap.handleKeyPress(k, player);
     }
 
     protected void handleLevelSpecificKeyReleased(int k) {}
 
     public void mousePressed(MouseEvent e) {
-        if (terminal != null && terminal.isActive()) {
-            int mouseX = e.getX() / GamePanel.SCALE;
-            int mouseY = e.getY() / GamePanel.SCALE;
-            terminal.mousePressed(mouseX, mouseY);
-            return;
-        }
+
+        int mx = e.getX()/GamePanel.SCALE;
+        int my = e.getY()/GamePanel.SCALE;
+        tileMap.handleMouse(mx, my);
         super.mousePressed(e);
     }
-
 
     @Override
     protected void handleLevelSpecificCommand(String[] token) {
