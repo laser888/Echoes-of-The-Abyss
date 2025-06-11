@@ -123,7 +123,7 @@ public class WinState extends GameState {
 
     private void select() {
         if(currentChoice == 0) {
-            gsm.setState(GameStateManager.LEVEL2STATE);
+            gsm.goToNextLevel();
         }
         if(currentChoice == 1) {
             gsm.setState(GameStateManager.MENUSTATE);

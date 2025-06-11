@@ -137,7 +137,7 @@ public class SimonSays extends Terminal {
 
     public void mousePressed(int x, int y) {
         if (!active || !awaitingInput || completed) {
-            System.out.println("Mouse click ignored: active=" + active + ", awaitingInput=" + awaitingInput + ", completed=" + completed);
+           // System.out.println("Mouse click ignored: active=" + active + ", awaitingInput=" + awaitingInput + ", completed=" + completed);
             return;
         }
 
@@ -159,7 +159,7 @@ public class SimonSays extends Terminal {
                 (logicalX - offsetX - GAP) % (CELL_SIZE + GAP) < CELL_SIZE &&
                 (logicalY - offsetY - GAP) % (CELL_SIZE + GAP) < CELL_SIZE) {
 
-            System.out.println("Valid click registered at grid position: ("+gridY+","+gridX+")");
+            //System.out.println("Valid click registered at grid position: ("+gridY+","+gridX+")");
             clickedCell = new Point(gridY, gridX);
             clickTimer = System.currentTimeMillis();
             playerInput.add(new Point(gridY, gridX));

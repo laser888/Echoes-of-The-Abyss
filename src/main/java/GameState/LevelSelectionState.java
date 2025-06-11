@@ -13,7 +13,7 @@ public class LevelSelectionState extends GameState {
     private GamePanel gamePanel;
 
     private int currentChoice = 0;
-    private String[] options = { "Level 1", "Level 2", "~=[,,_,,]:3"};
+    private String[] options = { "Tutorial", "Level 1", "Level 2", "Level 3", "~=[,,_,,]:3"};
 
     private Color titleColor;
     private Font titleFont;
@@ -53,7 +53,8 @@ public class LevelSelectionState extends GameState {
             } else {
                 g.setColor(Color.BLACK);
             }
-            g.drawString(options[i], 120, 68 + i * 50);
+            if(i < 4) g.drawString(options[i], 120, 50 + i * 50);
+            if(i == 4) g.drawString(options[i], 120, 300);
         }
     }
 
@@ -65,6 +66,12 @@ public class LevelSelectionState extends GameState {
             gsm.setState(GameStateManager.LEVEL2STATE);
         }
         if(currentChoice == 2) {
+            gsm.setState(GameStateManager.LEVEL3STATE);
+        }
+        if(currentChoice == 3) {
+            gsm.setState(GameStateManager.LEVEL4STATE);
+        }
+        if(currentChoice == 4) {
             gsm.setState(GameStateManager.CATSTATE);
         }
     }

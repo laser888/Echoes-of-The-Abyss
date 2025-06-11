@@ -15,14 +15,14 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Level2State extends BaseLevelState {
+public class Level3State extends BaseLevelState {
 
     private LevelConfiguration levelConfig;
     private boolean bossDoorIsOpen = false;
     private Point[] doorTileCoordinates;
     private Enemy keyMob;
 
-    public Level2State(GameStateManager gsm, GamePanel gamePanel) {
+    public Level3State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
     }
 
@@ -31,7 +31,7 @@ public class Level2State extends BaseLevelState {
 
         this.tileMap = new TileMap(30, gamePanel);
         this.tileMap.loadTiles("/TileSets/grasstileset.gif");
-        this.tileMap.loadMap("/Maps/level2-1.map");
+        this.tileMap.loadMap("/Maps/level3-1.map");
         this.tileMap.setPosition(0, 0);
         this.tileMap.setTween(1);
 
@@ -50,10 +50,10 @@ public class Level2State extends BaseLevelState {
         Point[] doorCoords = {new Point(96, 5), new Point(96, 6)};
 
         this.levelConfig = new LevelConfiguration(
-                "Level 2 - Cassy Castle",
-                "/Maps/level2-1.map",
+                "Level 3 - Dungeony Dungeon",
+                "/Maps/level3-1.map",
                 "/TileSets/grasstileset.gif",
-                "/Backgrounds/castlebg.gif",
+                "/Backgrounds/dungeonbg.gif",
                 playerSpawn,
                 enemySpawns,
                 doorCoords,

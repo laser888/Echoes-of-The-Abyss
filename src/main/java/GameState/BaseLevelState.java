@@ -175,7 +175,7 @@ public abstract class BaseLevelState extends GameState {
 
         drawLevelSpecificElements(g);
 
-        if (hud != null) hud.draw(g);
+        if(!editMode) if (hud != null) hud.draw(g);
 
         if (showStatsScreen) {
             drawStatsScreen(g);
@@ -513,7 +513,9 @@ public abstract class BaseLevelState extends GameState {
 
             if (tileId == 27) {
                 if (existing == null) {
-                    TerminalTile newTerminal = new TerminalTile(px, py, 27, tileMap, gamePanel);
+                    int tileX = px / tileMap.getTileSize();
+                    int tileY = py / tileMap.getTileSize();
+                    TerminalTile newTerminal = new TerminalTile(px, py, 27, tileMap, gamePanel, tileX, tileY);
                     tileMap.getInteractiveTiles().add(newTerminal);
                 }
                 tileMap.setTile(tileRow, tileCol, 27);

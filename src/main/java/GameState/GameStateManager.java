@@ -14,14 +14,18 @@ public class GameStateManager {
     private GameData gameData;
     private KeybindManager keybindManager;
 
-    public static final int WINNINGSTATE = 2;
+    private int currentLevel = 0;
+
     public static final int MENUSTATE = 0;
-    public static final int LEVEL1STATE = 1;
-    public static final int CATSTATE = 3;
-    public static final int SETTINGSSTATE = 4;
-    public static final int CLASSSELECTIONSTATE = 5;
-    public static final int LEVEL2STATE = 6;
-    public static final int LevelSelectionState = 7;
+    public static final int WINNINGSTATE = 1;
+    public static final int CATSTATE = 2;
+    public static final int SETTINGSSTATE = 3;
+    public static final int CLASSSELECTIONSTATE = 4;
+    public static final int LevelSelectionState = 5;
+    public static final int LEVEL1STATE = 6;
+    public static final int LEVEL2STATE = 7;
+    public static final int LEVEL3STATE = 8;
+    public static final int LEVEL4STATE = 9;
 
     private Entity.Player.PlayerClass currentPlayerClassSelection = Entity.Player.PlayerClass.NONE;
 
@@ -32,13 +36,15 @@ public class GameStateManager {
         gameStates = new ArrayList<GameState>();
         currentState = MENUSTATE;
         gameStates.add(new MenuState(this, gamePanel));
-        gameStates.add(new Level1State(this, gamePanel));
         gameStates.add(new WinState(this, gamePanel));
         gameStates.add(new CatState(this));
         gameStates.add(new SettingsState(this, gamePanel));
         gameStates.add(new ClassSelectionState(this, gamePanel));
-        gameStates.add(new Level2State(this, gamePanel));
         gameStates.add(new LevelSelectionState(this, gamePanel));
+        gameStates.add(new Level1State(this, gamePanel));
+        gameStates.add(new Level2State(this, gamePanel));
+        gameStates.add(new Level3State(this, gamePanel));
+        gameStates.add(new Level4State(this, gamePanel));
 
     }
 
@@ -104,6 +110,15 @@ public class GameStateManager {
 
     public GameState getCurrentState() {
         return gameStates.get(currentState);
+    }
+
+    public void goToNextLevel() {
+        currentLevel++;
+        switch (currentLevel) {
+            case 1: setState(LEVEL2STATE); break;
+            case 2: setState(LEVEL3STATE); break;
+            case 3: setState(LEVEL4STATE); break;
+        }
     }
 
     public void saveProgress() {

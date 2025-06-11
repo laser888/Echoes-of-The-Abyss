@@ -12,12 +12,16 @@ public class TerminalTile {
     private int tileId;
     private TileMap tileMap;
     private Font font;
+    private int tileX;
+    private int tileY;
     private static final int INTERACTION_RADIUS_IN_TILES = 2;
 
 
-    public TerminalTile(int px, int py, int tileId, TileMap tileMap, GamePanel gp) {
+    public TerminalTile(int px, int py, int tileId, TileMap tileMap, GamePanel gp, int tileX, int tileY) {
         this.px = px;
         this.py = py;
+        this.tileX = tileX;
+        this.tileY = tileY;
         this.tileId = tileId;
         this.tileMap = tileMap;
         int radius = tileMap.getTileSize() * INTERACTION_RADIUS_IN_TILES;
@@ -82,4 +86,13 @@ public class TerminalTile {
         );
         return tz.contains(playerX, playerY);
     }
+
+    public int getX() {
+        return tileX;
+    }
+
+    public int getY() {
+        return tileY;
+    }
+
 }

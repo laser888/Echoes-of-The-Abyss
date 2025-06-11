@@ -113,7 +113,10 @@ public class TileMap {
                             if (tileId == TERMINAL_TILE_ID) {
                                 int x = col * tileSize;
                                 int y = row * tileSize;
-                                interactiveTiles.add(new TerminalTile(x, y, tileId, this, gamePanel));
+                                int tileX = col;
+                                int tileY = row;
+                                interactiveTiles.add(new TerminalTile(x, y, tileId, this, gamePanel, tileX, tileY));
+
                             }
 
                         } else {
@@ -299,7 +302,10 @@ public class TileMap {
             t.render(g, (int)x, (int)y);
 
             if (!t.isActive() && t.playerNearby(player.getx(), player.gety())) {
-                t.drawPressEPrompt(g, (int)x, (int)y);
+                int promptY = t.getY() * tileSize - 10;
+                if (promptY >= 0) {
+                    t.drawPressEPrompt(g, (int)x, (int)y);
+                }
             }
         }
     }
