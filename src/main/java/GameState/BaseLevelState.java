@@ -1,5 +1,6 @@
 package GameState;
 
+import Data.GameData;
 import Entity.EntityManager;
 import Entity.HUD;
 import Entity.Player;
@@ -453,6 +454,15 @@ public abstract class BaseLevelState extends GameState {
         );
 
         if (player != null) player.addXP(finalScores.xpAwarded);
+
+        GameData gameData = gsm.getGameData();
+        if (gameData != null) {
+
+            String levelIdentifier = this.getClass().getSimpleName();
+
+            gameData.completedLevels.add(levelIdentifier);
+            System.out.println("Level Complete! Marking '" + levelIdentifier + "' as beaten.");
+        }
 
         gsm.saveGameData();
 

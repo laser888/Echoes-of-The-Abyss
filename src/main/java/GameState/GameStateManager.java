@@ -33,6 +33,7 @@ public class GameStateManager {
         this.keybindManager = kbm;
         this.gameData = gameData;
 
+        this.gameData = SaveManager.loadGame();
         gameStates = new ArrayList<GameState>();
         currentState = MENUSTATE;
         gameStates.add(new MenuState(this, gamePanel));
