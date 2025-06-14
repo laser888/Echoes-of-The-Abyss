@@ -89,7 +89,7 @@ public class LevelSelectionState extends GameState {
 
         g.setFont(optionFont);
         int startY = 50;
-        int lineHeight = 40;
+        int lineHeight = 46;
 
         for (int i = 0; i < allLevels.size(); i++) {
             LevelEntry level = allLevels.get(i);

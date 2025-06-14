@@ -32,7 +32,6 @@
   },
   "completedLevels": [
     "Level1State",
-    "Level2State",
-    "Level3State"
+    "Level2State"
   ]
 }
