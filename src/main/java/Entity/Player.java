@@ -752,17 +752,22 @@ public class Player extends MapObject {
 
     @Override
     public void setJumping(boolean b) {
-        if (b) {
-            if (jumpsAvailable > 0 && !jumping) {
-                this.jumping = true;
-                this.dy = jumpStart;
-                this.falling = true;
-                this.jumpsAvailable--;
-                // System.out.println("Jumped! Jumps left: " + jumpsAvailable);
-            }
+
+        if(b) {
+
+            if (jumpsAvailable <= 0) return;
+
+            if ((chosenClass != PlayerClass.ARCHER && falling) || (chosenClass != PlayerClass.ARCHER && jumping))
+                return;
+
+            this.jumping = true;
+            this.dy = jumpStart;
+            this.falling = true;
+            this.jumpsAvailable--;
         } else {
             this.jumping = false;
         }
+
     }
 
     @Override
