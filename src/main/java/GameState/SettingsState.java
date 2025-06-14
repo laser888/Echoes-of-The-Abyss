@@ -169,22 +169,19 @@ public class SettingsState extends GameState {
                 message = "Change cancelled.";
 
             } else {
-                boolean conflict = false;
 
                 for (Map.Entry<GameAction, Integer> entry : keybindManager.getAllKeybinds().entrySet()) {
                     if (entry.getKey() != actionToChange && entry.getValue() == k) {
                         message = "Key " + KeyEvent.getKeyText(k) + " used by " + entry.getKey().name().replace("_", " ");
-                        conflict = true;
                         break;
                     }
                 }
 
-                if (!conflict) {
                     keybindManager.setKeybind(actionToChange, k);
                     message = actionToChange.name().replace("_", " ") + " set to " + KeyEvent.getKeyText(k) + ".";
                     isWaitingForKey = false;
                     actionToChange = null;
-                }
+
             }
             return;
         }

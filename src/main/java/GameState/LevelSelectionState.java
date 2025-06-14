@@ -142,6 +142,9 @@ public class LevelSelectionState extends GameState {
                 currentChoice = 0;
             }
         }
+        if (k == KeyEvent.VK_ESCAPE) {
+            gsm.setState(GameStateManager.CLASSSELECTIONSTATE);
+        }
     }
 
     public void keyReleased(int k) {}
