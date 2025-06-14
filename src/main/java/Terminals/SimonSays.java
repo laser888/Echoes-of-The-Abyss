@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Random;
 import Main.GamePanel;
 
-
 public class SimonSays extends Terminal {
 
     private GamePanel gamePanel;
@@ -29,9 +28,9 @@ public class SimonSays extends Terminal {
     private Point clickedCell;
     private long clickTimer;
     private boolean puzzleSolved = false;
+    private long lastInputTime;
 
     public SimonSays(int x, int y, GamePanel gamePanel, int tileSize) {
-
         this.gamePanel = gamePanel;
         int interactionRadius = tileSize * 2;
         this.triggerZone = new Rectangle(x - interactionRadius/2 + tileSize/2, y - interactionRadius/2 + tileSize/2, interactionRadius, interactionRadius);
@@ -48,12 +47,18 @@ public class SimonSays extends Terminal {
         flashOn = false;
         clickedCell = null;
         clickTimer = 0;
+        lastInputTime = 0;
+        //System.out.println("SimonSays created at (" + x + "," + y + ")");
     }
 
     public void start() {
-
+        if (completed || puzzleSolved) {
+           // System.out.println("SimonSays start ignored: already completed or solved");
+            return;
+        }
         active = true;
         completed = false;
+        puzzleSolved = false;
         sequence.clear();
         playerInput.clear();
         currentSequenceLength = 1;
@@ -62,35 +67,39 @@ public class SimonSays extends Terminal {
         showingSequence = true;
         flashOn = true;
         flashTimer = System.currentTimeMillis();
+       // System.out.println("SimonSays started: sequence=" + sequence + ", length=" + currentSequenceLength);
     }
 
     private void generateSequence() {
-        sequence.add(new Point(random.nextInt(GRID_SIZE), random.nextInt(GRID_SIZE)));
+        int row = random.nextInt(GRID_SIZE);
+        int col = random.nextInt(GRID_SIZE);
+        sequence.add(new Point(row, col));
+     //  System.out.println("Sequence now: " + sequence);
     }
 
     public void update() {
-
-        if (!active || completed) return;
+        if (!active || completed || puzzleSolved) {
+            if (completed || puzzleSolved) {
+                //System.out.println("SimonSays update skipped: completed=" + completed + ", puzzleSolved=" + puzzleSolved);
+            }
+            return;
+        }
 
         if (showingSequence) {
-
             long currentTime = System.currentTimeMillis();
-
             if (currentTime - flashTimer > (flashOn ? 500 : 200)) {
-
                 flashOn = !flashOn;
                 flashTimer = currentTime;
 
                 if (flashOn) {
                     currentIndex++;
-
                     if (currentIndex >= currentSequenceLength) {
-
                         showingSequence = false;
                         awaitingInput = true;
                         currentIndex = 0;
                         playerInput.clear();
-                        flashOn = false;
+                        flashTimer = currentTime + 500; // Delay input to prevent click overlap
+                       // System.out.println("Sequence shown, awaiting input, sequence=" + sequence + ", length=" + currentSequenceLength);
                     }
                 }
             }
@@ -102,7 +111,6 @@ public class SimonSays extends Terminal {
     }
 
     public void render(Graphics2D g) {
-
         if (!active) return;
 
         int offsetX = (GamePanel.WIDTH - PANEL_SIZE) / 2;
@@ -113,17 +121,15 @@ public class SimonSays extends Terminal {
 
         for (int row = 0; row < GRID_SIZE; row++) {
             for (int col = 0; col < GRID_SIZE; col++) {
-
                 int x = offsetX + GAP + col * (CELL_SIZE + GAP);
                 int y = offsetY + GAP + row * (CELL_SIZE + GAP);
 
                 if (clickedCell != null && clickedCell.x == row && clickedCell.y == col) {
                     g.setColor(Color.GREEN);
-                }
-
-                else if (showingSequence && flashOn && currentIndex < sequence.size() &&
+                } else if (showingSequence && flashOn && currentIndex < sequence.size() &&
                         sequence.get(currentIndex).x == row && sequence.get(currentIndex).y == col) {
                     g.setColor(Color.YELLOW);
+                    //System.out.println("Rendering yellow at row=" + row + ", col=" + col + " for sequence point=" + sequence.get(currentIndex));
                 } else {
                     g.setColor(Color.GRAY);
                 }
@@ -136,8 +142,14 @@ public class SimonSays extends Terminal {
     }
 
     public void mousePressed(int x, int y) {
-        if (!active || !awaitingInput || completed) {
-           // System.out.println("Mouse click ignored: active=" + active + ", awaitingInput=" + awaitingInput + ", completed=" + completed);
+        if (!active || !awaitingInput || completed || puzzleSolved) {
+            //System.out.println("Mouse click ignored: active=" + active + ", awaitingInput=" + awaitingInput + ", completed=" + completed + ", puzzleSolved=" + puzzleSolved);
+            return;
+        }
+
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastInputTime < 200) {
+            System.out.println("Click ignored: too soon after last input at " + lastInputTime);
             return;
         }
 
@@ -158,20 +170,23 @@ public class SimonSays extends Terminal {
         if (gridX >= 0 && gridX < GRID_SIZE && gridY >= 0 && gridY < GRID_SIZE &&
                 (logicalX - offsetX - GAP) % (CELL_SIZE + GAP) < CELL_SIZE &&
                 (logicalY - offsetY - GAP) % (CELL_SIZE + GAP) < CELL_SIZE) {
-
-            //System.out.println("Valid click registered at grid position: ("+gridY+","+gridX+")");
+            //System.out.println("Click at screen (" + x + "," + y + "), mapped to grid (" + gridY + "," + gridX + ")");
             clickedCell = new Point(gridY, gridX);
-            clickTimer = System.currentTimeMillis();
+            clickTimer = currentTime;
+            lastInputTime = currentTime;
             playerInput.add(new Point(gridY, gridX));
 
             if (playerInput.get(playerInput.size() - 1).equals(sequence.get(playerInput.size() - 1))) {
+               // System.out.println("Correct input, playerInput=" + playerInput);
                 if (playerInput.size() == currentSequenceLength) {
+                    //System.out.println("Completed round of length " + currentSequenceLength + ", regenerating...");
                     currentSequenceLength++;
                     currentIndex = 0;
                     playerInput.clear();
-
                     if (currentSequenceLength > 5) {
                         completed = true;
+                        puzzleSolved = true;
+                        active = false;
                         showingSequence = false;
                         awaitingInput = false;
                         System.out.println("Terminal completed");
@@ -180,20 +195,20 @@ public class SimonSays extends Terminal {
                         showingSequence = true;
                         flashOn = true;
                         awaitingInput = false;
-                        flashTimer = System.currentTimeMillis();
+                        flashTimer = System.currentTimeMillis() + 500;
                     }
                 }
             } else {
-                System.out.println("Incorrect sequence, resetting");
-                currentSequenceLength = 1;
-                currentIndex = 0;
+                System.out.println("Expected: " + sequence.get(playerInput.size() - 1));
+                System.out.println("Got: " + playerInput.get(playerInput.size() - 1));
+                System.out.println("Incorrect sequence, retrying");
                 playerInput.clear();
-                sequence.clear();
-                sequence.add(new Point(random.nextInt(GRID_SIZE), random.nextInt(GRID_SIZE)));
+                currentIndex = 0;
                 showingSequence = true;
                 flashOn = true;
                 awaitingInput = false;
-                flashTimer = System.currentTimeMillis();
+                flashTimer = System.currentTimeMillis() + 500;
+                System.out.println("Retrying sequence: " + sequence + ", length=" + currentSequenceLength);
             }
         } else {
             System.out.println("Click outside grid or in gap: gridX=" + gridX + ", gridY=" + gridY);
@@ -201,24 +216,40 @@ public class SimonSays extends Terminal {
     }
 
     public void close() {
-
         active = false;
         awaitingInput = false;
         showingSequence = false;
+        System.out.println("SimonSays closed: completed=" + completed + ", puzzleSolved=" + puzzleSolved);
     }
 
     public boolean isActive() {
         return active;
     }
+
     public boolean isPuzzleSolved() {
         return puzzleSolved;
     }
 
     public void setPuzzleSolved(boolean solved) {
         this.puzzleSolved = solved;
+        if (solved) {
+            completed = true;
+            active = false;
+            System.out.println("SimonSays setPuzzleSolved: " + solved);
+        }
     }
 
     public boolean isCompleted() {
         return completed;
+    }
+
+    // For TerminalTile compatibility
+    public void markSolved() {
+        setPuzzleSolved(true);
+        System.out.println("SimonSays markSolved called");
+    }
+
+    public boolean isSolved() {
+        return puzzleSolved;
     }
 }

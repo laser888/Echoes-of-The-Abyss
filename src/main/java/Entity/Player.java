@@ -1,10 +1,13 @@
 package Entity;
 
+import Blessing.Blessing;
 import Effects.DamageResult;
 import GameState.GameStateManager;
 import GameState.BaseLevelState;
 import TileMap.*;
 import Data.GameData;
+import Blessing.BlessingType;
+import Blessing.Blessing;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -23,6 +26,7 @@ public class Player extends MapObject {
         NONE, MAGE, BERSERKER, ARCHER
     }
     private PlayerClass chosenClass;
+    private ArrayList<Blessing> blessings = new ArrayList<>();
 
     private static class ClassProgress {
         int level;
@@ -776,6 +780,64 @@ public class Player extends MapObject {
         }
     }
 
+    public void applyBlessings(Blessing blessing) {
+        blessings.add(blessing);
+        switch(blessing.getType()) {
+            case STRENGTH:
+                strength *= blessing.getValue();
+                break;
+            case CRITDAMAGE:
+                critDMG *= blessing.getValue();
+                CC += blessing.getValue();
+                break;
+            case DAMAGE:
+                scratchDamage *= blessing.getValue();
+                arrowDMG *= blessing.getValue();
+                abilityDMG *= blessing.getValue();
+                break;
+            case SPEED:
+                maxSpeed += blessing.getValue();
+                break;
+            case HEALTH:
+                 maxHealth *= blessing.getValue();
+                 break;
+            case DEFENCE:
+                defence *= blessing.getValue();
+                break;
+        }
+        System.out.println("Applying " + blessing.getType() + " blesing.");
+    }
+
+    public void clearBlessings() {
+        for(Blessing b : blessings) {
+            switch(b.getType()) {
+                case STRENGTH:
+                    this.strength /= b.getValue();
+                    break;
+                case CRITDAMAGE:
+                    this.critDMG /= b.getValue();
+                    CC -= b.getValue();
+                    break;
+                case DAMAGE:
+                    this.scratchDamage /= b.getValue();
+                    this.arrowDMG /= b.getValue();
+                    this.abilityDMG /= b.getValue();
+                    break;
+                case SPEED:
+                    this.maxSpeed -= b.getValue();
+                    break;
+                case HEALTH:
+                    this.maxHealth /= b.getValue();
+                    break;
+                case DEFENCE:
+                    this.defence /= b.getValue();
+                    break;
+            }
+        }
+        blessings.clear();
+    }
+
+
     public double getPositionX() {return xtemp;}
     public int getDefence() { return defence; }
     public int getStrength() { return strength; }
@@ -784,5 +846,7 @@ public class Player extends MapObject {
     public double getRegenRate() { return regen; }
     public int getIntelligence() { return intelligence; }
     public double getAbilityDamageBonus() { return abilityDMG; }
+
+
 
 }

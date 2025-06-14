@@ -1,5 +1,6 @@
 package GameState;
 
+import Blessing.Blessing;
 import Entity.*;
 import Entity.Enemies.Skeleton;
 import Entity.Enemies.Slugger;
@@ -106,10 +107,12 @@ public class Level1State extends BaseLevelState {
 
         tileMap.updateInteractive();
 
-        for(TerminalTile t : tileMap.getInteractiveTiles()) {
-
-            if(t.isActive() && t.isCompleted() && !t.isSolved()) {
-                puzzlesSolvedCount++;
+        for (TerminalTile t : tileMap.getInteractiveTiles()) {
+            if (t.isCompleted() && !t.isBlessingGiven()) {
+                t.setBlessingGiven();
+                Blessing b = Blessing.rollRandomBlessing();
+                System.out.println("DEBUG: rolled → " + b.getType() + " = " + b.getValue());
+                player.applyBlessings(b);
                 t.markSolved();
                 t.close();
             }

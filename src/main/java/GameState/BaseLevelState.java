@@ -180,6 +180,23 @@ public abstract class BaseLevelState extends GameState {
         if (showStatsScreen) {
             drawStatsScreen(g);
         }
+
+        if (screenIsFlashing) {
+            long elapsed = System.currentTimeMillis() - flashStartTime;
+            if (elapsed < flashDuration) {
+
+                g.setColor(new Color(0, 0, 0, 180));
+                g.fillRect(0, 0, GamePanel.WIDTH, GamePanel.HEIGHT);
+            } else {
+                screenIsFlashing = false;
+            }
+        }
+    }
+
+    public void startScreenFlash(long durationMillis) {
+        this.screenIsFlashing = true;
+        this.flashDuration = durationMillis;
+        this.flashStartTime = System.currentTimeMillis();
     }
 
     protected void drawStatsScreen(Graphics2D g) {
@@ -254,6 +271,10 @@ public abstract class BaseLevelState extends GameState {
 //        g.drawString(closeMsg, boxX + (boxWidth - closeMsgWidth) / 2, boxY + boxHeight - fmClose.getDescent() - 5);
     }
 
+    protected boolean screenIsFlashing = false;
+    protected long flashStartTime;
+    protected long flashDuration;
+
 
     @Override
     public void keyPressed(int k) {
@@ -316,12 +337,6 @@ public abstract class BaseLevelState extends GameState {
             }
 
         }
-
-        // if (terminal != null && terminal.isActive()) {
-        //    if (k == KeyEvent.VK_ESCAPE) terminal.close();
-        //    terminal.keyPressed(k);
-        //    return;
-        // }
 
         if (k == keybindManager.getKeyCode(GameAction.OPEN_CHAT)) {
             isTyping = true; typedText.setLength(0); chatIndex = chatHistory.size(); return;
@@ -422,6 +437,7 @@ public abstract class BaseLevelState extends GameState {
     }
 
     protected void levelComplete() {
+        player.clearBlessings();
         long levelEndTimeMillis = System.currentTimeMillis();
         double actualTimeTakenSeconds = (levelEndTimeMillis - levelStartTimeMillis) / 1000.0;
         boolean playerDidNotDie = (playerDeathCount == 0);
@@ -560,4 +576,7 @@ public abstract class BaseLevelState extends GameState {
 
     public abstract int getSpawnX();
     public abstract int getSpawnY();
+    public EntityManager getEntityManager() {
+        return this.entityManager;
+    }
 }

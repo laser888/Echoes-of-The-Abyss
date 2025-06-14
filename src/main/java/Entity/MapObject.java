@@ -5,8 +5,12 @@ import TileMap.TileMap;
 import TileMap.Tile;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.awt.image.BufferedImage;
 
 public abstract class MapObject {
+
+    protected ArrayList<BufferedImage[]> sprites;
 
     // tile stuff
     protected TileMap tileMap;
@@ -44,7 +48,7 @@ public abstract class MapObject {
     protected Animation animation;
     protected int currentAction;
     protected int previousAction;
-    protected boolean facingRight;
+    public boolean facingRight;
 
     // movement
     protected boolean left;

@@ -15,4 +15,5 @@ public abstract class Terminal {
     public Rectangle getTriggerZone() {return triggerZone;}
     public boolean isCompleted() {return completed;}
 
+
 }

@@ -15,6 +15,8 @@ public class TerminalTile {
     private int tileX;
     private int tileY;
     private static final int INTERACTION_RADIUS_IN_TILES = 2;
+    private boolean blessingGiven = false;
+
 
 
     public TerminalTile(int px, int py, int tileId, TileMap tileMap, GamePanel gp, int tileX, int tileY) {
@@ -94,5 +96,8 @@ public class TerminalTile {
     public int getY() {
         return tileY;
     }
+
+    public boolean isBlessingGiven() { return blessingGiven; }
+    public void setBlessingGiven() { this.blessingGiven = true; }
 
 }

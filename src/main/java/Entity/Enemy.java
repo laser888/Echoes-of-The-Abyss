@@ -31,5 +31,9 @@ public class Enemy extends MapObject{
 
     public void update() {}
 
+    public void setDead() {
+        this.health = 0;
+    }
+
 }
 
