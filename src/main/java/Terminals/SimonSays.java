@@ -59,7 +59,7 @@ public class SimonSays extends Terminal {
         showingSequence = true;
         flashOn = true;
         awaitingInput = false;
-        flashTimer = System.currentTimeMillis() + 500;
+        flashTimer = System.currentTimeMillis();
         System.out.println("Game reset: new sequence=" + sequence + ", length=" + currentSequenceLength);
     }
 
@@ -75,6 +75,11 @@ public class SimonSays extends Terminal {
         int row = random.nextInt(GRID_SIZE);
         int col = random.nextInt(GRID_SIZE);
         sequence.add(new Point(row, col));
+        currentIndex = 0;
+        showingSequence = true;
+        flashOn = true;
+        awaitingInput = false;
+        flashTimer = System.currentTimeMillis();
         System.out.println("Sequence now: " + sequence);
     }
 
@@ -85,7 +90,8 @@ public class SimonSays extends Terminal {
 
         if (showingSequence) {
             long currentTime = System.currentTimeMillis();
-            if (currentTime - flashTimer > (flashOn ? 400 : 200)) {
+            long flashDuration = flashOn ? 400 : 200;
+            if (currentTime >= flashTimer + flashDuration) {
                 flashOn = !flashOn;
                 flashTimer = currentTime;
 
@@ -166,6 +172,7 @@ public class SimonSays extends Terminal {
                 (logicalX - offsetX - GAP) % (CELL_SIZE + GAP) < CELL_SIZE &&
                 (logicalY - offsetY - GAP) % (CELL_SIZE + GAP) < CELL_SIZE) {
             clickedCell = new Point(gridY, gridX);
+
             clickTimer = currentTime;
             lastInputTime = currentTime;
             playerInput.add(new Point(gridY, gridX));
@@ -175,6 +182,7 @@ public class SimonSays extends Terminal {
                     currentSequenceLength++;
                     currentIndex = 0;
                     playerInput.clear();
+
                     if (currentSequenceLength > 5) {
                         completed = true;
                         puzzleSolved = true;
@@ -184,10 +192,6 @@ public class SimonSays extends Terminal {
                         System.out.println("Terminal completed");
                     } else {
                         generateSequence();
-                        showingSequence = true;
-                        flashOn = true;
-                        awaitingInput = false;
-                        flashTimer = System.currentTimeMillis() + 500;
                     }
                 }
             } else {
