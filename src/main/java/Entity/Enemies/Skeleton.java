@@ -24,7 +24,10 @@ public class Skeleton extends Enemy {
     private long lastFireTimeNano;
     private static final long FIRE_COOLDOWN_NANO = 3 * 1000 * 1000000L; // 3 seconds
     private static final double ATTACK_RANGE_PIXELS = 125.0;
+    private static final double DETECTION_RANGE_PIXELS = 300.0;
     private int arrowDamage;
+
+    private boolean patrolling;
 
     public Skeleton(TileMap tm, Player player) {
         super(tm);
@@ -45,6 +48,9 @@ public class Skeleton extends Enemy {
         arrowDamage = 20;
 
         lastFireTimeNano = System.nanoTime() - FIRE_COOLDOWN_NANO;
+
+        patrolling = true;
+        right = true;
 
         try {
             BufferedImage spritesheet = ImageIO.read(getClass().getResourceAsStream("/Sprites/Enemies/skeleton.gif"));
@@ -89,6 +95,16 @@ public class Skeleton extends Enemy {
         }
     }
 
+    private boolean isAtEdge() {
+        double nextX = x + (right ? cwidth / 2 + 1 : -cwidth / 2 - 1);
+        double nextY = y + cheight / 2 + 1;
+
+        int tileX = (int) (nextX / tileMap.getTileSize());
+        int tileY = (int) (nextY / tileMap.getTileSize());
+
+        return tileMap.getType(tileY,tileX) == 0;
+    }
+
     public void fireArrow() {
 
         if (player.getx() < x) {
@@ -107,35 +123,58 @@ public class Skeleton extends Enemy {
 
         double playerX = player.getPositionX();
         double skeletonX = getx();
+        double distanceToPlayer = Math.abs(playerX - skeletonX);
 
-        if (playerX < skeletonX) {
-            facingRight = false;
-        } else {
-            facingRight = true;
-        }
+        if (distanceToPlayer > DETECTION_RANGE_PIXELS) {
 
-        if (Math.abs(playerX - skeletonX) <= ATTACK_RANGE_PIXELS) {
+            patrolling = true;
+            if (isAtEdge() || (right && dx == 0) || (left && dx == 0)) {
+                right = !right;
+                left = !left;
+                facingRight = right;
+                dx = right ? maxSpeed : -maxSpeed;
+
+            }
+
+            if (currentAction != WALKING) {
+                currentAction = WALKING;
+                animation.setFrames(sprites.get(WALKING));
+                animation.setDelay(50);
+            }
+        } else if (distanceToPlayer <= ATTACK_RANGE_PIXELS) {
+
+            patrolling = false;
             right = false;
             left = false;
-            dx = 0; // Stop moving
-            animation.setFrames(sprites.get(IDLE));
-            animation.setDelay(400);
-        } else if (playerX > skeletonX) {
-                right = true;
-                left = false;
-                facingRight = true;
-                dx = maxSpeed;
-            animation.setFrames(sprites.get(WALKING));
-            animation.setDelay(50);
+            dx = 0;
 
-            } else {
+            if (currentAction != IDLE) {
+                currentAction = IDLE;
+                animation.setFrames(sprites.get(IDLE));
+                animation.setDelay(400);
+            }
+        } else {
+            patrolling = false;
+
+            if (playerX < skeletonX) {
                 right = false;
                 left = true;
                 facingRight = false;
                 dx = -maxSpeed;
+
+            } else {
+                right = true;
+                left = false;
+                facingRight = true;
+                dx = maxSpeed;
+            }
+
+            if (currentAction != WALKING) {
+                currentAction = WALKING;
                 animation.setFrames(sprites.get(WALKING));
                 animation.setDelay(50);
             }
+        }
 
         getNextPosition();
         checkTileMapCollision();

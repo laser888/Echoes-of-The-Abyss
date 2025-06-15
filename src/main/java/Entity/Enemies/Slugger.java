@@ -73,6 +73,16 @@ public class Slugger extends Enemy {
         }
     }
 
+    private boolean isAtEdge() {
+        double nextX = x + (right ? cwidth / 2 + 1 : -cwidth / 2 - 1);
+        double nextY = y + cheight / 2 + 1;
+
+        int tileX = (int) (nextX / tileMap.getTileSize());
+        int tileY = (int) (nextY / tileMap.getTileSize());
+
+        return tileMap.getType(tileY,tileX) == 0;
+    }
+
     public void update() {
 
         // update position
@@ -89,17 +99,12 @@ public class Slugger extends Enemy {
         }
 
         // if it hits a wall, go other direction
-        if(right && dx == 0) {
-            right = false;
-            left = true;
-            facingRight = false;
-            dx = -maxSpeed;
-        }
-        if(left && dx == 0) {
-            right = true;
-            left = false;
-            facingRight = true;
-            dx = maxSpeed;
+        if (isAtEdge() || (right && dx == 0) || (left && dx == 0)) {
+            right = !right;
+            left = !left;
+            facingRight = right;
+            dx = right ? maxSpeed : -maxSpeed;
+
         }
 
         // update animation
