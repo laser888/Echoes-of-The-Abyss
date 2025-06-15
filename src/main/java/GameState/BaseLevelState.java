@@ -546,6 +546,14 @@ public abstract class BaseLevelState extends GameState {
 
     protected void levelComplete() {
         player.clearBlessings();
+
+        puzzlesSolvedCount = 0;
+        for (TerminalTile terminal : tileMap.getInteractiveTiles()) {
+            if (terminal.isSolved()) {
+                puzzlesSolvedCount++;
+            }
+        }
+        totalPuzzlesInLevel = tileMap.getInteractiveTiles().size();
         long levelEndTimeMillis = System.currentTimeMillis();
         double actualTimeTakenSeconds = (levelEndTimeMillis - levelStartTimeMillis) / 1000.0;
         boolean playerDidNotDie = (playerDeathCount == 0);

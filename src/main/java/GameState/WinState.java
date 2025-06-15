@@ -67,15 +67,15 @@ public class WinState extends GameState {
         g.setFont(rankFont);
         g.setColor(Color.ORANGE);
         int rankWidth = g.getFontMetrics().stringWidth(scoreData.rank);
-        g.drawString(scoreData.rank, GamePanel.WIDTH - 80 - rankWidth, 105);
+        g.drawString(scoreData.rank, GamePanel.WIDTH - 50 - rankWidth, 105);
 
         g.setFont(bigScoreFont);
         String scoreStr = String.format("%.0f", scoreData.finalDisplayScore);
         int scoreStrWidth = g.getFontMetrics().stringWidth(scoreStr);
-        g.drawString(scoreStr, GamePanel.WIDTH - 80 - scoreStrWidth, 175);
+        g.drawString(scoreStr, GamePanel.WIDTH - 50 - scoreStrWidth, 175);
 
         g.setFont(statsInfoFont);
-        g.setColor(Color.DARK_GRAY);
+        g.setColor(Color.WHITE);
         int statsY = 70;
         int lineHeight = 16;
 
@@ -94,7 +94,7 @@ public class WinState extends GameState {
             statsY += lineHeight;
         }
 
-        g.setColor(Color.DARK_GRAY);
+        g.setColor(Color.WHITE);
         g.drawString("Rank: " + scoreData.rank, 20, statsY);
         statsY += lineHeight;
 
@@ -113,9 +113,9 @@ public class WinState extends GameState {
 
         for(int i = 0; i < options.length; i++) {
             if(i == currentChoice) {
-                g.setColor(Color.YELLOW);
-            } else {
                 g.setColor(Color.BLACK);
+            } else {
+                g.setColor(Color.YELLOW);
             }
             g.drawString(options[i], 20, optionsY + i * 12);
         }
