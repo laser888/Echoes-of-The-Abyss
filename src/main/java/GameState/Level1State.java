@@ -115,7 +115,7 @@ public class Level1State extends BaseLevelState {
             if (t.isCompleted() && !t.isBlessingGiven()) {
                 t.setBlessingGiven();
                 Blessing b = Blessing.rollRandomBlessing();
-                blessingText = b.getType() + ": +" + b.getValue();
+                blessingText = b.getType() + ": +" + Math.round(b.getValue() * 100) / 100;
                 blessingTextTimer = System.nanoTime();
                 blessingApplied = true;
                 player.applyBlessings(b);
@@ -170,7 +170,7 @@ public class Level1State extends BaseLevelState {
             g.setFont(new Font("Arial", Font.BOLD, 14));
             g.setColor(Color.YELLOW);
 
-            g.drawString(blessingText, 50, 40);
+            g.drawString(blessingText, 80, 20);
         }
     }
 

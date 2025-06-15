@@ -18,8 +18,6 @@ public class TerminalTile {
     private static final int INTERACTION_RADIUS_IN_TILES = 2;
     private boolean blessingGiven = false;
 
-
-
     public TerminalTile(int px, int py, int tileId, TileMap tileMap, GamePanel gp, int tileX, int tileY) {
         this.px = px;
         this.py = py;
@@ -42,7 +40,6 @@ public class TerminalTile {
         int size = tileMap.getTileSize();
 
         if (!simon.isActive()) {
-
             BufferedImage terminalImage = tileMap.getTileImage(tileId);
             if (terminalImage != null) {
                 g.drawImage(terminalImage, drawX, drawY, null);
@@ -53,7 +50,7 @@ public class TerminalTile {
     }
 
     public void drawPressEPrompt(Graphics2D g, int camX, int camY) {
-        if (!simon.isActive()) {
+        if (!simon.isActive() && !simon.isCompleted()) {
             int drawX = px + camX;
             int drawY = py + camY - 20;
             int size = tileMap.getTileSize();
@@ -72,19 +69,24 @@ public class TerminalTile {
     }
 
     public void interact() {
-        simon.start();
-        BaseLevelState.inTerminal = true;
+        if (!simon.isCompleted() && !simon.isPuzzleSolved()) {
+            simon.start();
+            BaseLevelState.inTerminal = true;
+        }
     }
+
     public void close() {
         simon.close();
         BaseLevelState.inTerminal = false;
     }
+
     public boolean isActive() { return simon.isActive(); }
     public boolean isCompleted() { return simon.isCompleted(); }
     public boolean isSolved() { return simon.isPuzzleSolved(); }
     public void markSolved() { simon.setPuzzleSolved(true); }
     public void mousePressed(int x, int y) { simon.mousePressed(x, y); }
     public Point getPos() { return new Point(px, py); }
+
     public boolean playerNearby(int playerX, int playerY) {
         int radius = tileMap.getTileSize() * INTERACTION_RADIUS_IN_TILES;
         Rectangle tz = new Rectangle(
@@ -106,5 +108,4 @@ public class TerminalTile {
 
     public boolean isBlessingGiven() { return blessingGiven; }
     public void setBlessingGiven() { this.blessingGiven = true; }
-
 }
