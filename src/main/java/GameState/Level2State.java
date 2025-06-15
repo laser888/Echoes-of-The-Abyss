@@ -22,6 +22,10 @@ public class Level2State extends BaseLevelState {
     private boolean bossDoorIsOpen = false;
     private Point[] doorTileCoordinates;
     private Enemy keyMob;
+    private boolean blessingApplied = false;
+    private String blessingText = null;
+    private long blessingTextTimer = 0;
+    private static final long BLESSING_TEXT_DURATION_NANO = 3_000_000_000L;
 
     public Level2State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
@@ -111,11 +115,17 @@ public class Level2State extends BaseLevelState {
             if (t.isCompleted() && !t.isBlessingGiven()) {
                 t.setBlessingGiven();
                 Blessing b = Blessing.rollRandomBlessing();
-                System.out.println("DEBUG: rolled → " + b.getType() + " = " + b.getValue());
+                blessingText = b.getType() + ": +" + b.getValue();
+                blessingTextTimer = System.nanoTime();
+                blessingApplied = true;
                 player.applyBlessings(b);
                 t.markSolved();
                 t.close();
             }
+        }
+
+        if (blessingText != null && (System.nanoTime() - blessingTextTimer) > BLESSING_TEXT_DURATION_NANO) {
+            blessingText = null;
         }
 
 

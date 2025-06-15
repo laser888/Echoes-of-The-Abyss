@@ -2,6 +2,7 @@ package Entity;
 
 import Blessing.Blessing;
 import Effects.DamageResult;
+import Entity.Enemies.Skeleton;
 import GameState.GameStateManager;
 import GameState.BaseLevelState;
 import TileMap.*;
@@ -305,7 +306,7 @@ public class Player extends MapObject {
                     j--;
                 }
             }
-            if (intersects(e)) {
+            if (intersects(e) && !(e instanceof Skeleton)) {
                 hit(e.getDamage());
             }
         }

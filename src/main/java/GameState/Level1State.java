@@ -22,6 +22,10 @@ public class Level1State extends BaseLevelState {
     private boolean bossDoorIsOpen = false;
     private Point[] doorTileCoordinates;
     private Enemy keyMob;
+    private boolean blessingApplied = false;
+    private String blessingText = null;
+    private long blessingTextTimer = 0;
+    private static final long BLESSING_TEXT_DURATION_NANO = 3_000_000_000L; // 3 seconds
 
     public Level1State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
@@ -111,11 +115,17 @@ public class Level1State extends BaseLevelState {
             if (t.isCompleted() && !t.isBlessingGiven()) {
                 t.setBlessingGiven();
                 Blessing b = Blessing.rollRandomBlessing();
-                System.out.println("DEBUG: rolled → " + b.getType() + " = " + b.getValue());
+                blessingText = b.getType() + ": +" + b.getValue();
+                blessingTextTimer = System.nanoTime();
+                blessingApplied = true;
                 player.applyBlessings(b);
                 t.markSolved();
                 t.close();
             }
+        }
+
+        if (blessingText != null && (System.nanoTime() - blessingTextTimer) > BLESSING_TEXT_DURATION_NANO) {
+            blessingText = null;
         }
 
         if(entityManager != null) {
@@ -143,7 +153,7 @@ public class Level1State extends BaseLevelState {
                     for (int j = skeletonArrows.size() - 1; j >= 0; j--) {
                         Arrow arrow = skeletonArrows.get(j);
                         if (arrow.isEnemyArrow() && player != null && arrow.intersects(player)) {
-                            player.hit(skeleton.getDamage());
+                            player.hit(skeleton.getArrowDamage());
                             arrow.setHit();
                         }
                     }
@@ -155,6 +165,13 @@ public class Level1State extends BaseLevelState {
     @Override
     protected void drawLevelSpecificElements(Graphics2D g) {
         tileMap.drawInteractive(g, player);
+
+        if (blessingText != null) {
+            g.setFont(new Font("Arial", Font.BOLD, 14));
+            g.setColor(Color.YELLOW);
+
+            g.drawString(blessingText, 50, 40);
+        }
     }
 
     @Override

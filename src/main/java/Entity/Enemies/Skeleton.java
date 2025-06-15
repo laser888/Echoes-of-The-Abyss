@@ -16,11 +16,15 @@ public class Skeleton extends Enemy {
     private Player player;
     private ArrayList<Arrow> arrows;
 
-    private BufferedImage[] sprites;
+    private ArrayList<BufferedImage[]> sprites;
+    private final int[] numFrames = {1, 9};
+    private static final int IDLE = 0;
+    private static final int WALKING = 1;
 
     private long lastFireTimeNano;
     private static final long FIRE_COOLDOWN_NANO = 3 * 1000 * 1000000L; // 3 seconds
-    private static final double ATTACK_RANGE_PIXELS = 150.0;
+    private static final double ATTACK_RANGE_PIXELS = 125.0;
+    private int arrowDamage;
 
     public Skeleton(TileMap tm, Player player) {
         super(tm);
@@ -38,24 +42,30 @@ public class Skeleton extends Enemy {
         cheight = 20;
 
         health = maxHealth = 200;
-        damage = 20;
+        arrowDamage = 20;
 
         lastFireTimeNano = System.nanoTime() - FIRE_COOLDOWN_NANO;
 
         try {
             BufferedImage spritesheet = ImageIO.read(getClass().getResourceAsStream("/Sprites/Enemies/skeleton.gif"));
-            sprites = new BufferedImage[9];
 
-            for (int i = 0; i < sprites.length; i++) {
-                sprites[i] = spritesheet.getSubimage(i * width, 0, width, height);
+            sprites = new ArrayList<>();
+
+            for (int i = 0; i < numFrames.length; i++) {
+                BufferedImage[] bi = new BufferedImage[numFrames[i]];
+                for (int j = 0; j < numFrames[i]; j++) {
+                    bi[j] = spritesheet.getSubimage(j * width, i * height, width, height);
+                }
+                sprites.add(bi);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         animation = new Animation();
-        animation.setFrames(sprites);
-        animation.setDelay(150);
+        currentAction = IDLE;
+        animation.setFrames(sprites.get(IDLE));
+        animation.setDelay(400);
     }
 
     private void getNextPosition() {
@@ -95,27 +105,36 @@ public class Skeleton extends Enemy {
 
     public void update() {
 
-            double playerX = player.getPositionX();
-            double skeletonX = getx();
+        double playerX = player.getPositionX();
+        double skeletonX = getx();
 
-            double tolerance = 1.5;
+        if (playerX < skeletonX) {
+            facingRight = false;
+        } else {
+            facingRight = true;
+        }
 
-            if (Math.abs(playerX - skeletonX) <= tolerance) {
-                right = false;
-                left = false;
-                dx = 0;
-
-            } else if (playerX > skeletonX) {
+        if (Math.abs(playerX - skeletonX) <= ATTACK_RANGE_PIXELS) {
+            right = false;
+            left = false;
+            dx = 0; // Stop moving
+            animation.setFrames(sprites.get(IDLE));
+            animation.setDelay(400);
+        } else if (playerX > skeletonX) {
                 right = true;
                 left = false;
                 facingRight = true;
                 dx = maxSpeed;
+            animation.setFrames(sprites.get(WALKING));
+            animation.setDelay(50);
 
             } else {
                 right = false;
                 left = true;
                 facingRight = false;
                 dx = -maxSpeed;
+                animation.setFrames(sprites.get(WALKING));
+                animation.setDelay(50);
             }
 
         getNextPosition();
@@ -166,5 +185,9 @@ public class Skeleton extends Enemy {
         }
 
         super.draw(g);
+    }
+
+    public int getArrowDamage() {
+        return arrowDamage;
     }
 }
