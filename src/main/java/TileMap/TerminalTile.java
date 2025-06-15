@@ -1,5 +1,6 @@
 package TileMap;
 
+import GameState.BaseLevelState;
 import Terminals.SimonSays;
 import Main.GamePanel;
 
@@ -70,8 +71,14 @@ public class TerminalTile {
         }
     }
 
-    public void interact() { simon.start(); }
-    public void close() { simon.close(); }
+    public void interact() {
+        simon.start();
+        BaseLevelState.inTerminal = true;
+    }
+    public void close() {
+        simon.close();
+        BaseLevelState.inTerminal = false;
+    }
     public boolean isActive() { return simon.isActive(); }
     public boolean isCompleted() { return simon.isCompleted(); }
     public boolean isSolved() { return simon.isPuzzleSolved(); }

@@ -13,10 +13,12 @@ import TileMap.TileMap;
 import Main.KeybindManager;
 import Effects.DamageNumber;
 import TileMap.TerminalTile;
+import TileMap.TerminalTile;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.security.Key;
 import java.util.ArrayList;
 
 public abstract class BaseLevelState extends GameState {
@@ -46,7 +48,11 @@ public abstract class BaseLevelState extends GameState {
     // UI
     protected boolean showStatsScreen = false;
     protected Font statsFont;
+    protected Font pauseFont;
     protected Font statsTitleFont;
+    private int currentChoice = 0;
+    private String[] options = { "Main Menu", "Settings", "Return"};
+    private boolean paused = false;
 
     // Chat
     public static boolean isTyping = false;
@@ -56,6 +62,8 @@ public abstract class BaseLevelState extends GameState {
 
     protected boolean editMode = false;
     protected int selectedTile = 1;
+
+    public static boolean inTerminal = false;
 
     private boolean leftPressed = false, rightPressed = false, upPressed = false, downPressed = false;
 
@@ -69,6 +77,7 @@ public abstract class BaseLevelState extends GameState {
     protected void initCommonLevelComponents() {
         this.hud = new HUD(player);
         this.entityManager = new EntityManager(player);
+        paused = false;
 
         this.levelStartTimeMillis = System.currentTimeMillis();
         this.enemiesKilledCount = 0;
@@ -76,6 +85,7 @@ public abstract class BaseLevelState extends GameState {
         this.playerDeathCount = 0;
 
         this.statsFont = new Font("Arial", Font.PLAIN, 12);
+        this.pauseFont = new Font("Arial", Font.PLAIN, 14);
         this.statsTitleFont = new Font("Arial", Font.BOLD, 16);
     }
 
@@ -98,29 +108,31 @@ public abstract class BaseLevelState extends GameState {
     public void update() {
         if (player == null) return;
 
-        if (!editMode) {
+        if(!paused) {
+            if (!editMode) {
 
-            player.update();
+                player.update();
 
-            tileMap.setPosition(GamePanel.WIDTH / 2.0 - player.getx(), GamePanel.HEIGHT / 2.0 - player.gety());
+                tileMap.setPosition(GamePanel.WIDTH / 2.0 - player.getx(), GamePanel.HEIGHT / 2.0 - player.gety());
 
-            if (bg != null) {
-                bg.setPosition(tileMap.getx(), tileMap.gety());
+                if (bg != null) {
+                    bg.setPosition(tileMap.getx(), tileMap.gety());
+                }
+
+                if (entityManager != null) {
+                    entityManager.updateAll(tileMap, (this instanceof Level1State ? (Level1State) this : null));
+                }
+
+                updateLevelSpecificLogic();
+
+            } else {
+                // Camera
+                int moveSpeed = 5;
+                if (leftPressed) tileMap.setPosition(tileMap.getx() + moveSpeed, tileMap.gety());
+                if (rightPressed) tileMap.setPosition(tileMap.getx() - moveSpeed, tileMap.gety());
+                if (upPressed) tileMap.setPosition(tileMap.getx(), tileMap.gety() + moveSpeed);
+                if (downPressed) tileMap.setPosition(tileMap.getx(), tileMap.gety() - moveSpeed);
             }
-
-            if (entityManager != null) {
-                entityManager.updateAll(tileMap, (this instanceof Level1State ? (Level1State) this : null));
-            }
-
-            updateLevelSpecificLogic();
-
-        } else {
-            // Camera
-            int moveSpeed = 5;
-            if (leftPressed) tileMap.setPosition(tileMap.getx() + moveSpeed, tileMap.gety());
-            if (rightPressed) tileMap.setPosition(tileMap.getx() - moveSpeed, tileMap.gety());
-            if (upPressed) tileMap.setPosition(tileMap.getx(), tileMap.gety() + moveSpeed);
-            if (downPressed) tileMap.setPosition(tileMap.getx(), tileMap.gety() - moveSpeed);
         }
     }
 
@@ -182,6 +194,10 @@ public abstract class BaseLevelState extends GameState {
             drawStatsScreen(g);
         }
 
+        if(paused) {
+            drawPauseScreen(g);
+        }
+
         if (screenIsFlashing) {
             long elapsed = System.currentTimeMillis() - flashStartTime;
             if (elapsed < flashDuration) {
@@ -200,76 +216,141 @@ public abstract class BaseLevelState extends GameState {
         this.flashStartTime = System.currentTimeMillis();
     }
 
-    protected void drawStatsScreen(Graphics2D g) {
+    protected void drawPauseScreen(Graphics2D g) {
         if (player == null) return;
+
         g.setColor(new Color(0, 0, 0, 150));
         g.fillRect(0, 0, GamePanel.WIDTH, GamePanel.HEIGHT);
 
-        int boxWidth = 220;
-        int boxHeight = 245;
+        int boxWidth = 200;
+        int boxHeight = 180;
         int boxX = (GamePanel.WIDTH - boxWidth) / 2;
         int boxY = (GamePanel.HEIGHT - boxHeight) / 2;
 
-        g.setColor(new Color(50, 50, 100, 200));
-        g.fillRect(boxX, boxY, boxWidth, boxHeight);
+        // Draw pause box
+        g.setColor(new Color(30, 30, 30, 200));
+        g.fillRoundRect(boxX, boxY, boxWidth, boxHeight, 20, 20);
         g.setColor(Color.WHITE);
-        g.drawRect(boxX, boxY, boxWidth, boxHeight);
+        g.drawRoundRect(boxX, boxY, boxWidth, boxHeight, 20, 20);
 
+        // Draw title
         g.setFont(statsTitleFont);
-        String title = "Player Stats";
-        FontMetrics fmTitle = g.getFontMetrics(statsTitleFont);
+        String title = "GAME PAUSED";
+        FontMetrics fmTitle = g.getFontMetrics();
         int titleWidth = fmTitle.stringWidth(title);
-        g.drawString(title, boxX + (boxWidth - titleWidth) / 2, boxY + fmTitle.getAscent() + 5);
+        int titleY = boxY + fmTitle.getAscent() + 15;
+        g.drawString(title, boxX + (boxWidth - titleWidth) / 2, titleY);
 
-        g.setFont(statsFont);
-        FontMetrics fmStats = g.getFontMetrics(statsFont);
-        int lineHeight = fmStats.getHeight() + 3;
-        int lineY = boxY + fmTitle.getAscent() + 5 + fmTitle.getHeight() + 10;
-        int paddingLeft = boxX + 15;
-        g.setColor(Color.WHITE);
+        // Draw options
+        g.setFont(pauseFont);
+        FontMetrics fmOptions = g.getFontMetrics();
+        int optionStartY = titleY + 30;
 
-        g.drawString("Health: " + player.getHealth() + " / " + player.getMaxHealth(), paddingLeft, lineY); lineY += lineHeight;
-        g.drawString("Mana: " + player.getIntelligence() + " / " + player.getMaxIntelligence(), paddingLeft, lineY); lineY += lineHeight;
-        g.drawString("Defence: " + player.getDefence(), paddingLeft, lineY); lineY += lineHeight;
-        g.drawString("Strength: " + player.getStrength(), paddingLeft, lineY); lineY += lineHeight;
-        g.drawString("Crit Chance: " + String.format("%.1f%%", player.getCritChance()), paddingLeft, lineY); lineY += lineHeight;
-        g.drawString("Crit Damage: " + String.format("+%.1f%%", player.getCritDamage()), paddingLeft, lineY); lineY += lineHeight;
-        g.drawString("Regen: " + String.format("%.1f%%/s", player.getRegenRate()), paddingLeft, lineY); lineY += lineHeight;
-        g.drawString("Intelligence: " + player.getIntelligence(), paddingLeft, lineY); lineY += lineHeight;
-        g.drawString("Ability DMG Bonus: " + String.format("+%.1f%%", player.getAbilityDamageBonus()), paddingLeft, lineY); lineY += lineHeight;
+        for (int i = 0; i < options.length; i++) {
+            String option = options[i];
+            int textWidth = fmOptions.stringWidth(option);
+            int x = boxX + (boxWidth - textWidth) / 2;
+            int y = optionStartY + i * 25;
 
-        // Class info
-        lineY += 5;
-        g.setColor(Color.CYAN);
-        g.drawString("Class: " + player.getChosenClass().name(), paddingLeft, lineY); lineY += lineHeight;
-        g.drawString("Level: " + player.getCurrentClassLevel(), paddingLeft, lineY); lineY += lineHeight;
-        g.drawString(String.format("XP: %d / %d", player.getCurrentClassXP(), player.getCurrentClassXPToNextLevel()), paddingLeft, lineY);
-        lineY += lineHeight - 5;
+            if (i == currentChoice) {
+                g.setColor(Color.YELLOW);
+                // Optional underline:
+                g.drawString(">", x - 15, y);
+            } else {
+                g.setColor(Color.LIGHT_GRAY);
+            }
 
-        // XP Bar
-        int barMaxWidth = boxWidth - 30;
-        int barHeight = 10;
-        int barX = paddingLeft;
-        int barY = lineY;
-        double xpProgressRatio = 0;
-        if (player.getCurrentClassXPToNextLevel() > 0) {
-            xpProgressRatio = (double) player.getCurrentClassXP() / player.getCurrentClassXPToNextLevel();
+            g.drawString(option, x, y);
         }
-        int currentProgressWidth = (int) (barMaxWidth * xpProgressRatio);
-        g.setColor(new Color(70, 70, 70));
-        g.fillRect(barX, barY, barMaxWidth, barHeight);
-        g.setColor(new Color(50, 200, 50));
-        g.fillRect(barX, barY, currentProgressWidth, barHeight);
-        g.setColor(Color.WHITE);
-        g.drawRect(barX, barY, barMaxWidth, barHeight);
-        lineY += barHeight + 10;
+    }
 
-//        g.setFont(new Font("Arial", Font.ITALIC, 10));
-//        FontMetrics fmClose = g.getFontMetrics();
-//        g.setColor(Color.LIGHT_GRAY);
-//        String closeMsg = "Press " + KeyEvent.getKeyText(keybindManager.getKeyCode(GameAction.TAB_TOGGLE)) + " or ESC to close";
-//        int closeMsgWidth = fmClose.stringWidth(closeMsg);
-//        g.drawString(closeMsg, boxX + (boxWidth - closeMsgWidth) / 2, boxY + boxHeight - fmClose.getDescent() - 5);
+    private void select() {
+        if(currentChoice == 0) {
+            gsm.setState(GameStateManager.MENUSTATE);
+        }
+        if(currentChoice == 1) {
+            gsm.setState(GameStateManager.SETTINGSSTATE);
+        }
+        if(currentChoice == 2) {
+            paused = false;
+        }
+    }
+
+    protected void drawStatsScreen(Graphics2D g) {
+        if (player == null) return;
+
+        // Fonts
+        g.setFont(statsTitleFont);
+        FontMetrics fmTitle = g.getFontMetrics();
+        g.setFont(statsFont);
+        FontMetrics fm = g.getFontMetrics();
+
+        // Text content
+        String title = "Player Stats";
+        String[] stats = {
+                "Health: " + player.getHealth() + " / " + player.getMaxHealth(),
+                "Mana: " + player.getIntelligence() + " / " + player.getMaxIntelligence(),
+                "Defence: " + player.getDefence(),
+                "Strength: " + player.getStrength(),
+                "Crit Chance: " + String.format("%.1f%%", player.getCritChance()),
+                "Crit Damage: " + String.format("+%.1f%%", player.getCritDamage()),
+                "Regen Rate: " + String.format("%.1f%%/s", player.getRegenRate()),
+                "Intelligence: " + player.getIntelligence(),
+                "Ability DMG: " + String.format("+%.1f%%", player.getAbilityDamageBonus()),
+                "Class: " + player.getChosenClass().name(),
+                "Level: " + player.getCurrentClassLevel(),
+                "XP: " + player.getCurrentClassXP() + " / " + player.getCurrentClassXPToNextLevel()
+        };
+
+        // Padding & spacing
+        int padding = 16;
+        int lineSpacing = fm.getHeight();
+        int titleSpacing = fmTitle.getHeight();
+        int xpBarHeight = 10;
+
+        int totalHeight = titleSpacing + padding + stats.length * lineSpacing + padding + xpBarHeight;
+
+        // Box dimensions
+        int boxWidth = 300;
+        int boxHeight = totalHeight;
+        int boxX = (GamePanel.WIDTH - boxWidth) / 2;
+        int boxY = Math.max(10, (GamePanel.HEIGHT - boxHeight) / 2);  // never offscreen
+
+        // Background box
+        g.setColor(new Color(0, 0, 0, 180));
+        g.fillRoundRect(boxX, boxY, boxWidth, boxHeight, 16, 16);
+        g.setColor(Color.WHITE);
+        g.drawRoundRect(boxX, boxY, boxWidth, boxHeight, 16, 16);
+
+        // Title
+        g.setFont(statsTitleFont);
+        int titleX = boxX + (boxWidth - fmTitle.stringWidth(title)) / 2;
+        int titleY = boxY + padding + fmTitle.getAscent();
+        g.drawString(title, titleX, titleY);
+
+        // Stat lines
+        g.setFont(statsFont);
+        int y = titleY + padding;
+        for (String line : stats) {
+            int lineX = boxX + padding;
+            g.drawString(line, lineX, y);
+            y += lineSpacing;
+        }
+
+        // XP progress bar
+        int xpBarX = boxX + padding;
+        int xpBarY = y;
+        int xpBarWidth = boxWidth - 2 * padding;
+
+        double percent = (double) player.getCurrentClassXP() / Math.max(1, player.getCurrentClassXPToNextLevel());
+        int fill = (int) (xpBarWidth * percent);
+
+        g.setColor(Color.DARK_GRAY);
+        g.fillRect(xpBarX, xpBarY, xpBarWidth, xpBarHeight);
+        g.setColor(new Color(0, 200, 0));
+        g.fillRect(xpBarX, xpBarY, fill, xpBarHeight);
+        g.setColor(Color.WHITE);
+        g.drawRect(xpBarX, xpBarY, xpBarWidth, xpBarHeight);
     }
 
     protected boolean screenIsFlashing = false;
@@ -279,95 +360,121 @@ public abstract class BaseLevelState extends GameState {
 
     @Override
     public void keyPressed(int k) {
-        if (isTyping) {
-            handleTypingInput(k);
-            return;
+        if(k == KeyEvent.VK_ESCAPE && !showStatsScreen && !inTerminal) {
+            paused = !paused;
         }
-        if (k == KeyEvent.VK_F1) {
-
-            editMode = !editMode;
-            //System.out.println("Edit Mode: " + (editMode ? "ON" : "OFF"));
-
-            if (editMode && player != null) {
-                player.setVector(0, 0);
+        if(!paused) {
+            if (isTyping) {
+                handleTypingInput(k);
+                return;
             }
-            return;
-        }
+            if (k == KeyEvent.VK_F1) {
 
-        // saving
-        if (k == KeyEvent.VK_CONTROL) controlPressed = true;
-        if (editMode && controlPressed && k == KeyEvent.VK_S) {
-            String savePath = "src/main/resources/Maps/edited.map";
-            tileMap.saveMap(savePath);
-            //System.out.println("Attempted to save map to " + savePath);
-        }
+                editMode = !editMode;
+                //System.out.println("Edit Mode: " + (editMode ? "ON" : "OFF"));
 
-        // Adds row
-        if (editMode && k == KeyEvent.VK_R) {
-            tileMap.addRow();
-            tileMap.fixBounds();
-            gamePanel.repaint();
-        }
-
-        // Adds column
-        if (editMode && k == KeyEvent.VK_C) {
-            tileMap.addColumn();
-            tileMap.fixBounds();
-            gamePanel.repaint();
-        }
-
-        if (editMode) {
-
-            if (k == KeyEvent.VK_EQUALS || k == KeyEvent.VK_PLUS) {
-                selectedTile++;
-                if (selectedTile > 2 * tileMap.getNumTilesAcross() - 1) selectedTile = 1;
-                //System.out.println("Selected Tile ID: " + selectedTile);
-            }
-
-            if (k == KeyEvent.VK_MINUS) {
-                selectedTile--;
-                if (selectedTile < 1) selectedTile = 2 * tileMap.getNumTilesAcross() - 1;
-                //System.out.println("Selected Tile ID: " + selectedTile);
-            }
-
-            if (controlPressed && k == KeyEvent.VK_Z && !undoStack.isEmpty()) {
-                TileChange last = undoStack.pop();
-                tileMap.setTile(last.row, last.col, last.oldId);
-                gamePanel.repaint();
+                if (editMode && player != null) {
+                    player.setVector(0, 0);
+                }
                 return;
             }
 
-        }
+            // saving
+            if (k == KeyEvent.VK_CONTROL) controlPressed = true;
+            if (editMode && controlPressed && k == KeyEvent.VK_S) {
+                String savePath = "src/main/resources/Maps/edited.map";
+                tileMap.saveMap(savePath);
+                //System.out.println("Attempted to save map to " + savePath);
+            }
 
-        if (k == keybindManager.getKeyCode(GameAction.OPEN_CHAT)) {
-            isTyping = true; typedText.setLength(0); chatIndex = chatHistory.size(); return;
-        }
-        if (k == keybindManager.getKeyCode(GameAction.TAB_TOGGLE)) {
-            showStatsScreen = !showStatsScreen; return;
-        }
-        if (k == KeyEvent.VK_ESCAPE && showStatsScreen) {
-            showStatsScreen = false; return;
-        }
+            // Adds row
+            if (editMode && k == KeyEvent.VK_R) {
+                tileMap.addRow();
+                tileMap.fixBounds();
+                gamePanel.repaint();
+            }
 
-        if (editMode) {
-            if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) leftPressed = true;
-            if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) rightPressed = true;
-            if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) upPressed = true;
-            if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) downPressed = true;
-        }
+            // Adds column
+            if (editMode && k == KeyEvent.VK_C) {
+                tileMap.addColumn();
+                tileMap.fixBounds();
+                gamePanel.repaint();
+            }
 
-        if (player != null && !showStatsScreen /* && (terminal == null || !terminal.isActive()) */) {
-            if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) player.setLeft(true);
-            if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) player.setRight(true);
-            if (k == keybindManager.getKeyCode(GameAction.JUMP)) player.setJumping(true);
-            if (k == keybindManager.getKeyCode(GameAction.FIRE)) player.setFiring(true);
-            if (k == keybindManager.getKeyCode(GameAction.SCRATCH)) player.setScratching(true);
-            if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) player.setUp(true);
-            if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) player.setDown(true);
-            if (k == keybindManager.getKeyCode(GameAction.GLIDE)) player.setGliding(true);
+            if (editMode) {
 
+                if (k == KeyEvent.VK_EQUALS || k == KeyEvent.VK_PLUS) {
+                    selectedTile++;
+                    if (selectedTile > 2 * tileMap.getNumTilesAcross() - 1) selectedTile = 1;
+                    //System.out.println("Selected Tile ID: " + selectedTile);
+                }
+
+                if (k == KeyEvent.VK_MINUS) {
+                    selectedTile--;
+                    if (selectedTile < 1) selectedTile = 2 * tileMap.getNumTilesAcross() - 1;
+                    //System.out.println("Selected Tile ID: " + selectedTile);
+                }
+
+                if (controlPressed && k == KeyEvent.VK_Z && !undoStack.isEmpty()) {
+                    TileChange last = undoStack.pop();
+                    tileMap.setTile(last.row, last.col, last.oldId);
+                    gamePanel.repaint();
+                    return;
+                }
+
+            }
+
+            if (k == keybindManager.getKeyCode(GameAction.OPEN_CHAT)) {
+                isTyping = true;
+                typedText.setLength(0);
+                chatIndex = chatHistory.size();
+                return;
+            }
+            if (k == keybindManager.getKeyCode(GameAction.TAB_TOGGLE)) {
+                showStatsScreen = !showStatsScreen;
+                return;
+            }
+            if (k == KeyEvent.VK_ESCAPE && showStatsScreen) {
+                showStatsScreen = false;
+                return;
+            }
+
+            if (editMode) {
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) leftPressed = true;
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) rightPressed = true;
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) upPressed = true;
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) downPressed = true;
+            }
+
+            if (player != null && !inTerminal) {
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) player.setLeft(true);
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) player.setRight(true);
+                if (k == keybindManager.getKeyCode(GameAction.JUMP)) player.setJumping(true);
+                if (k == keybindManager.getKeyCode(GameAction.FIRE)) player.setFiring(true);
+                if (k == keybindManager.getKeyCode(GameAction.SCRATCH)) player.setScratching(true);
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) player.setUp(true);
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) player.setDown(true);
+                if (k == keybindManager.getKeyCode(GameAction.GLIDE)) player.setGliding(true);
+
+            }
+            handleLevelSpecificKeyPressed(k); // For level specific keybinds
+        } else {
+            if(k == KeyEvent.VK_ENTER) {
+                select();
+            }
+            if(k == KeyEvent.VK_UP) {
+                currentChoice--;
+                if(currentChoice == -1) {
+                    currentChoice = options.length - 1 ;
+                }
+            }
+            if(k == KeyEvent.VK_DOWN) {
+                currentChoice++;
+                if(currentChoice == options.length) {
+                    currentChoice = 0;
+                }
+            }
         }
-        handleLevelSpecificKeyPressed(k); // For level specific keybinds
     }
 
     protected abstract void handleLevelSpecificKeyPressed(int k);
@@ -391,24 +498,24 @@ public abstract class BaseLevelState extends GameState {
     @Override
     public void keyReleased(int k) {
         if (player != null) {
-            if (editMode) {
-                if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) leftPressed = false;
-                if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) rightPressed = false;
-                if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) upPressed = false;
-                if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) downPressed = false;
-            }
-            if (k == KeyEvent.VK_CONTROL) controlPressed = false;
-            if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) player.setLeft(false);
-            if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) player.setRight(false);
-            if (k == keybindManager.getKeyCode(GameAction.JUMP)) player.setJumping(false);
-            if (k == keybindManager.getKeyCode(GameAction.FIRE)) player.setFiring(false);
-            if (k == keybindManager.getKeyCode(GameAction.SCRATCH)) player.setScratching(false);
-            if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) player.setUp(false);
-            if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) player.setDown(false);
-            if (k == keybindManager.getKeyCode(GameAction.GLIDE)) player.setGliding(false);
+                if (editMode) {
+                    if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) leftPressed = false;
+                    if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) rightPressed = false;
+                    if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) upPressed = false;
+                    if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) downPressed = false;
+                }
+                if (k == KeyEvent.VK_CONTROL) controlPressed = false;
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) player.setLeft(false);
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) player.setRight(false);
+                if (k == keybindManager.getKeyCode(GameAction.JUMP)) player.setJumping(false);
+                if (k == keybindManager.getKeyCode(GameAction.FIRE)) player.setFiring(false);
+                if (k == keybindManager.getKeyCode(GameAction.SCRATCH)) player.setScratching(false);
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) player.setUp(false);
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) player.setDown(false);
+                if (k == keybindManager.getKeyCode(GameAction.GLIDE)) player.setGliding(false);
 
-        }
-        handleLevelSpecificKeyReleased(k);
+            }
+            handleLevelSpecificKeyReleased(k);
     }
     protected abstract void handleLevelSpecificKeyReleased(int k);
 
