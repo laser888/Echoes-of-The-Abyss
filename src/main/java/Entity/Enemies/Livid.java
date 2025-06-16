@@ -74,8 +74,8 @@ public class Livid extends Enemy {
         height = 45;
         cwidth = 20;
         cheight = 20;
-        health = maxHealth = 500;
-        damage = 20;
+        health = maxHealth = 3000;
+        damage = 65;
         loadSprites(spriteSheets.get(suitType));
         right = false;
         left = false;

@@ -6,14 +6,14 @@
       "xpToNextLevel": 337
     },
     "MAGE": {
-      "level": 51,
-      "xp": 45,
-      "xpToNextLevel": 150
+      "level": 53,
+      "xp": 102,
+      "xpToNextLevel": 188
     },
     "BERSERKER": {
-      "level": 53,
-      "xp": 290,
-      "xpToNextLevel": 372
+      "level": 54,
+      "xp": 78,
+      "xpToNextLevel": 418
     }
   },
   "keybinds": {

@@ -16,8 +16,8 @@ public class Zombie extends Enemy {
 
         super(tm);
 
-        moveSpeed = 0.5;
-        maxSpeed = 0.5;
+        moveSpeed = 0.2;
+        maxSpeed = 0.2;
         fallSpeed = 0.2;
         maxFallSpeed = 10.0;
 
@@ -26,8 +26,8 @@ public class Zombie extends Enemy {
         cwidth = 20;
         cheight = 20;
 
-        health = maxHealth = 250;
-        damage = 20;
+        health = maxHealth = 150; // High health for a basic enemy
+        damage = 40; // High damage, but avoidable
 
         // load sprites
         try {

@@ -26,7 +26,6 @@ public class WizardBoss extends Enemy {
     private long lastMoveTime;
     private static final long LIGHTNING_COOLDOWN = 5000; // 5 seconds
     private static final long FIRE_COOLDOWN = 3000; // 3 seconds
-    private static final long MOVE_COOLDOWN = 10000; // 10 seconds
     private static final int ATTACK_RANGE = 300; // Range for attacks
     private static final int CHASE_RANGE = 500;
     private static final int TOLERANCE = 80;
@@ -47,8 +46,8 @@ public class WizardBoss extends Enemy {
         height = 30;
         cwidth = 20;
         cheight = 20;
-        health = maxHealth = 600;
-        damage = 15;
+        health = maxHealth = 6000;
+        damage = 50;
         loadSprites();
         facingRight = true;
     }

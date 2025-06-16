@@ -184,6 +184,10 @@ public class Level2State extends BaseLevelState {
             for (int i = currentEnemies.size() - 1; i >= 0; i--) {
                 Enemy e = currentEnemies.get(i);
                 if (e.isDead()) {
+                    if (e instanceof Livid && !((Livid)e).isReal()) {
+                        currentEnemies.remove(i);
+                        continue;
+                    }
                     enemiesKilledCount++;
                     if (e == keyMob && !bossDoorIsOpen) {
                         openBossDoor();
@@ -191,10 +195,6 @@ public class Level2State extends BaseLevelState {
                     }
                     entityManager.addExplosion(new Explosion(tileMap, e.getx(), e.gety()));
                     currentEnemies.remove(i);
-
-                    if (e instanceof Livid && ((Livid)e).isReal()) {
-                        levelComplete(GameStateManager.LEVEL2STATE);
-                    }
                 }
 
                 if (e instanceof Skeleton) {

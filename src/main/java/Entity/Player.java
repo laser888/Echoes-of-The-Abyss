@@ -54,37 +54,40 @@ public class Player extends MapObject {
     private static final int TRUE_BASE_SCRATCH_RANGE = 35;
     private static final double TRUE_BASE_CC = 15.0;
     private static final double TRUE_BASE_CRIT_DAMAGE = 50.0;
-    private static final int TRUE_BASE_ARROW_DMG = 10;
+    private static final int TRUE_BASE_ARROW_DMG = 18;
+    private static final double TRUE_BASE_INTEL_REGEN = 1.0;
+
 
     // Mage Stats
     public static final int MAGE_STARTING_LEVEL = 1;
-    public static final int MAGE_INITIAL_XP_TO_NEXT_LEVEL = 100;
-    public static final double MAGE_XP_CURVE_MULTIPLIER = 1.5;
-    public static final int MAGE_INTELLIGENCE_GAIN_PER_LEVEL = 5;
-    public static final double MAGE_ABILITY_DMG_GAIN_PER_LEVEL = 2.5;
+    public static final int MAGE_INTELLIGENCE_GAIN_PER_LEVEL = 8;
+    public static final double MAGE_ABILITY_DMG_GAIN_PER_LEVEL = 1.5;
+    public static final double MAGE_XP_CURVE_MULTIPLIER = 1.12;
+    public static final int MAGE_INITIAL_XP_TO_NEXT_LEVEL = 500;
 
     // Berserk Stats
     public static final int BERSERKER_STARTING_LEVEL = 1;
-    public static final int BERSERKER_INITIAL_XP_TO_NEXT_LEVEL = 120;
+    public static final int BERSERKER_INITIAL_XP_TO_NEXT_LEVEL = 550;
+    public static final double BERSERKER_XP_CURVE_MULTIPLIER = 1.125;
 
-    public static final double BERSERKER_XP_CURVE_MULTIPLIER = 1.55;
-    public static final int BERSERKER_STRENGTH_GAIN_PER_LEVEL = 4;
-    public static final int BERSERKER_DEFENSE_GAIN_PER_LEVEL = 2;
-    public static final double BERSERKER_MOVESPEED_GAIN_PER_LEVEL = 0.03;
-    public static final int BERSERKER_SCRATCH_DAMAGE_GAIN_PER_LEVEL = 2;
-    public static final double BERSERKER_MELEE_RANGE_GAIN_PER_LEVEL = 0.75;
-    public static final int BERSERKER_HEALTH_GAIN_PER_LEVEL = 5;
+    public static final int BERSERKER_HEALTH_GAIN_PER_LEVEL = 15;
+    public static final int BERSERKER_STRENGTH_GAIN_PER_LEVEL = 5;
+    public static final int BERSERKER_DEFENSE_GAIN_PER_LEVEL = 3;
+    public static final int BERSERKER_SCRATCH_DAMAGE_GAIN_PER_LEVEL = 3;
+    public static final double BERSERKER_MOVESPEED_GAIN_PER_LEVEL = 0.005;
+    public static final double BERSERKER_MELEE_RANGE_GAIN_PER_LEVEL = 0.5;
 
     // Archer Stats
     public static final int ARCHER_STARTING_LEVEL = 1;
-    public static final int ARCHER_INITIAL_XP_TO_NEXT_LEVEL = 110;
-    public static final double ARCHER_XP_CURVE_MULTIPLIER = 1.5;
+    public static final int ARCHER_INITIAL_XP_TO_NEXT_LEVEL = 520;
+    public static final double ARCHER_XP_CURVE_MULTIPLIER = 1.122;
+
     public static final int ARCHER_PROJECTILE_DMG_BASE_BOOST = 5;
     public static final int ARCHER_MAX_JUMPS = 2;
-    public static final int ARCHER_ARROW_DMG_GAIN_PER_LEVEL = 2;
-    public static final double ARCHER_CC_GAIN_PER_LEVEL = 1.0;
-    public static final double ARCHER_CD_GAIN_PER_LEVEL = 5.0;
-
+    public static final int ARCHER_ARROW_DMG_GAIN_PER_LEVEL = 4;
+    public static final double ARCHER_CC_GAIN_PER_LEVEL = 0.7;
+    public static final double ARCHER_CD_GAIN_PER_LEVEL = 4.0;
+    public static final double ARCHER_INTEL_REGEN = 1.5;
     // Player Stats
     private int health;
     private int maxHealth;
@@ -176,10 +179,10 @@ public class Player extends MapObject {
         this.CC = TRUE_BASE_CC;
         this.critDMG = TRUE_BASE_CRIT_DAMAGE;
         regen = 2.0;
-        intelRegen = 1.0;
+        this.intelRegen = TRUE_BASE_INTEL_REGEN;
         fireCost = 10;
         fireBallDamage = 20;
-        arrowCost = 8;
+        arrowCost = 6;
         this.arrowDMG = TRUE_BASE_ARROW_DMG;
 
         fireBalls = new ArrayList<>();
@@ -587,29 +590,24 @@ public class Player extends MapObject {
         }
     }
 
-    public DamageResult calculateDamage(int baseScratchDamage, int strength, double critChance, double critMultiplier, Integer targetDefence) {
-
+    public DamageResult calculateDamage(int baseSkillDamage, int strength, double critChance, double critMultiplier, Integer targetDefence) {
         int defenceValue = (targetDefence == null) ? 0 : targetDefence;
-        double rawDamage = baseScratchDamage + strength;
-        boolean crit = false;
 
+        double rawDamage = baseSkillDamage + strength;
+        boolean crit = false;
         if (Math.random() * 100 < critChance) {
             rawDamage *= (1.0 + (critMultiplier / 100.0));
             crit = true;
-
         }
-
         double finalDamageDouble = rawDamage * 100.0 / (100.0 + defenceValue);
         return new DamageResult((int) finalDamageDouble, crit, rawDamage);
     }
 
-    public DamageResult calculateMagicDamage(int baseDamage, int intelligence, double abilityDamagePercent, Integer targetDefence) {
-
+    public DamageResult calculateMagicDamage(int baseSkillDamage, int intelligence, double abilityDamagePercent, Integer targetDefence) {
         int defenceValue = (targetDefence == null) ? 0 : targetDefence;
-        double rawDamage = baseDamage + (intelligence * 1.5);
+        double rawDamage = baseSkillDamage + (intelligence * 1.2);
         rawDamage *= (1.0 + (abilityDamagePercent / 100.0));
         boolean crit = false;
-
         double finalDamageDouble = rawDamage * 100.0 / (100.0 + defenceValue);
         return new DamageResult((int) finalDamageDouble, crit, rawDamage);
     }
@@ -650,6 +648,7 @@ public class Player extends MapObject {
             this.arrowDMG += levelPoints * ARCHER_ARROW_DMG_GAIN_PER_LEVEL;
             this.CC += levelPoints * ARCHER_CC_GAIN_PER_LEVEL;
             this.critDMG += levelPoints * ARCHER_CD_GAIN_PER_LEVEL;
+            this.intelRegen += ARCHER_INTEL_REGEN;
         }
 
         this.health = this.maxHealth;
@@ -786,59 +785,70 @@ public class Player extends MapObject {
 
     public void applyBlessings(Blessing blessing) {
         blessings.add(blessing);
-        switch(blessing.getType()) {
+        double multiplier = blessing.getValue();
+        System.out.println("Applying " + blessing.getType() + " blessing. Multiplier: " + multiplier);
+
+        switch (blessing.getType()) {
             case STRENGTH:
-                strength *= blessing.getValue();
+                strength = (int)(strength * multiplier);
                 break;
             case CRITDAMAGE:
-                critDMG *= blessing.getValue();
-                CC += blessing.getValue();
+                critDMG *= multiplier;
+
+                CC += (multiplier - 1.0) * 10;
                 break;
             case DAMAGE:
-                scratchDamage *= blessing.getValue();
-                arrowDMG *= blessing.getValue();
-                abilityDMG *= blessing.getValue();
+
+                scratchDamage = (int)(scratchDamage * multiplier);
+                arrowDMG = (int)(arrowDMG * multiplier);
+                fireBallDamage = (int)(fireBallDamage * multiplier);
                 break;
             case SPEED:
-                maxSpeed += blessing.getValue();
+                maxSpeed *= multiplier;
+                moveSpeed *= multiplier;
                 break;
             case HEALTH:
-                maxHealth *= blessing.getValue();
+                maxHealth = (int)(maxHealth * multiplier);
+                health = maxHealth;
                 break;
             case DEFENCE:
-                defence *= blessing.getValue();
+                defence = (int)(defence * multiplier);
                 break;
         }
-        System.out.println("Applying " + blessing.getType() + " blesing.");
     }
 
     public void clearBlessings() {
-        for(Blessing b : blessings) {
-            switch(b.getType()) {
-                case STRENGTH:
-                    this.strength /= b.getValue();
-                    break;
+
+        for (int i = blessings.size() - 1; i >= 0; i--) {
+            Blessing b = blessings.get(i);
+            double inverseMultiplier = 1.0 / b.getValue();
+            switch (b.getType()) {
+                case STRENGTH: strength = (int)(strength * inverseMultiplier); break;
                 case CRITDAMAGE:
-                    this.critDMG /= b.getValue();
-                    CC -= b.getValue();
+                    critDMG *= inverseMultiplier;
+                    CC -= (b.getValue() - 1.0) * 10;
                     break;
                 case DAMAGE:
-                    this.scratchDamage /= b.getValue();
-                    this.arrowDMG /= b.getValue();
-                    this.abilityDMG /= b.getValue();
+                    scratchDamage = (int)(scratchDamage * inverseMultiplier);
+                    arrowDMG = (int)(arrowDMG * inverseMultiplier);
+                    fireBallDamage = (int)(fireBallDamage * inverseMultiplier);
                     break;
                 case SPEED:
-                    this.maxSpeed -= b.getValue();
+                    maxSpeed *= inverseMultiplier;
+                    moveSpeed *= inverseMultiplier;
                     break;
                 case HEALTH:
-                    this.maxHealth /= b.getValue();
+                    maxHealth = (int)(maxHealth * inverseMultiplier);
+                    health = Math.min(health, maxHealth);
                     break;
                 case DEFENCE:
-                    this.defence /= b.getValue();
+                    defence = (int)(defence * inverseMultiplier);
                     break;
             }
         }
         blessings.clear();
+
+        applyCurrentClassLevelBonuses();
     }
 
 

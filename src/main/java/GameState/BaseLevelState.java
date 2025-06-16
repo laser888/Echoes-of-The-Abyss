@@ -548,6 +548,14 @@ public abstract class BaseLevelState extends GameState {
     protected void levelComplete(int currentLevelId) {
 
         int nextLevelId = currentLevelId + 1;
+        double xpMultiplier = 1.0;
+
+        switch(currentLevelId) {
+            case 6: xpMultiplier = 1.0; break;
+            case 7: xpMultiplier = 2.0; break;
+            case 8: xpMultiplier = 3.0; break;
+            case 9: xpMultiplier = 4.0; break;
+        }
         player.clearBlessings();
 
         puzzlesSolvedCount = 0;
@@ -568,7 +576,7 @@ public abstract class BaseLevelState extends GameState {
                 totalPuzzlesInLevel,
                 parTimeSeconds,
                 actualTimeTakenSeconds,
-                playerDidNotDie
+                playerDidNotDie, xpMultiplier
         );
 
         if (player != null) player.addXP(finalScores.xpAwarded);

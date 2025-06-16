@@ -6,7 +6,7 @@ public class ScoreManager {
             int enemiesKilled, int totalEnemiesInLevel,
             int solvedPuzzles, int totalPuzzlesInLevel,
             double parTimeForLevelSeconds, double actualTimeTakenSeconds,
-            boolean playerDidNotDieInLevel) {
+            boolean playerDidNotDieInLevel, double xpMultiplier) {
 
         double combatScoreVal;
 
@@ -54,7 +54,7 @@ public class ScoreManager {
 
         double finalDisplayScore = baseScore * trinketMultiplier;
 
-        int xpAwarded = determineXPAwarded(rank);
+        int xpAwarded = determineXPAwarded(rank, xpMultiplier);
 
         long totalSecondsLong = (long) actualTimeTakenSeconds;
         long minutes = totalSecondsLong / 60;
@@ -72,10 +72,10 @@ public class ScoreManager {
 
 
     private String determineRank(double baseScore) {
-        if (baseScore >= 90) return "S+";
-        else if (baseScore >= 80) return "S";
-        else if (baseScore >= 70) return "A";
-        else if (baseScore >= 60) return "B";
+        if (baseScore >= 100) return "S+";
+        else if (baseScore >= 95) return "S";
+        else if (baseScore >= 85) return "A";
+        else if (baseScore >= 70) return "B";
         else if (baseScore >= 50) return "C";
         else return "D";
     }
@@ -92,22 +92,25 @@ public class ScoreManager {
         }
     }
 
-    private static final int S_PLUS_RANK_XP = 120;
-    private static final int S_RANK_XP = 100;
-    private static final int A_RANK_XP = 75;
-    private static final int B_RANK_XP = 50;
-    private static final int C_RANK_XP = 25;
-    private static final int D_RANK_XP = 10;
+    private static final int S_PLUS_RANK_XP = 1200;
+    private static final int S_RANK_XP = 800;
+    private static final int A_RANK_XP = 500;
+    private static final int B_RANK_XP = 300;
+    private static final int C_RANK_XP = 150;
+    private static final int D_RANK_XP = 75;
 
-    private int determineXPAwarded(String rank) {
+    private int determineXPAwarded(String rank, double xpMultiplier) {
+        int baseXp;
         switch (rank) {
-            case "S+": return S_PLUS_RANK_XP;
-            case "S":  return S_RANK_XP;
-            case "A":  return A_RANK_XP;
-            case "B":  return B_RANK_XP;
-            case "C":  return C_RANK_XP;
-            case "D":  return D_RANK_XP;
-            default:   return 0;
+            case "S+": baseXp = S_PLUS_RANK_XP; break;
+            case "S":  baseXp = S_RANK_XP; break;
+            case "A":  baseXp = A_RANK_XP; break;
+            case "B":  baseXp = B_RANK_XP; break;
+            case "C":  baseXp = C_RANK_XP; break;
+            case "D":  baseXp = D_RANK_XP; break;
+            default:   baseXp = 0;
         }
+
+        return (int) (baseXp * xpMultiplier);
     }
 }
