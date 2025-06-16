@@ -455,6 +455,7 @@ public abstract class BaseLevelState extends GameState {
                 if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) player.setUp(true);
                 if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) player.setDown(true);
                 if (k == keybindManager.getKeyCode(GameAction.GLIDE)) player.setGliding(true);
+                if (k == keybindManager.getKeyCode(GameAction.DEBUG_TOGGLE)) HUD.toggleDebug();
 
             }
             handleLevelSpecificKeyPressed(k); // For level specific keybinds

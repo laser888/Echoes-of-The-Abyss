@@ -131,7 +131,7 @@ public class Player extends MapObject {
     // Animations
     private String spriteFilePath;
     private ArrayList<BufferedImage[]> sprites;
-    private final int[] numFrames = {1, 2, 3, 4, 8};
+    private final int[] numFrames = {1, 2, 3, 4, 5};
     private static final int IDLE = 0;
     private static final int WALKING = 3;
     private static final int JUMPING = 1;
@@ -202,7 +202,7 @@ public class Player extends MapObject {
             numFrames[4] = 6;
         } else if (gsm.getSelectedPlayerClass() == PlayerClass.ARCHER) {
             spriteFilePath = "/Sprites/Player/playersprites_archer.gif";
-            numFrames[4] = 4;
+            numFrames[4] = 3;
         } else {
             spriteFilePath = "/Sprites/Player/playersprites.gif";
         }
@@ -456,7 +456,7 @@ public class Player extends MapObject {
             if (currentAction != FIREBALL) {
                 currentAction = FIREBALL;
                 animation.setFrames(sprites.get(FIREBALL));
-                animation.setDelay(100);
+                animation.setDelay(40);
                 width = 30;
             }
         } else if (dy < 0) {
