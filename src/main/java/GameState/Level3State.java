@@ -4,7 +4,7 @@ import Blessing.Blessing;
 import Entity.*;
 import Entity.Enemies.Skeleton;
 import Entity.Enemies.Slugger;
-import Entity.Enemies.SluggerBoss;
+import Entity.Enemies.WizardBoss;
 import Entity.Enemies.Zombie;
 import Main.GamePanel;
 import TileMap.Background;
@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Level3State extends BaseLevelState {
-
     private LevelConfiguration levelConfig;
     private boolean bossDoorIsOpen = false;
     private Point[] doorTileCoordinates;
@@ -26,6 +25,7 @@ public class Level3State extends BaseLevelState {
     private String blessingText = null;
     private long blessingTextTimer = 0;
     private static final long BLESSING_TEXT_DURATION_NANO = 3_000_000_000L;
+    private boolean bossSpawned = false;
 
     public Level3State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
@@ -33,13 +33,11 @@ public class Level3State extends BaseLevelState {
 
     @Override
     protected void loadLevelSpecifics() {
-
         this.tileMap = new TileMap(30, gamePanel);
         this.tileMap.loadTiles("/TileSets/grasstileset.gif");
         this.tileMap.loadMap("/Maps/level3-1.map");
         this.tileMap.setPosition(0, 0);
         this.tileMap.setTween(1);
-
 
         Point playerSpawn = new Point(100, 100);
         java.util.List<LevelConfiguration.EnemySpawnData> enemySpawns = new ArrayList<>();
@@ -50,7 +48,6 @@ public class Level3State extends BaseLevelState {
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1680, 200)));
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1800, 200)));
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(2750, 200), true)); // Key Mob
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("SluggerBoss", new Point(3050, 200)));
 
         Point[] doorCoords = {new Point(96, 5), new Point(96, 6)};
 
@@ -76,11 +73,11 @@ public class Level3State extends BaseLevelState {
         this.bossDoorIsOpen = false;
         setDoorState(false);
         this.parTimeSeconds = levelConfig.getParTimeSeconds();
+        System.out.println("TileMap offset: x=" + tileMap.getx() + ", y=" + tileMap.gety());
     }
 
     @Override
     protected void populateLevelEntities() {
-
         for (LevelConfiguration.EnemySpawnData spawnData : levelConfig.getEnemySpawns()) {
             Enemy enemy = null;
             switch (spawnData.enemyType) {
@@ -94,9 +91,6 @@ public class Level3State extends BaseLevelState {
                 case "Skeleton":
                     enemy = new Skeleton(tileMap, player);
                     break;
-                case "SluggerBoss":
-                    enemy = new SluggerBoss(tileMap, player);
-                    break;
             }
             if (enemy != null) {
                 enemy.setPosition(spawnData.position.x, spawnData.position.y);
@@ -108,7 +102,6 @@ public class Level3State extends BaseLevelState {
 
     @Override
     protected void updateLevelSpecificLogic() {
-
         tileMap.updateInteractive();
 
         for (TerminalTile t : tileMap.getInteractiveTiles()) {
@@ -128,8 +121,7 @@ public class Level3State extends BaseLevelState {
             blessingText = null;
         }
 
-        if(entityManager != null) {
-
+        if (entityManager != null) {
             List<Enemy> currentEnemies = entityManager.getEnemies();
             for (int i = currentEnemies.size() - 1; i >= 0; i--) {
                 Enemy e = currentEnemies.get(i);
@@ -142,7 +134,7 @@ public class Level3State extends BaseLevelState {
                     entityManager.addExplosion(new Explosion(tileMap, e.getx(), e.gety()));
                     currentEnemies.remove(i);
 
-                    if (e instanceof SluggerBoss) {
+                    if (e instanceof WizardBoss) {
                         levelComplete(GameStateManager.LEVEL3STATE);
                     }
                 }
@@ -153,8 +145,28 @@ public class Level3State extends BaseLevelState {
                     for (int j = skeletonArrows.size() - 1; j >= 0; j--) {
                         Arrow arrow = skeletonArrows.get(j);
                         if (arrow.isEnemyArrow() && player != null && arrow.intersects(player)) {
+                            System.out.println("Arrow hit player at (" + arrow.getx() + "," + arrow.gety() + ")");
                             player.hit(skeleton.getDamage());
                             arrow.setHit();
+                        }
+                    }
+                }
+                if (e instanceof WizardBoss) {
+                    WizardBoss wb = (WizardBoss) e;
+                    for (int j = wb.getLightningStrikes().size() - 1; j >= 0; j--) {
+                        Lightning l = wb.getLightningStrikes().get(j);
+                        if (player != null && l.intersects(player)) {
+                            System.out.println("Lightning hit player at (" + l.getx() + "," + l.gety() + ")");
+                            player.hit(l.getDamage());
+                            l.setHit();
+                        }
+                    }
+                    for (int j = wb.getFireWaves().size() - 1; j >= 0; j--) {
+                        Fire f = wb.getFireWaves().get(j);
+                        if (player != null && f.intersects(player)) {
+                            System.out.println("Fire hit player at (" + f.getx() + "," + f.gety() + ")");
+                            player.hit(f.getDamage());
+                            f.setHit();
                         }
                     }
                 }
@@ -165,11 +177,27 @@ public class Level3State extends BaseLevelState {
     @Override
     protected void drawLevelSpecificElements(Graphics2D g) {
         tileMap.drawInteractive(g, player);
+        if (entityManager != null) {
+            for (Enemy e : entityManager.getEnemies()) {
 
+                if (e instanceof WizardBoss) {
+                    WizardBoss wb = (WizardBoss) e;
+
+                    for (Lightning l : wb.getLightningStrikes()) {
+                        l.setMapPosition();
+                        l.draw(g);
+                    }
+
+                    for (Fire f : wb.getFireWaves()) {
+                        f.setMapPosition();
+                        f.draw(g);
+                    }
+                }
+            }
+        }
         if (blessingText != null) {
             g.setFont(new Font("Arial", Font.BOLD, 14));
             g.setColor(Color.YELLOW);
-
             g.drawString(blessingText, 80, 20);
         }
     }
@@ -182,7 +210,6 @@ public class Level3State extends BaseLevelState {
     protected void handleLevelSpecificKeyReleased(int k) {}
 
     public void mousePressed(MouseEvent e) {
-
         int mx = e.getX()/GamePanel.SCALE;
         int my = e.getY()/GamePanel.SCALE;
         tileMap.handleMouse(mx, my);
@@ -191,13 +218,11 @@ public class Level3State extends BaseLevelState {
 
     @Override
     protected void handleLevelSpecificCommand(String[] token) {
-
         switch(token[0].toLowerCase()) {
             case "/getkey":
             case "/opendoor":
                 if (!bossDoorIsOpen) {
                     openBossDoor();
-                    //System.out.println("Level 1 Cheat: Door opened.");
                 }
                 break;
         }
@@ -205,16 +230,21 @@ public class Level3State extends BaseLevelState {
 
     private void openBossDoor() {
         if (!bossDoorIsOpen) {
-            //System.out.println("Level 1: Boss door is opening!");
             bossDoorIsOpen = true;
             setDoorState(true);
+            if (!bossSpawned) {
+                Enemy boss = new WizardBoss(tileMap, player);
+                boss.setPosition(3050, 185);
+                entityManager.addEnemy(boss);
+                bossSpawned = true;
+                System.out.println("WizardBoss spawned at (3050, 185)");
+            }
         }
     }
 
     private void setDoorState(boolean open) {
         if (doorTileCoordinates != null && tileMap != null) {
             for (Point p : doorTileCoordinates) {
-
                 if (open) {
                     if (p.y == 5) tileMap.setTile(p.y, p.x, 17);
                     else tileMap.setTile(p.y, p.x, 0);
