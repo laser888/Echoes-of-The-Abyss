@@ -2,10 +2,7 @@ package GameState;
 
 import Blessing.Blessing;
 import Entity.*;
-import Entity.Enemies.Skeleton;
-import Entity.Enemies.Slugger;
-import Entity.Enemies.SluggerBoss;
-import Entity.Enemies.Zombie;
+import Entity.Enemies.*;
 import Main.GamePanel;
 import TileMap.Background;
 import TileMap.TileMap;
@@ -17,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Level2State extends BaseLevelState {
-
     private LevelConfiguration levelConfig;
     private boolean bossDoorIsOpen = false;
     private Point[] doorTileCoordinates;
@@ -26,20 +22,37 @@ public class Level2State extends BaseLevelState {
     private String blessingText = null;
     private long blessingTextTimer = 0;
     private static final long BLESSING_TEXT_DURATION_NANO = 3_000_000_000L;
+    private String bossHintText = null;
+    private long bossHintTimer = 0;
+    private static final long BOSS_HINT_DURATION_NANO = 5_000_000_000L;
+    private ArrayList<Livid> lividGroup;
+    private Livid initialBoss;
+    private boolean bossActivated = false;
+    private boolean bossFightStarted;
 
     public Level2State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
+        lividGroup = new ArrayList<>();
     }
 
     @Override
     protected void loadLevelSpecifics() {
+        lividGroup.clear();
+        bossDoorIsOpen = false;
+        bossActivated = false;
+        bossFightStarted = false;
+        initialBoss = null;
+        blessingApplied = false;
+        blessingText = null;
+        bossHintText = null;
+        keyMob = null;
+        System.out.println("Level2State reset in loadLevelSpecifics");
 
         this.tileMap = new TileMap(30, gamePanel);
         this.tileMap.loadTiles("/TileSets/grasstileset.gif");
         this.tileMap.loadMap("/Maps/level2-1.map");
         this.tileMap.setPosition(0, 0);
         this.tileMap.setTween(1);
-
 
         Point playerSpawn = new Point(100, 100);
         java.util.List<LevelConfiguration.EnemySpawnData> enemySpawns = new ArrayList<>();
@@ -49,8 +62,8 @@ public class Level2State extends BaseLevelState {
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1525, 200)));
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1680, 200)));
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1800, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(2750, 200), true)); // Key Mob
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("SluggerBoss", new Point(3050, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(2750, 200), true));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Livid", new Point(3050, 185)));
 
         Point[] doorCoords = {new Point(96, 5), new Point(96, 6)};
 
@@ -73,14 +86,14 @@ public class Level2State extends BaseLevelState {
         this.player.setPosition(levelConfig.getPlayerSpawnPoint().x, levelConfig.getPlayerSpawnPoint().y);
 
         this.doorTileCoordinates = levelConfig.getDoorCoordinates();
-        this.bossDoorIsOpen = false;
         setDoorState(false);
         this.parTimeSeconds = levelConfig.getParTimeSeconds();
     }
 
     @Override
     protected void populateLevelEntities() {
-
+        lividGroup.clear();
+        entityManager.getEnemies().clear();
         for (LevelConfiguration.EnemySpawnData spawnData : levelConfig.getEnemySpawns()) {
             Enemy enemy = null;
             switch (spawnData.enemyType) {
@@ -94,9 +107,19 @@ public class Level2State extends BaseLevelState {
                 case "Skeleton":
                     enemy = new Skeleton(tileMap, player);
                     break;
-                case "SluggerBoss":
-                    enemy = new SluggerBoss(tileMap, player);
-                    break;
+                case "Livid":
+                    String[] suits = {"Heart", "Diamond", "Spade"};
+                    int realSuitIndex = (int)(Math.random() * 3);
+                    String realSuit = suits[realSuitIndex];
+                    for (int i = 0; i < suits.length; i++) {
+                        Livid livid = new Livid(tileMap, player, suits[i], i == realSuitIndex, lividGroup);
+                        double spawnX = spawnData.position.x + (50 * i); // 3050, 3100, 3150
+                        livid.setPosition(spawnX, spawnData.position.y);
+                        lividGroup.add(livid);
+                    }
+                    continue;
+                default:
+                    enemy = null;
             }
             if (enemy != null) {
                 enemy.setPosition(spawnData.position.x, spawnData.position.y);
@@ -104,11 +127,11 @@ public class Level2State extends BaseLevelState {
             }
         }
         this.totalEnemiesAtStart = entityManager.getEnemies().size();
+        System.out.println("Populated " + totalEnemiesAtStart + " enemies (excluding Livids)");
     }
 
     @Override
     protected void updateLevelSpecificLogic() {
-
         tileMap.updateInteractive();
 
         for (TerminalTile t : tileMap.getInteractiveTiles()) {
@@ -127,10 +150,36 @@ public class Level2State extends BaseLevelState {
         if (blessingText != null && (System.nanoTime() - blessingTextTimer) > BLESSING_TEXT_DURATION_NANO) {
             blessingText = null;
         }
+        if (bossDoorIsOpen && !bossActivated) {
+            bossActivated = true;
+            for (Livid livid : lividGroup) {
+                entityManager.addEnemy(livid);
+                System.out.println("Spawned Livid (" + livid.getSuitType() + ", " +
+                        (livid.isReal() ? "real" : "clone") + ") at (" + livid.getx() + ", " + livid.gety() + ")");
+                if (livid.isReal()) {
+                    bossHintText = "The " + livid.getSuitType() + " Livid is the true boss!";
+                    bossHintTimer = System.nanoTime();
+                }
+            }
+        }
 
+        if (bossHintText != null && (System.nanoTime() - bossHintTimer) > BOSS_HINT_DURATION_NANO) {
+            bossHintText = null;
+        }
 
-        if(entityManager != null) {
+        if (lividGroup != null) {
+            for (Livid livid : lividGroup) {
+                if (livid.shouldBlindPlayer()) {
+                    startScreenFlash(500);
+                    System.out.println("Livid triggered blind effect");
+                }
+                if (livid.isDead() && livid.isReal()) {
+                    levelComplete();
+                }
+            }
+        }
 
+        if (entityManager != null) {
             List<Enemy> currentEnemies = entityManager.getEnemies();
             for (int i = currentEnemies.size() - 1; i >= 0; i--) {
                 Enemy e = currentEnemies.get(i);
@@ -143,7 +192,7 @@ public class Level2State extends BaseLevelState {
                     entityManager.addExplosion(new Explosion(tileMap, e.getx(), e.gety()));
                     currentEnemies.remove(i);
 
-                    if (e instanceof SluggerBoss) {
+                    if (e instanceof Livid && ((Livid)e).isReal()) {
                         levelComplete();
                     }
                 }
@@ -158,6 +207,18 @@ public class Level2State extends BaseLevelState {
                             arrow.setHit();
                         }
                     }
+                } else if (e instanceof Livid) {
+                    Livid livid = (Livid) e;
+                    ArrayList<CardProjectile> cards = livid.getCards();
+
+                    for (int j = cards.size() - 1; j >= 0; j--) {
+                        CardProjectile card = cards.get(j);
+
+                        if (player != null && card.intersects(player)) {
+                            player.hit(livid.getDamage());
+                            card.setHit();
+                        }
+                    }
                 }
             }
         }
@@ -166,14 +227,15 @@ public class Level2State extends BaseLevelState {
     @Override
     protected void drawLevelSpecificElements(Graphics2D g) {
         tileMap.drawInteractive(g, player);
-
         if (blessingText != null) {
             g.setFont(new Font("Arial", Font.BOLD, 14));
             g.setColor(Color.YELLOW);
-
             g.drawString(blessingText, 80, 20);
         }
-
+        if (bossHintText != null) {
+            g.setColor(Color.RED);
+            g.drawString(bossHintText, 80, 40);
+        }
     }
 
     @Override
@@ -181,25 +243,36 @@ public class Level2State extends BaseLevelState {
         tileMap.handleKeyPress(k, player);
     }
 
+    @Override
     protected void handleLevelSpecificKeyReleased(int k) {}
 
+    @Override
     public void mousePressed(MouseEvent e) {
-
-        int mx = e.getX()/GamePanel.SCALE;
-        int my = e.getY()/GamePanel.SCALE;
+        int mx = e.getX() / GamePanel.SCALE;
+        int my = e.getY() / GamePanel.SCALE;
         tileMap.handleMouse(mx, my);
         super.mousePressed(e);
     }
 
     @Override
     protected void handleLevelSpecificCommand(String[] token) {
-
-        switch(token[0].toLowerCase()) {
+        switch (token[0].toLowerCase()) {
             case "/getkey":
             case "/opendoor":
                 if (!bossDoorIsOpen) {
                     openBossDoor();
-                    //System.out.println("Level 1 Cheat: Door opened.");
+                }
+                break;
+            case "/teleport":
+                if (token.length == 3) {
+                    try {
+                        int x = Integer.parseInt(token[1]);
+                        int y = Integer.parseInt(token[2]);
+                        player.setPosition(x, y);
+                        System.out.println("Teleported to (" + x + ", " + y + ")");
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid teleport coordinates.");
+                    }
                 }
                 break;
         }
@@ -207,16 +280,15 @@ public class Level2State extends BaseLevelState {
 
     private void openBossDoor() {
         if (!bossDoorIsOpen) {
-            //System.out.println("Level 1: Boss door is opening!");
             bossDoorIsOpen = true;
             setDoorState(true);
+            System.out.println("Boss door opened!");
         }
     }
 
     private void setDoorState(boolean open) {
         if (doorTileCoordinates != null && tileMap != null) {
             for (Point p : doorTileCoordinates) {
-
                 if (open) {
                     if (p.y == 5) tileMap.setTile(p.y, p.x, 17);
                     else tileMap.setTile(p.y, p.x, 0);

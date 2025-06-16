@@ -7,8 +7,6 @@ import GameState.GameStateManager;
 import GameState.BaseLevelState;
 import TileMap.*;
 import Data.GameData;
-import Blessing.BlessingType;
-import Blessing.Blessing;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -805,8 +803,8 @@ public class Player extends MapObject {
                 maxSpeed += blessing.getValue();
                 break;
             case HEALTH:
-                 maxHealth *= blessing.getValue();
-                 break;
+                maxHealth *= blessing.getValue();
+                break;
             case DEFENCE:
                 defence *= blessing.getValue();
                 break;
