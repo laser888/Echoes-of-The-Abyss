@@ -528,14 +528,17 @@ public class Player extends MapObject {
     }
 
     public void respawn() {
-        if (!dead) return;
-        setPosition(gsm.getCurrentState().getSpawnX(), gsm.getCurrentState().getSpawnY());
-        health = maxHealth;
-        intelligence = maxIntelligence;
-        dead = false;
-        immune = true; // Enable immunity on respawn
-        immuneTimer = System.nanoTime(); // Start immunity timer
-        //System.out.println("Player respawned at (" + gsm.getCurrentState().getSpawnX() + ", " + gsm.getCurrentState().getSpawnY() + ") with immunity");
+        if (dead || outOfMap) {
+            setPosition(gsm.getCurrentState().getSpawnX(), gsm.getCurrentState().getSpawnY());
+            health = maxHealth;
+            intelligence = maxIntelligence;
+            dead = false;
+            immune = true; // Enable immunity on respawn
+            immuneTimer = System.nanoTime(); // Start immunity timer
+            //System.out.println("Player respawned at (" + gsm.getCurrentState().getSpawnX() + ", " + gsm.getCurrentState().getSpawnY() + ") with immunity");
+        } else {
+            return;
+        }
     }
 
     public void setSpeed(double speed) {

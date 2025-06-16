@@ -70,7 +70,7 @@ public abstract class MapObject {
     protected boolean outOfMap;
 
     // constructor
-    public MapObject (TileMap tm) {
+    public MapObject(TileMap tm) {
         tileMap = tm;
         tileSize = tm.getTileSize();
     }
@@ -99,11 +99,27 @@ public abstract class MapObject {
         if (bottomTile >= numRows) {
             outOfMap = true;
             return;
-        } else {
+
+        } else if (topTile < 0) {
             outOfMap = false;
+            topLeft = false;
+            topRight = false;
+            bottomLeft = false;
+            bottomRight = false;
+            return;
+
+        } else if (leftTile < 0 || rightTile >= numCols) {
+            outOfMap = false;
+            topLeft = leftTile < 0 ? true : tileMap.getType(topTile, leftTile) == Tile.BLOCKED;
+            topRight = rightTile >= numCols ? true : tileMap.getType(topTile, rightTile) == Tile.BLOCKED;
+            bottomLeft = leftTile < 0 ? true : tileMap.getType(bottomTile, leftTile) == Tile.BLOCKED;
+            bottomRight = rightTile >= numCols ? true : tileMap.getType(bottomTile, rightTile) == Tile.BLOCKED;
+            return;
         }
 
-        // Clamp tiles to valid ranges
+        outOfMap = false;
+
+        // Clamp tiles for tile access
         topTile = Math.max(0, Math.min(topTile, numRows - 1));
         bottomTile = Math.max(0, Math.min(bottomTile, numRows - 1));
         leftTile = Math.max(0, Math.min(leftTile, numCols - 1));
@@ -120,10 +136,7 @@ public abstract class MapObject {
         bottomRight = br == Tile.BLOCKED;
     }
 
-
-
     public void checkTileMapCollision() {
-
         currCol = (int) x / tileSize;
         currRow = (int) y / tileSize;
 
@@ -133,19 +146,22 @@ public abstract class MapObject {
         xtemp = x;
         ytemp = y;
 
+        // fi
         calculateCorners(x, ydest);
+        if (outOfMap) {
+            return;
+        }
 
-        if(dy < 0) {
-            if(topLeft || topRight){
+        if (dy < 0) {
+            if (topLeft || topRight) {
                 dy = 0;
                 ytemp = currRow * tileSize + cheight / 2;
             } else {
                 ytemp += dy;
             }
-
         }
-        if(dy > 0) {
-            if(bottomLeft || bottomRight){
+        if (dy > 0) {
+            if (bottomLeft || bottomRight) {
                 dy = 0;
                 falling = false;
                 ytemp = (currRow + 1) * tileSize - cheight / 2;
@@ -154,39 +170,64 @@ public abstract class MapObject {
             }
         }
 
+        // Check horizontal movement
         calculateCorners(xdest, y);
-        if(dx < 0) {
-            if(topLeft || bottomLeft){
+        if (outOfMap) {
+            System.out.println("MapObject: checkTileMapCollision early exit due to outOfMap (horizontal) at (x=" + x + ", y=" + y + ")");
+            return;
+        }
+
+        if (dx < 0) {
+            if (topLeft || bottomLeft) {
                 dx = 0;
                 xtemp = currCol * tileSize + cwidth / 2;
+                System.out.println("MapObject: Blocked left movement at x=" + xtemp);
             } else {
                 xtemp += dx;
             }
-
         }
-        if(dx > 0) {
-            if(topRight || bottomRight){
+        if (dx > 0) {
+            if (topRight || bottomRight) {
                 dx = 0;
                 xtemp = (currCol + 1) * tileSize - cwidth / 2;
+                System.out.println("MapObject: Blocked right movement at x=" + xtemp);
             } else {
                 xtemp += dx;
             }
         }
 
-        if(!falling) {
+        // Check if should start falling
+        if (!falling) {
             calculateCorners(x, ydest + 1);
-            if(!bottomLeft && !bottomRight) {
+            if (outOfMap) {
+                System.out.println("MapObject: checkTileMapCollision early exit due to outOfMap (falling) at (x=" + x + ", y=" + y + ")");
+                return;
+            }
+            if (!bottomLeft && !bottomRight) {
                 falling = true;
             }
         }
+
+        // Clamp x position to map boundaries to reinforce left/right walls
+        int minX = cwidth / 2;
+        int maxX = tileMap.getWidth() - cwidth / 2;
+        if (xtemp < minX) {
+            xtemp = minX;
+            dx = 0;
+            System.out.println("MapObject: Clamped to left edge at x=" + xtemp);
+        } else if (xtemp > maxX) {
+            xtemp = maxX;
+            dx = 0;
+            System.out.println("MapObject: Clamped to right edge at x=" + xtemp);
+        }
     }
 
-    public int getx() { return (int) x;}
-    public int gety() { return (int) y;}
-    public int getWidth() { return width;}
-    public int getHeight() { return height;}
-    public int getCWidth() { return cwidth;}
-    public int getCHeight() { return cheight;}
+    public int getx() { return (int) x; }
+    public int gety() { return (int) y; }
+    public int getWidth() { return width; }
+    public int getHeight() { return height; }
+    public int getCWidth() { return cwidth; }
+    public int getCHeight() { return cheight; }
 
     public void setPosition(double x, double y) {
         this.x = x;
@@ -203,22 +244,21 @@ public abstract class MapObject {
         ymap = tileMap.gety();
     }
 
-    public void setLeft(boolean b) { left = b;}
-    public void setRight(boolean b) { right = b;}
-    public void setUp(boolean b) { up = b;}
-    public void setDown(boolean b) { down = b;}
-    public void setJumping(boolean b) { jumping = b;}
+    public void setLeft(boolean b) { left = b; }
+    public void setRight(boolean b) { right = b; }
+    public void setUp(boolean b) { up = b; }
+    public void setDown(boolean b) { down = b; }
+    public void setJumping(boolean b) { jumping = b; }
 
     public boolean notOnScreen() {
         return x + xmap + width < 0 || x + xmap - width > GamePanel.WIDTH || y + ymap + height < 0 || y + ymap - height > GamePanel.HEIGHT;
     }
 
     public void draw(Graphics2D g) {
-        if(facingRight) {
+        if (facingRight) {
             g.drawImage(animation.getImage(), (int) (x + xmap - width / 2), (int) (y + ymap - height / 2), null);
         } else {
             g.drawImage(animation.getImage(), (int) (x + xmap - width / 2 + width), (int) (y + ymap - height / 2), -width, height, null);
         }
     }
-
 }

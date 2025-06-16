@@ -71,13 +71,17 @@ public class Level2State extends BaseLevelState {
 
         Point playerSpawn = new Point(100, 100);
         java.util.List<LevelConfiguration.EnemySpawnData> enemySpawns = new ArrayList<>();
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(200, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(150, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(860, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1525, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1680, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1800, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(2750, 200), true));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(650, 170)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(780, 110)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(1200, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(1250, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(1305, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(1310, 80)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(1300, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(1900, 110)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(2200, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(2300, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(2830, 200), true));
 
         Point[] doorCoords = {new Point(96, 5), new Point(96, 6)};
 
@@ -117,9 +121,11 @@ public class Level2State extends BaseLevelState {
                     break;
                 case "Zombie":
                     enemy = new Zombie(tileMap);
+                    if (spawnData.isKeyMob) { this.keyMob = enemy; }
                     break;
                 case "Skeleton":
                     enemy = new Skeleton(tileMap, player);
+                    if (spawnData.isKeyMob) { this.keyMob = enemy; }
                     break;
             }
             if (enemy != null) {

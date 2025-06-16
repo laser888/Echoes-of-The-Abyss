@@ -54,15 +54,32 @@ public class Level3State extends BaseLevelState {
 
         Point playerSpawn = new Point(100, 100);
         java.util.List<LevelConfiguration.EnemySpawnData> enemySpawns = new ArrayList<>();
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(100, 200)));
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(200, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(150, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(860, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1525, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1680, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1800, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(2750, 200), true));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(200, 80)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(250, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(670, 170)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(780, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(825, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(870, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(1000, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(1050, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(1480, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(1500, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(1600, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(1620, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(1700, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(1750, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(1800, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(1840, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(2300, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(2400, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(2445, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(2460, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(2820, 200), true));
 
-        Point[] doorCoords = {new Point(96, 5), new Point(96, 6)};
+
+        Point[] doorCoords = {new Point(95, 5), new Point(95, 6)};
 
         this.levelConfig = new LevelConfiguration(
                 "Level 3 - Dungeony Dungeon",
@@ -98,9 +115,11 @@ public class Level3State extends BaseLevelState {
                     break;
                 case "Zombie":
                     enemy = new Zombie(tileMap);
+                    if (spawnData.isKeyMob) { this.keyMob = enemy; }
                     break;
                 case "Skeleton":
                     enemy = new Skeleton(tileMap, player);
+                    if (spawnData.isKeyMob) { this.keyMob = enemy; }
                     break;
             }
             if (enemy != null) {
