@@ -26,12 +26,12 @@ public class WizardBoss extends Enemy {
     private long lastMoveTime;
     private static final long LIGHTNING_COOLDOWN = 5000; // 5 seconds
     private static final long FIRE_COOLDOWN = 3000; // 3 seconds
-    private static final long MOVE_COOLDOWN = 4000; // 4 seconds
+    private static final long MOVE_COOLDOWN = 10000; // 10 seconds
     private static final int ATTACK_RANGE = 300; // Range for attacks
-    private static final int CHASE_RANGE = 200;
-    private static final int PATROL_RANGE = 100;
-    private double startX;
-    private boolean movingRight;
+    private static final int CHASE_RANGE = 500;
+    private static final int TOLERANCE = 80;
+
+
 
     public WizardBoss(TileMap tm, Player player) {
         super(tm);
@@ -49,8 +49,6 @@ public class WizardBoss extends Enemy {
         cheight = 20;
         health = maxHealth = 600;
         damage = 15;
-        startX = x;
-        movingRight = true;
         loadSprites();
         facingRight = true;
     }
@@ -62,7 +60,7 @@ public class WizardBoss extends Enemy {
             if (spritesheet == null) {
                 throw new IOException("WizardBoss sprite sheet is null");
             }
-            System.out.println("WizardBoss sprite loaded successfully");
+            //System.out.println("WizardBoss sprite loaded successfully");
         } catch (Exception e) {
             System.out.println("Failed to load WizardBoss sprite: " + e.getMessage());
             spritesheet = new BufferedImage(31, 120, BufferedImage.TYPE_INT_ARGB);
@@ -125,7 +123,7 @@ public class WizardBoss extends Enemy {
         lightningStrikes.add(lightning);
         lastLightningTime = System.currentTimeMillis();
         setAnimation(LIGHTNING);
-        System.out.println("WizardBoss fired lightning at (" + player.getx() + "," + spawnY + "), warning at (" + player.getx() + "," + warnY + "), tileMap.gety=" + tileMap.gety());
+        //tln("WizardBoss fired lightning at (" + player.getx() + "," + spawnY + "), warning at (" + player.getx() + "," + warnY + "), tileMap.gety=" + tileMap.gety());
     }
 
     private void fireWave() {
@@ -135,13 +133,12 @@ public class WizardBoss extends Enemy {
         fireWaves.add(wave);
         lastFireTime = System.currentTimeMillis();
         setAnimation(FIRE);
-        System.out.println("WizardBoss fired fire wave at (" + x + "," + y + ")");
+        //System.out.println("WizardBoss fired fire wave at (" + x + "," + y + ")");
     }
 
     @Override
     public void setPosition(double x, double y) {
         super.setPosition(x, y);
-        if (startX == 0) startX = x;
     }
 
     @Override
@@ -156,27 +153,21 @@ public class WizardBoss extends Enemy {
     }
 
     private void getNextPosition() {
-
+        // Face player
         facingRight = player.getx() > x;
 
-        if (System.currentTimeMillis() - lastMoveTime > MOVE_COOLDOWN) {
-            double distToPlayer = Math.abs(player.getx() - x);
-            if (distToPlayer < CHASE_RANGE) {
+        // Movement logic
+        double distToPlayer = Math.abs(player.getx() - x);
+        if (distToPlayer < CHASE_RANGE && distToPlayer > TOLERANCE) {
 
-                dx = (player.getx() > x) ? moveSpeed : -moveSpeed;
-                setAnimation(WALKING);
-            } else {
-
-                if (Math.abs(x - startX) > PATROL_RANGE) {
-                    movingRight = !movingRight;
-                }
-                dx = movingRight ? moveSpeed : -moveSpeed;
-                setAnimation(WALKING);
-            }
-            lastMoveTime = System.currentTimeMillis();
+            dx = (player.getx() > x) ? moveSpeed : -moveSpeed;
+            setAnimation(WALKING);
         } else {
+
             dx = 0;
+            setAnimation(IDLE);
         }
+        //System.out.println("WizardBoss movement: dx=" + dx + ", distToPlayer=" + distToPlayer + ", x=" + x + ", player.x=" + player.getx() + ", inTolerance=" + (distToPlayer <= TOLERANCE));
 
         if (dx != 0) {
             if (dx > maxSpeed) dx = maxSpeed;

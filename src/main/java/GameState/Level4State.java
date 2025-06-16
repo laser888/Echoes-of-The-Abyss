@@ -143,7 +143,7 @@ public class Level4State extends BaseLevelState {
                     currentEnemies.remove(i);
 
                     if (e instanceof SluggerBoss) {
-                        levelComplete(GameStateManager.LEVEL3STATE);
+                        levelComplete(GameStateManager.LEVEL4STATE);
                     }
                 }
 

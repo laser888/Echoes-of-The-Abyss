@@ -24,6 +24,7 @@ public class GameStateManager {
     public static final int LEVEL2STATE = 7;
     public static final int LEVEL3STATE = 8;
     public static final int LEVEL4STATE = 9;
+    public static final int CREDITSSTATE = 10;
 
     private Entity.Player.PlayerClass currentPlayerClassSelection = Entity.Player.PlayerClass.NONE;
 
@@ -44,6 +45,7 @@ public class GameStateManager {
         gameStates.add(new Level2State(this, gamePanel));
         gameStates.add(new Level3State(this, gamePanel));
         gameStates.add(new Level4State(this, gamePanel));
+        gameStates.add(new CreditsState(this, gamePanel));
 
     }
 
