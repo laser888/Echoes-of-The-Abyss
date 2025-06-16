@@ -86,22 +86,29 @@ public abstract class MapObject {
     }
 
     public void calculateCorners(double x, double y) {
-
-        int leftTile = (int) (x - cwidth / 2) / tileSize;
-        int rightTile = (int) (x + cwidth / 2 - 1) / tileSize;
-        int topTile = (int) (y - cwidth / 2) / tileSize;
-        int bottomTile = (int) (y + cwidth / 2 - 1) / tileSize;
-
+        int tileSize = tileMap.getTileSize();
         int numRows = tileMap.getNumRows();
         int numCols = tileMap.getNumCols();
 
-        // If out of bounds (below map), respawn or stop
-        if (topTile < 0 || bottomTile >= numRows || leftTile < 0 || rightTile >= numCols) {
+        int leftTile = (int) (x - cwidth / 2) / tileSize;
+        int rightTile = (int) (x + cwidth / 2 - 1) / tileSize;
+        int topTile = (int) (y - cheight / 2) / tileSize;
+        int bottomTile = (int) (y + cheight / 2 - 1) / tileSize;
+
+        // If out of bounds (below map), respawn
+        if (bottomTile >= numRows) {
             outOfMap = true;
             return;
         } else {
             outOfMap = false;
         }
+
+        // Clamp tiles to valid ranges
+        topTile = Math.max(0, Math.min(topTile, numRows - 1));
+        bottomTile = Math.max(0, Math.min(bottomTile, numRows - 1));
+        leftTile = Math.max(0, Math.min(leftTile, numCols - 1));
+        rightTile = Math.max(0, Math.min(rightTile, numCols - 1));
+
         int tl = tileMap.getType(topTile, leftTile);
         int tr = tileMap.getType(topTile, rightTile);
         int bl = tileMap.getType(bottomTile, leftTile);
@@ -111,8 +118,9 @@ public abstract class MapObject {
         topRight = tr == Tile.BLOCKED;
         bottomLeft = bl == Tile.BLOCKED;
         bottomRight = br == Tile.BLOCKED;
-
     }
+
+
 
     public void checkTileMapCollision() {
 
