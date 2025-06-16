@@ -17,29 +17,37 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Level4State extends BaseLevelState {
-
     private LevelConfiguration levelConfig;
-    private boolean bossDoorIsOpen = false;
+    private boolean bossDoorIsOpen;
     private Point[] doorTileCoordinates;
     private Enemy keyMob;
     private boolean blessingApplied = false;
     private String blessingText = null;
     private long blessingTextTimer = 0;
     private static final long BLESSING_TEXT_DURATION_NANO = 3_000_000_000L;
+    private boolean bossSpawned;
 
     public Level4State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
+        this.bossSpawned = false;
+        this.bossDoorIsOpen = false;
+    }
+
+    @Override
+    public void init() {
+        super.init();
+        this.bossSpawned = false;
+        this.bossDoorIsOpen = false;
+        setDoorState(false);
     }
 
     @Override
     protected void loadLevelSpecifics() {
-
         this.tileMap = new TileMap(30, gamePanel);
         this.tileMap.loadTiles("/TileSets/grasstileset.gif");
         this.tileMap.loadMap("/Maps/level4-1.map");
         this.tileMap.setPosition(0, 0);
         this.tileMap.setTween(1);
-
 
         Point playerSpawn = new Point(100, 100);
         java.util.List<LevelConfiguration.EnemySpawnData> enemySpawns = new ArrayList<>();
@@ -50,12 +58,11 @@ public class Level4State extends BaseLevelState {
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1680, 200)));
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1800, 200)));
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(2750, 200), true)); // Key Mob
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("SluggerBoss", new Point(3050, 200)));
 
         Point[] doorCoords = {new Point(96, 5), new Point(96, 6)};
 
         this.levelConfig = new LevelConfiguration(
-                "Level 3 - Dungeony Dungeon",
+                "Level 4 - Dungeony Dungeon",
                 "/Maps/level4-1.map",
                 "/TileSets/grasstileset.gif",
                 "/Backgrounds/dungeonbg.gif",
@@ -73,14 +80,13 @@ public class Level4State extends BaseLevelState {
         this.player.setPosition(levelConfig.getPlayerSpawnPoint().x, levelConfig.getPlayerSpawnPoint().y);
 
         this.doorTileCoordinates = levelConfig.getDoorCoordinates();
-        this.bossDoorIsOpen = false;
         setDoorState(false);
         this.parTimeSeconds = levelConfig.getParTimeSeconds();
+        System.out.println("Level 4: TileMap offset: x=" + tileMap.getx() + ", y=" + tileMap.gety());
     }
 
     @Override
     protected void populateLevelEntities() {
-
         for (LevelConfiguration.EnemySpawnData spawnData : levelConfig.getEnemySpawns()) {
             Enemy enemy = null;
             switch (spawnData.enemyType) {
@@ -94,9 +100,6 @@ public class Level4State extends BaseLevelState {
                 case "Skeleton":
                     enemy = new Skeleton(tileMap, player);
                     break;
-                case "SluggerBoss":
-                    enemy = new SluggerBoss(tileMap, player);
-                    break;
             }
             if (enemy != null) {
                 enemy.setPosition(spawnData.position.x, spawnData.position.y);
@@ -108,7 +111,6 @@ public class Level4State extends BaseLevelState {
 
     @Override
     protected void updateLevelSpecificLogic() {
-
         tileMap.updateInteractive();
 
         for (TerminalTile t : tileMap.getInteractiveTiles()) {
@@ -128,8 +130,17 @@ public class Level4State extends BaseLevelState {
             blessingText = null;
         }
 
-        if(entityManager != null) {
+        if (bossDoorIsOpen && !bossSpawned && player != null && player.getx() > 2940) {
+            setDoorState(false); // Lock door
+            bossDoorIsOpen = false; // Prevent reopening
+            Enemy boss = new SluggerBoss(tileMap, player);
+            boss.setPosition(3050, 200);
+            entityManager.addEnemy(boss);
+            bossSpawned = true;
+            System.out.println("Level 4: Door locked at x=2940, SluggerBoss spawned at (3050, 200), player.x=" + player.getx());
+        }
 
+        if (entityManager != null) {
             List<Enemy> currentEnemies = entityManager.getEnemies();
             for (int i = currentEnemies.size() - 1; i >= 0; i--) {
                 Enemy e = currentEnemies.get(i);
@@ -153,6 +164,7 @@ public class Level4State extends BaseLevelState {
                     for (int j = skeletonArrows.size() - 1; j >= 0; j--) {
                         Arrow arrow = skeletonArrows.get(j);
                         if (arrow.isEnemyArrow() && player != null && arrow.intersects(player)) {
+                            System.out.println("Level 4: Arrow hit player at (" + arrow.getx() + "," + arrow.gety() + ")");
                             player.hit(skeleton.getDamage());
                             arrow.setHit();
                         }
@@ -169,7 +181,6 @@ public class Level4State extends BaseLevelState {
         if (blessingText != null) {
             g.setFont(new Font("Arial", Font.BOLD, 14));
             g.setColor(Color.YELLOW);
-
             g.drawString(blessingText, 80, 20);
         }
     }
@@ -182,7 +193,6 @@ public class Level4State extends BaseLevelState {
     protected void handleLevelSpecificKeyReleased(int k) {}
 
     public void mousePressed(MouseEvent e) {
-
         int mx = e.getX()/GamePanel.SCALE;
         int my = e.getY()/GamePanel.SCALE;
         tileMap.handleMouse(mx, my);
@@ -191,13 +201,12 @@ public class Level4State extends BaseLevelState {
 
     @Override
     protected void handleLevelSpecificCommand(String[] token) {
-
         switch(token[0].toLowerCase()) {
             case "/getkey":
             case "/opendoor":
                 if (!bossDoorIsOpen) {
                     openBossDoor();
-                    //System.out.println("Level 1 Cheat: Door opened.");
+                    System.out.println("Level 4: Cheat: Door opened");
                 }
                 break;
         }
@@ -205,16 +214,15 @@ public class Level4State extends BaseLevelState {
 
     private void openBossDoor() {
         if (!bossDoorIsOpen) {
-            //System.out.println("Level 1: Boss door is opening!");
             bossDoorIsOpen = true;
             setDoorState(true);
+            System.out.println("Level 4: Boss door opened");
         }
     }
 
     private void setDoorState(boolean open) {
         if (doorTileCoordinates != null && tileMap != null) {
             for (Point p : doorTileCoordinates) {
-
                 if (open) {
                     if (p.y == 5) tileMap.setTile(p.y, p.x, 17);
                     else tileMap.setTile(p.y, p.x, 0);

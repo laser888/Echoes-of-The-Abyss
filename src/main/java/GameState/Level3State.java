@@ -18,17 +18,29 @@ import java.util.List;
 
 public class Level3State extends BaseLevelState {
     private LevelConfiguration levelConfig;
-    private boolean bossDoorIsOpen = false;
+    private boolean bossDoorIsOpen;
     private Point[] doorTileCoordinates;
     private Enemy keyMob;
     private boolean blessingApplied = false;
     private String blessingText = null;
     private long blessingTextTimer = 0;
     private static final long BLESSING_TEXT_DURATION_NANO = 3_000_000_000L;
-    private boolean bossSpawned = false;
+    private boolean bossSpawned;
 
     public Level3State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
+        this.bossSpawned = false;
+        this.bossDoorIsOpen = false;
+        System.out.println("Level 3: Constructor called, flags reset");
+    }
+
+    @Override
+    public void init() {
+        super.init();
+        this.bossSpawned = false;
+        this.bossDoorIsOpen = false;
+        setDoorState(false);
+        System.out.println("Level 3: init() called, flags reset, door closed");
     }
 
     @Override
@@ -70,10 +82,9 @@ public class Level3State extends BaseLevelState {
         this.player.setPosition(levelConfig.getPlayerSpawnPoint().x, levelConfig.getPlayerSpawnPoint().y);
 
         this.doorTileCoordinates = levelConfig.getDoorCoordinates();
-        this.bossDoorIsOpen = false;
         setDoorState(false);
         this.parTimeSeconds = levelConfig.getParTimeSeconds();
-        System.out.println("TileMap offset: x=" + tileMap.getx() + ", y=" + tileMap.gety());
+        System.out.println("Level 3: TileMap offset: x=" + tileMap.getx() + ", y=" + tileMap.gety());
     }
 
     @Override
@@ -121,6 +132,16 @@ public class Level3State extends BaseLevelState {
             blessingText = null;
         }
 
+        if (bossDoorIsOpen && !bossSpawned && player != null && player.getx() > 2940) {
+            setDoorState(false);
+            bossDoorIsOpen = false;
+            Enemy boss = new WizardBoss(tileMap, player);
+            boss.setPosition(3050, 185);
+            entityManager.addEnemy(boss);
+            bossSpawned = true;
+            System.out.println("Level 3: Door locked at x=2940, WizardBoss spawned at (3050, 185), player.x=" + player.getx());
+        }
+
         if (entityManager != null) {
             List<Enemy> currentEnemies = entityManager.getEnemies();
             for (int i = currentEnemies.size() - 1; i >= 0; i--) {
@@ -145,7 +166,7 @@ public class Level3State extends BaseLevelState {
                     for (int j = skeletonArrows.size() - 1; j >= 0; j--) {
                         Arrow arrow = skeletonArrows.get(j);
                         if (arrow.isEnemyArrow() && player != null && arrow.intersects(player)) {
-                            System.out.println("Arrow hit player at (" + arrow.getx() + "," + arrow.gety() + ")");
+                            System.out.println("Level 3: Arrow hit player at (" + arrow.getx() + "," + arrow.gety() + ")");
                             player.hit(skeleton.getDamage());
                             arrow.setHit();
                         }
@@ -156,7 +177,7 @@ public class Level3State extends BaseLevelState {
                     for (int j = wb.getLightningStrikes().size() - 1; j >= 0; j--) {
                         Lightning l = wb.getLightningStrikes().get(j);
                         if (player != null && l.intersects(player)) {
-                            System.out.println("Lightning hit player at (" + l.getx() + "," + l.gety() + ")");
+                            System.out.println("Level 3: Lightning hit player at (" + l.getx() + "," + l.gety() + ")");
                             player.hit(l.getDamage());
                             l.setHit();
                         }
@@ -164,7 +185,7 @@ public class Level3State extends BaseLevelState {
                     for (int j = wb.getFireWaves().size() - 1; j >= 0; j--) {
                         Fire f = wb.getFireWaves().get(j);
                         if (player != null && f.intersects(player)) {
-                            System.out.println("Fire hit player at (" + f.getx() + "," + f.gety() + ")");
+                            System.out.println("Level 3: Fire hit player at (" + f.getx() + "," + f.gety() + ")");
                             player.hit(f.getDamage());
                             f.setHit();
                         }
@@ -179,15 +200,12 @@ public class Level3State extends BaseLevelState {
         tileMap.drawInteractive(g, player);
         if (entityManager != null) {
             for (Enemy e : entityManager.getEnemies()) {
-
                 if (e instanceof WizardBoss) {
                     WizardBoss wb = (WizardBoss) e;
-
                     for (Lightning l : wb.getLightningStrikes()) {
                         l.setMapPosition();
                         l.draw(g);
                     }
-
                     for (Fire f : wb.getFireWaves()) {
                         f.setMapPosition();
                         f.draw(g);
@@ -232,13 +250,7 @@ public class Level3State extends BaseLevelState {
         if (!bossDoorIsOpen) {
             bossDoorIsOpen = true;
             setDoorState(true);
-            if (!bossSpawned) {
-                Enemy boss = new WizardBoss(tileMap, player);
-                boss.setPosition(3050, 185);
-                entityManager.addEnemy(boss);
-                bossSpawned = true;
-                System.out.println("WizardBoss spawned at (3050, 185)");
-            }
+            System.out.println("Level 3: Boss door opened");
         }
     }
 

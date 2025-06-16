@@ -15,7 +15,7 @@ import java.util.List;
 
 public class Level2State extends BaseLevelState {
     private LevelConfiguration levelConfig;
-    private boolean bossDoorIsOpen = false;
+    private boolean bossDoorIsOpen;
     private Point[] doorTileCoordinates;
     private Enemy keyMob;
     private boolean blessingApplied = false;
@@ -27,12 +27,27 @@ public class Level2State extends BaseLevelState {
     private static final long BOSS_HINT_DURATION_NANO = 5_000_000_000L;
     private ArrayList<Livid> lividGroup;
     private Livid initialBoss;
-    private boolean bossActivated = false;
+    private boolean bossActivated;
     private boolean bossFightStarted;
 
     public Level2State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
         lividGroup = new ArrayList<>();
+        this.bossActivated = false;
+        this.bossDoorIsOpen = false;
+        this.bossFightStarted = false;
+        System.out.println("Level 2: Constructor called, flags reset");
+    }
+
+    @Override
+    public void init() {
+        super.init();
+        this.bossActivated = false;
+        this.bossDoorIsOpen = false;
+        this.bossFightStarted = false;
+        lividGroup.clear();
+        setDoorState(false);
+        System.out.println("Level 2: init() called, flags reset, door closed");
     }
 
     @Override
@@ -46,7 +61,7 @@ public class Level2State extends BaseLevelState {
         blessingText = null;
         bossHintText = null;
         keyMob = null;
-        System.out.println("Level2State reset in loadLevelSpecifics");
+        System.out.println("Level 2: loadLevelSpecifics called, state reset");
 
         this.tileMap = new TileMap(30, gamePanel);
         this.tileMap.loadTiles("/TileSets/grasstileset.gif");
@@ -63,7 +78,6 @@ public class Level2State extends BaseLevelState {
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1680, 200)));
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1800, 200)));
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(2750, 200), true));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Livid", new Point(3050, 185)));
 
         Point[] doorCoords = {new Point(96, 5), new Point(96, 6)};
 
@@ -107,19 +121,6 @@ public class Level2State extends BaseLevelState {
                 case "Skeleton":
                     enemy = new Skeleton(tileMap, player);
                     break;
-                case "Livid":
-                    String[] suits = {"Heart", "Diamond", "Spade"};
-                    int realSuitIndex = (int)(Math.random() * 3);
-                    String realSuit = suits[realSuitIndex];
-                    for (int i = 0; i < suits.length; i++) {
-                        Livid livid = new Livid(tileMap, player, suits[i], i == realSuitIndex, lividGroup);
-                        double spawnX = spawnData.position.x + (50 * i); // 3050, 3100, 3150
-                        livid.setPosition(spawnX, spawnData.position.y);
-                        lividGroup.add(livid);
-                    }
-                    continue;
-                default:
-                    enemy = null;
             }
             if (enemy != null) {
                 enemy.setPosition(spawnData.position.x, spawnData.position.y);
@@ -127,7 +128,7 @@ public class Level2State extends BaseLevelState {
             }
         }
         this.totalEnemiesAtStart = entityManager.getEnemies().size();
-        System.out.println("Populated " + totalEnemiesAtStart + " enemies (excluding Livids)");
+        System.out.println("Level 2: Populated " + totalEnemiesAtStart + " enemies (excluding Livids)");
     }
 
     @Override
@@ -150,17 +151,29 @@ public class Level2State extends BaseLevelState {
         if (blessingText != null && (System.nanoTime() - blessingTextTimer) > BLESSING_TEXT_DURATION_NANO) {
             blessingText = null;
         }
-        if (bossDoorIsOpen && !bossActivated) {
-            bossActivated = true;
-            for (Livid livid : lividGroup) {
+
+        if (bossDoorIsOpen && !bossActivated && player != null && player.getx() > 2940) {
+            setDoorState(false);
+            bossDoorIsOpen = false;
+
+            String[] suits = {"Heart", "Diamond", "Spade"};
+            int realSuitIndex = (int)(Math.random() * 3);
+            String realSuit = suits[realSuitIndex];
+            for (int i = 0; i < suits.length; i++) {
+                Livid livid = new Livid(tileMap, player, suits[i], i == realSuitIndex, lividGroup);
+                double spawnX = 3050 + (50 * i); // 3050, 3100, 3150
+                livid.setPosition(spawnX, 185);
+                lividGroup.add(livid);
                 entityManager.addEnemy(livid);
-                System.out.println("Spawned Livid (" + livid.getSuitType() + ", " +
+                System.out.println("Level 2: Spawned Livid (" + livid.getSuitType() + ", " +
                         (livid.isReal() ? "real" : "clone") + ") at (" + livid.getx() + ", " + livid.gety() + ")");
                 if (livid.isReal()) {
                     bossHintText = "The " + livid.getSuitType() + " Livid is the true boss!";
                     bossHintTimer = System.nanoTime();
                 }
             }
+            bossActivated = true;
+            System.out.println("Level 2: Door locked at x=2940, Livid group spawned, player.x=" + player.getx());
         }
 
         if (bossHintText != null && (System.nanoTime() - bossHintTimer) > BOSS_HINT_DURATION_NANO) {
@@ -171,7 +184,7 @@ public class Level2State extends BaseLevelState {
             for (Livid livid : lividGroup) {
                 if (livid.shouldBlindPlayer()) {
                     startScreenFlash(500);
-                    System.out.println("Livid triggered blind effect");
+                    System.out.println("Level 2: Livid triggered blind effect");
                 }
                 if (livid.isDead() && livid.isReal()) {
                     levelComplete(GameStateManager.LEVEL2STATE);
@@ -210,10 +223,8 @@ public class Level2State extends BaseLevelState {
                 } else if (e instanceof Livid) {
                     Livid livid = (Livid) e;
                     ArrayList<CardProjectile> cards = livid.getCards();
-
                     for (int j = cards.size() - 1; j >= 0; j--) {
                         CardProjectile card = cards.get(j);
-
                         if (player != null && card.intersects(player)) {
                             player.hit(livid.getDamage());
                             card.setHit();
@@ -233,6 +244,7 @@ public class Level2State extends BaseLevelState {
             g.drawString(blessingText, 80, 20);
         }
         if (bossHintText != null) {
+            g.setFont(new Font("Arial", Font.BOLD, 14));
             g.setColor(Color.RED);
             g.drawString(bossHintText, 80, 40);
         }
@@ -269,9 +281,9 @@ public class Level2State extends BaseLevelState {
                         int x = Integer.parseInt(token[1]);
                         int y = Integer.parseInt(token[2]);
                         player.setPosition(x, y);
-                        System.out.println("Teleported to (" + x + ", " + y + ")");
+                        System.out.println("Level 2: Teleported to (" + x + ", " + y + ")");
                     } catch (NumberFormatException e) {
-                        System.out.println("Invalid teleport coordinates.");
+                        System.out.println("Level 2: Invalid teleport coordinates.");
                     }
                 }
                 break;
@@ -282,7 +294,7 @@ public class Level2State extends BaseLevelState {
         if (!bossDoorIsOpen) {
             bossDoorIsOpen = true;
             setDoorState(true);
-            System.out.println("Boss door opened!");
+            System.out.println("Level 2: Boss door opened");
         }
     }
 
