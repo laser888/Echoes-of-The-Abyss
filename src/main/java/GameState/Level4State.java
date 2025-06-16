@@ -26,11 +26,13 @@ public class Level4State extends BaseLevelState {
     private long blessingTextTimer = 0;
     private static final long BLESSING_TEXT_DURATION_NANO = 3_000_000_000L;
     private boolean bossSpawned;
+    private boolean inBossFight;
 
     public Level4State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
         this.bossSpawned = false;
         this.bossDoorIsOpen = false;
+        this.inBossFight = false;
     }
 
     @Override
@@ -38,6 +40,7 @@ public class Level4State extends BaseLevelState {
         super.init();
         this.bossSpawned = false;
         this.bossDoorIsOpen = false;
+        this.inBossFight = false;
         setDoorState(false);
     }
 
@@ -82,7 +85,6 @@ public class Level4State extends BaseLevelState {
         this.doorTileCoordinates = levelConfig.getDoorCoordinates();
         setDoorState(false);
         this.parTimeSeconds = levelConfig.getParTimeSeconds();
-        System.out.println("Level 4: TileMap offset: x=" + tileMap.getx() + ", y=" + tileMap.gety());
     }
 
     @Override
@@ -130,14 +132,20 @@ public class Level4State extends BaseLevelState {
             blessingText = null;
         }
 
+        if (player != null && player.isDead() && inBossFight) {
+            player.respawn();
+            //System.out.println("Level 4: Player died in boss fight, respawned at (" + getSpawnX() + ", " + getSpawnY() + ")");
+        }
+
         if (bossDoorIsOpen && !bossSpawned && player != null && player.getx() > 2940) {
-            setDoorState(false); // Lock door
-            bossDoorIsOpen = false; // Prevent reopening
+            setDoorState(false);
+            bossDoorIsOpen = false;
             Enemy boss = new SluggerBoss(tileMap, player);
             boss.setPosition(3050, 200);
             entityManager.addEnemy(boss);
             bossSpawned = true;
-            System.out.println("Level 4: Door locked at x=2940, SluggerBoss spawned at (3050, 200), player.x=" + player.getx());
+            inBossFight = true;
+            //System.out.println("Level 4: Door locked at x=2940, SluggerBoss spawned at (3050, 200), player.x=" + player.getx());
         }
 
         if (entityManager != null) {
@@ -190,8 +198,10 @@ public class Level4State extends BaseLevelState {
         tileMap.handleKeyPress(k, player);
     }
 
+    @Override
     protected void handleLevelSpecificKeyReleased(int k) {}
 
+    @Override
     public void mousePressed(MouseEvent e) {
         int mx = e.getX()/GamePanel.SCALE;
         int my = e.getY()/GamePanel.SCALE;
@@ -216,7 +226,7 @@ public class Level4State extends BaseLevelState {
         if (!bossDoorIsOpen) {
             bossDoorIsOpen = true;
             setDoorState(true);
-            System.out.println("Level 4: Boss door opened");
+            //System.out.println("Level 4: Boss door opened");
         }
     }
 
@@ -236,11 +246,11 @@ public class Level4State extends BaseLevelState {
 
     @Override
     public int getSpawnX() {
-        return (levelConfig != null) ? levelConfig.getPlayerSpawnPoint().x : 100;
+        return (inBossFight && bossSpawned) ? 2950 : (levelConfig != null ? levelConfig.getPlayerSpawnPoint().x : 100);
     }
 
     @Override
     public int getSpawnY() {
-        return (levelConfig != null) ? levelConfig.getPlayerSpawnPoint().y : 100;
+        return (inBossFight && bossSpawned) ? 200 : (levelConfig != null ? levelConfig.getPlayerSpawnPoint().y : 100);
     }
 }

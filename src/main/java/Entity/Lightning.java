@@ -106,7 +106,7 @@ public class Lightning extends MapObject {
             long elapsedNanos = System.nanoTime() - flightTimer;
             if (elapsedNanos > FLIGHT_DURATION_NANO) {
                 remove = true;
-                System.out.println("Lightning timed out at y=" + y);
+                //System.out.println("Lightning timed out at y=" + y);
             }
 
             checkTileMapCollision();
@@ -116,7 +116,7 @@ public class Lightning extends MapObject {
             }
             if (y > tileMap.getHeight() + height * 2) {
                 remove = true;
-                System.out.println("Lightning removed at y=" + y);
+                //System.out.println("Lightning removed at y=" + y);
             }
         }
     }
@@ -130,7 +130,7 @@ public class Lightning extends MapObject {
                 int warnX = (int)(warningX + xmap - 10);
                 int warnY = (int)(warningY + ymap - 10);
                 g.fillRect(warnX, warnY, 20, 20);
-                System.out.println("Drawing lightning warning at screen (" + warnX + "," + warnY + "), xmap=" + xmap + ", ymap=" + ymap);
+                //System.out.println("Drawing lightning warning at screen (" + warnX + "," + warnY + "), xmap=" + xmap + ", ymap=" + ymap);
             }
         } else {
             int drawX = (int)(x + xmap - width); // Center sprite
@@ -142,7 +142,7 @@ public class Lightning extends MapObject {
             } else {
                 g.drawImage(sprite, drawX + scaledWidth, drawY, -scaledWidth, scaledHeight, null);
             }
-            System.out.println("Lightning draw: world (" + x + "," + y + "), screen (" + (drawX + scaledWidth/2) + "," + (drawY + scaledHeight/2) + "), xmap=" + xmap + ", ymap=" + ymap);
+            //System.out.println("Lightning draw: world (" + x + "," + y + "), screen (" + (drawX + scaledWidth/2) + "," + (drawY + scaledHeight/2) + "), xmap=" + xmap + ", ymap=" + ymap);
         }
     }
 
@@ -153,7 +153,7 @@ public class Lightning extends MapObject {
                 player.getWidth(), player.getHeight());
         boolean intersects = r1.intersects(r2);
         if (intersects) {
-            System.out.println("Lightning intersects player at (" + x + "," + y + ") with hitbox (" + cwidth + "," + cheight + ")");
+            //System.out.println("Lightning intersects player at (" + x + "," + y + ") with hitbox (" + cwidth + "," + cheight + ")");
         }
         return intersects;
     }

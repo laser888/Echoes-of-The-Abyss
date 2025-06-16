@@ -24,14 +24,15 @@ public class Level1State extends BaseLevelState {
     private boolean blessingApplied = false;
     private String blessingText = null;
     private long blessingTextTimer = 0;
-    private static final long BLESSING_TEXT_DURATION_NANO = 3_000_000_000L; // 3 seconds
+    private static final long BLESSING_TEXT_DURATION_NANO = 3_000_000_000L;
     private boolean bossSpawned;
+    private boolean inBossFight;
 
     public Level1State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
         this.bossSpawned = false;
         this.bossDoorIsOpen = false;
-        System.out.println("Level 1: Constructor called, flags reset");
+        this.inBossFight = false;
     }
 
     @Override
@@ -39,8 +40,8 @@ public class Level1State extends BaseLevelState {
         super.init();
         this.bossSpawned = false;
         this.bossDoorIsOpen = false;
+        this.inBossFight = false;
         setDoorState(false);
-        System.out.println("Level 1: init() called, flags reset, door closed");
     }
 
     @Override
@@ -59,7 +60,7 @@ public class Level1State extends BaseLevelState {
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1525, 200)));
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1680, 200)));
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1800, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(2750, 200), true)); // Key Mob
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(2750, 200), true));
 
         Point[] doorCoords = {new Point(96, 5), new Point(96, 6)};
 
@@ -131,6 +132,11 @@ public class Level1State extends BaseLevelState {
             blessingText = null;
         }
 
+        if (player != null && player.isDead() && inBossFight) {
+            player.respawn();
+            //System.out.println("Level 1: Player died in boss fight, respawned at (" + getSpawnX() + ", " + getSpawnY() + ")");
+        }
+
         if (bossDoorIsOpen && !bossSpawned && player != null && player.getx() > 2940) {
             setDoorState(false);
             bossDoorIsOpen = false;
@@ -138,7 +144,8 @@ public class Level1State extends BaseLevelState {
             boss.setPosition(3050, 200);
             entityManager.addEnemy(boss);
             bossSpawned = true;
-            System.out.println("Level 1: Door locked at x=2940, SluggerBoss spawned at (3050, 200), player.x=" + player.getx());
+            inBossFight = true;
+            //System.out.println("Level 1: Door locked at x=2940, SluggerBoss spawned at (3050, 200), player.x=" + player.getx());
         }
 
         if (entityManager != null) {
@@ -215,7 +222,7 @@ public class Level1State extends BaseLevelState {
         if (!bossDoorIsOpen) {
             bossDoorIsOpen = true;
             setDoorState(true);
-            System.out.println("Level 1: Boss door opened");
+            //System.out.println("Level 1: Boss door opened");
         }
     }
 
@@ -235,11 +242,11 @@ public class Level1State extends BaseLevelState {
 
     @Override
     public int getSpawnX() {
-        return (levelConfig != null) ? levelConfig.getPlayerSpawnPoint().x : 100;
+        return (inBossFight && bossSpawned) ? 2950 : (levelConfig != null ? levelConfig.getPlayerSpawnPoint().x : 100);
     }
 
     @Override
     public int getSpawnY() {
-        return (levelConfig != null) ? levelConfig.getPlayerSpawnPoint().y : 100;
+        return (inBossFight && bossSpawned) ? 200 : (levelConfig != null ? levelConfig.getPlayerSpawnPoint().y : 100);
     }
 }

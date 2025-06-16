@@ -29,6 +29,7 @@ public class Level2State extends BaseLevelState {
     private Livid initialBoss;
     private boolean bossActivated;
     private boolean bossFightStarted;
+    private boolean inBossFight;
 
     public Level2State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
@@ -36,7 +37,7 @@ public class Level2State extends BaseLevelState {
         this.bossActivated = false;
         this.bossDoorIsOpen = false;
         this.bossFightStarted = false;
-        System.out.println("Level 2: Constructor called, flags reset");
+        this.inBossFight = false;
     }
 
     @Override
@@ -45,9 +46,9 @@ public class Level2State extends BaseLevelState {
         this.bossActivated = false;
         this.bossDoorIsOpen = false;
         this.bossFightStarted = false;
+        this.inBossFight = false;
         lividGroup.clear();
         setDoorState(false);
-        System.out.println("Level 2: init() called, flags reset, door closed");
     }
 
     @Override
@@ -61,7 +62,6 @@ public class Level2State extends BaseLevelState {
         blessingText = null;
         bossHintText = null;
         keyMob = null;
-        System.out.println("Level 2: loadLevelSpecifics called, state reset");
 
         this.tileMap = new TileMap(30, gamePanel);
         this.tileMap.loadTiles("/TileSets/grasstileset.gif");
@@ -128,7 +128,7 @@ public class Level2State extends BaseLevelState {
             }
         }
         this.totalEnemiesAtStart = entityManager.getEnemies().size();
-        System.out.println("Level 2: Populated " + totalEnemiesAtStart + " enemies (excluding Livids)");
+        //System.out.println("Level 2: Populated " + totalEnemiesAtStart + " enemies (excluding Livids)");
     }
 
     @Override
@@ -152,16 +152,20 @@ public class Level2State extends BaseLevelState {
             blessingText = null;
         }
 
+        if (player != null && player.isDead() && inBossFight) {
+            player.respawn();
+            //System.out.println("Level 2: Player died in boss fight, respawned at (" + getSpawnX() + ", " + getSpawnY() + ")");
+        }
+
         if (bossDoorIsOpen && !bossActivated && player != null && player.getx() > 2940) {
             setDoorState(false);
             bossDoorIsOpen = false;
-
             String[] suits = {"Heart", "Diamond", "Spade"};
             int realSuitIndex = (int)(Math.random() * 3);
             String realSuit = suits[realSuitIndex];
             for (int i = 0; i < suits.length; i++) {
                 Livid livid = new Livid(tileMap, player, suits[i], i == realSuitIndex, lividGroup);
-                double spawnX = 3050 + (50 * i); // 3050, 3100, 3150
+                double spawnX = 3050 + (50 * i);
                 livid.setPosition(spawnX, 185);
                 lividGroup.add(livid);
                 entityManager.addEnemy(livid);
@@ -173,7 +177,8 @@ public class Level2State extends BaseLevelState {
                 }
             }
             bossActivated = true;
-            System.out.println("Level 2: Door locked at x=2940, Livid group spawned, player.x=" + player.getx());
+            inBossFight = true;
+            //System.out.println("Level 2: Door locked at x=2940, Livid group spawned, player.x=" + player.getx());
         }
 
         if (bossHintText != null && (System.nanoTime() - bossHintTimer) > BOSS_HINT_DURATION_NANO) {
@@ -294,7 +299,7 @@ public class Level2State extends BaseLevelState {
         if (!bossDoorIsOpen) {
             bossDoorIsOpen = true;
             setDoorState(true);
-            System.out.println("Level 2: Boss door opened");
+            //System.out.println("Level 2: Boss door opened");
         }
     }
 
@@ -314,11 +319,11 @@ public class Level2State extends BaseLevelState {
 
     @Override
     public int getSpawnX() {
-        return (levelConfig != null) ? levelConfig.getPlayerSpawnPoint().x : 100;
+        return (inBossFight && bossActivated) ? 2950 : (levelConfig != null ? levelConfig.getPlayerSpawnPoint().x : 100);
     }
 
     @Override
     public int getSpawnY() {
-        return (levelConfig != null) ? levelConfig.getPlayerSpawnPoint().y : 100;
+        return (inBossFight && bossActivated) ? 200 : (levelConfig != null ? levelConfig.getPlayerSpawnPoint().y : 100);
     }
 }

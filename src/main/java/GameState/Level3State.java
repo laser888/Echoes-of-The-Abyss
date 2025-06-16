@@ -26,12 +26,13 @@ public class Level3State extends BaseLevelState {
     private long blessingTextTimer = 0;
     private static final long BLESSING_TEXT_DURATION_NANO = 3_000_000_000L;
     private boolean bossSpawned;
+    private boolean inBossFight;
 
     public Level3State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
         this.bossSpawned = false;
         this.bossDoorIsOpen = false;
-        System.out.println("Level 3: Constructor called, flags reset");
+        this.inBossFight = false;
     }
 
     @Override
@@ -39,8 +40,8 @@ public class Level3State extends BaseLevelState {
         super.init();
         this.bossSpawned = false;
         this.bossDoorIsOpen = false;
+        this.inBossFight = false;
         setDoorState(false);
-        System.out.println("Level 3: init() called, flags reset, door closed");
     }
 
     @Override
@@ -59,7 +60,7 @@ public class Level3State extends BaseLevelState {
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1525, 200)));
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1680, 200)));
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1800, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(2750, 200), true)); // Key Mob
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(2750, 200), true));
 
         Point[] doorCoords = {new Point(96, 5), new Point(96, 6)};
 
@@ -84,7 +85,6 @@ public class Level3State extends BaseLevelState {
         this.doorTileCoordinates = levelConfig.getDoorCoordinates();
         setDoorState(false);
         this.parTimeSeconds = levelConfig.getParTimeSeconds();
-        System.out.println("Level 3: TileMap offset: x=" + tileMap.getx() + ", y=" + tileMap.gety());
     }
 
     @Override
@@ -132,6 +132,11 @@ public class Level3State extends BaseLevelState {
             blessingText = null;
         }
 
+        if (player != null && player.isDead() && inBossFight) {
+            player.respawn();
+//            System.out.println("Level 3: Player died in boss fight, respawned at (" + getSpawnX() + ", " + getSpawnY() + ")");
+        }
+
         if (bossDoorIsOpen && !bossSpawned && player != null && player.getx() > 2940) {
             setDoorState(false);
             bossDoorIsOpen = false;
@@ -139,7 +144,8 @@ public class Level3State extends BaseLevelState {
             boss.setPosition(3050, 185);
             entityManager.addEnemy(boss);
             bossSpawned = true;
-            System.out.println("Level 3: Door locked at x=2940, WizardBoss spawned at (3050, 185), player.x=" + player.getx());
+            inBossFight = true;
+            //System.out.println("Level 3: Door locked at x=2940, WizardBoss spawned at (3050, 185), player.x=" + player.getx());
         }
 
         if (entityManager != null) {
@@ -166,7 +172,6 @@ public class Level3State extends BaseLevelState {
                     for (int j = skeletonArrows.size() - 1; j >= 0; j--) {
                         Arrow arrow = skeletonArrows.get(j);
                         if (arrow.isEnemyArrow() && player != null && arrow.intersects(player)) {
-                            System.out.println("Level 3: Arrow hit player at (" + arrow.getx() + "," + arrow.gety() + ")");
                             player.hit(skeleton.getDamage());
                             arrow.setHit();
                         }
@@ -177,7 +182,6 @@ public class Level3State extends BaseLevelState {
                     for (int j = wb.getLightningStrikes().size() - 1; j >= 0; j--) {
                         Lightning l = wb.getLightningStrikes().get(j);
                         if (player != null && l.intersects(player)) {
-                            System.out.println("Level 3: Lightning hit player at (" + l.getx() + "," + l.gety() + ")");
                             player.hit(l.getDamage());
                             l.setHit();
                         }
@@ -185,7 +189,6 @@ public class Level3State extends BaseLevelState {
                     for (int j = wb.getFireWaves().size() - 1; j >= 0; j--) {
                         Fire f = wb.getFireWaves().get(j);
                         if (player != null && f.intersects(player)) {
-                            System.out.println("Level 3: Fire hit player at (" + f.getx() + "," + f.gety() + ")");
                             player.hit(f.getDamage());
                             f.setHit();
                         }
@@ -250,7 +253,7 @@ public class Level3State extends BaseLevelState {
         if (!bossDoorIsOpen) {
             bossDoorIsOpen = true;
             setDoorState(true);
-            System.out.println("Level 3: Boss door opened");
+            //System.out.println("Level 3: Boss door opened");
         }
     }
 
@@ -270,11 +273,11 @@ public class Level3State extends BaseLevelState {
 
     @Override
     public int getSpawnX() {
-        return (levelConfig != null) ? levelConfig.getPlayerSpawnPoint().x : 100;
+        return (inBossFight && bossSpawned) ? 2950 : (levelConfig != null ? levelConfig.getPlayerSpawnPoint().x : 100);
     }
 
     @Override
     public int getSpawnY() {
-        return (levelConfig != null) ? levelConfig.getPlayerSpawnPoint().y : 100;
+        return (inBossFight && bossSpawned) ? 200 : (levelConfig != null ? levelConfig.getPlayerSpawnPoint().y : 100);
     }
 }

@@ -57,7 +57,6 @@ public class Player extends MapObject {
     private static final int TRUE_BASE_ARROW_DMG = 18;
     private static final double TRUE_BASE_INTEL_REGEN = 1.0;
 
-
     // Mage Stats
     public static final int MAGE_STARTING_LEVEL = 1;
     public static final int MAGE_INTELLIGENCE_GAIN_PER_LEVEL = 8;
@@ -88,6 +87,7 @@ public class Player extends MapObject {
     public static final double ARCHER_CC_GAIN_PER_LEVEL = 0.7;
     public static final double ARCHER_CD_GAIN_PER_LEVEL = 4.0;
     public static final double ARCHER_INTEL_REGEN = 1.5;
+
     // Player Stats
     private int health;
     private int maxHealth;
@@ -109,6 +109,9 @@ public class Player extends MapObject {
     private boolean flinching;
     private long flinchTimer;
     private boolean flying;
+    private boolean immune;
+    private long immuneTimer;
+    private static final long IMMUNITY_DURATION_NANO = 2_000_000_000L; // 2 seconds
 
     // Abilities
     private boolean firing;
@@ -210,7 +213,6 @@ public class Player extends MapObject {
             spriteFilePath = "/Sprites/Player/playersprites.gif";
         }
 
-        // Load sprites
         try {
             BufferedImage spritesheet = ImageIO.read(getClass().getResourceAsStream(spriteFilePath));
 
@@ -236,10 +238,10 @@ public class Player extends MapObject {
     public int getHealth() { return health; }
     public int getMaxHealth() { return maxHealth; }
     public int getMaxIntelligence() { return maxIntelligence; }
+    public boolean isDead() { return dead; }
 
     public void setFiring(boolean shooting) {
         if(shooting) {
-
             if (chosenClass == PlayerClass.MAGE) {
                 firing = true;
             } else if (chosenClass == PlayerClass.ARCHER) {
@@ -276,18 +278,17 @@ public class Player extends MapObject {
                     }
                 }
                 if (hitEnemy) {
-                    DamageResult result = calculateDamage(scratchDamage, strength, CC, critDMG, null); // Pass enemy defence
+                    DamageResult result = calculateDamage(scratchDamage, strength, CC, critDMG, null);
                     e.hit(result.damage);
                     if (currentLevelState != null) {
                         currentLevelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
                     }
-                    scratchDamageDealt = true; // Ensures damage is only dealt once per animation
+                    scratchDamageDealt = true;
                 }
             }
 
             for (int j = 0; j < fireBalls.size(); j++) {
                 FireBall fb = fireBalls.get(j);
-
                 if (fb.intersects(e)) {
                     DamageResult result = calculateMagicDamage(fireBallDamage, intelligence, abilityDMG, null);
                     e.hit(result.damage);
@@ -314,19 +315,17 @@ public class Player extends MapObject {
     }
 
     public void hit(int damage) {
-        if(flinching) return;
+        if (flinching || immune) return;
         dead = false;
         finalDMG = damage * 100 / (100 + defence);
         health -= finalDMG;
-        if(health < 0) health = 0;
-        if(health == 0) {
+        if (health < 0) health = 0;
+        if (health == 0) {
             dead = true;
             currentLevelState.recordPlayerDeath();
         }
-        respawn(dead);
         flinching = true;
         flinchTimer = System.nanoTime();
-
     }
 
     private void getNextPosition() {
@@ -374,7 +373,7 @@ public class Player extends MapObject {
     }
 
     public void update() {
-        if (outOfMap) respawn(true);
+        if (outOfMap) respawn();
         getNextPosition();
         checkTileMapCollision();
         setPosition(xtemp, ytemp);
@@ -405,7 +404,15 @@ public class Player extends MapObject {
             lastRegenTime = now;
         }
 
-        // Fireball attack
+        // Check immunity timer
+        if (immune) {
+            long elapsed = (System.nanoTime() - immuneTimer) / 1_000_000;
+            if (elapsed > IMMUNITY_DURATION_NANO / 1_000_000) {
+                immune = false;
+                System.out.println("Player immunity ended");
+            }
+        }
+
         if (firing && currentAction != FIREBALL && intelligence >= fireCost) {
             intelligence -= fireCost;
             FireBall fb = new FireBall(tileMap, facingRight);
@@ -413,16 +420,13 @@ public class Player extends MapObject {
             fireBalls.add(fb);
         }
 
-        // Arrow attack
         if (shootingArrow && chosenClass == PlayerClass.ARCHER && currentAction != FIREBALL && intelligence >= arrowCost) {
             intelligence -= arrowCost;
             Arrow a = new Arrow(tileMap, facingRight, false);
             a.setPosition(x, y);
             arrows.add(a);
-
         }
 
-        // Update fireballs
         for (int i = 0; i < fireBalls.size(); i++) {
             fireBalls.get(i).update();
             if (fireBalls.get(i).shouldRemove()) {
@@ -439,7 +443,6 @@ public class Player extends MapObject {
             }
         }
 
-        // Check flinching
         if (flinching) {
             long elapsed = (System.nanoTime() - flinchTimer) / 1_000_000;
             if (elapsed > 1000) {
@@ -447,7 +450,6 @@ public class Player extends MapObject {
             }
         }
 
-        // Set animation
         if (scratching) {
             if (currentAction != SCRATCHING) {
                 currentAction = SCRATCHING;
@@ -499,7 +501,6 @@ public class Player extends MapObject {
 
         animation.update();
 
-        // Set direction
         if (currentAction != SCRATCHING && currentAction != FIREBALL) {
             if (right) facingRight = true;
             if (left) facingRight = false;
@@ -507,21 +508,17 @@ public class Player extends MapObject {
     }
 
     public void draw(Graphics2D g) {
-
         setMapPosition();
 
-        // draw fireballs
         for(int i = 0; i < fireBalls.size(); i++) {
             fireBalls.get(i).draw(g);
         }
 
-        // draw arrow
         for (int i = 0; i < arrows.size(); i++) {
             arrows.get(i).draw(g);
         }
 
-        // draw player
-        if(flinching) {
+        if(flinching || immune) { // Show flicker during immunity
             long elapsed = (System.nanoTime() - flinchTimer) / 1000000;
             if(elapsed / 100 % 2 == 0) {
                 return;
@@ -530,12 +527,15 @@ public class Player extends MapObject {
         super.draw(g);
     }
 
-    public void respawn(boolean dead) {
-        if(!dead) return;
-
+    public void respawn() {
+        if (!dead) return;
         setPosition(gsm.getCurrentState().getSpawnX(), gsm.getCurrentState().getSpawnY());
         health = maxHealth;
         intelligence = maxIntelligence;
+        dead = false;
+        immune = true; // Enable immunity on respawn
+        immuneTimer = System.nanoTime(); // Start immunity timer
+        //System.out.println("Player respawned at (" + gsm.getCurrentState().getSpawnX() + ", " + gsm.getCurrentState().getSpawnY() + ") with immunity");
     }
 
     public void setSpeed(double speed) {
@@ -654,7 +654,6 @@ public class Player extends MapObject {
         this.health = this.maxHealth;
         this.intelligence = this.maxIntelligence;
         this.maxSpeed = Math.max(this.maxSpeed, this.moveSpeed);
-
     }
 
     public void addXP(int xpGained) {
@@ -665,15 +664,12 @@ public class Player extends MapObject {
         if (currentClassProg == null) return;
 
         currentClassProg.xp += xpGained;
-        // System.out.println(chosenClass + " gained " + xpGained + " XP. Current: " + currentClassProg.xp + "/" + currentClassProg.xpToNextLevel);
-
         boolean hasLeveledUp = false;
         while (currentClassProg.xp >= currentClassProg.xpToNextLevel) {
             currentClassProg.xp -= currentClassProg.xpToNextLevel;
             currentClassProg.level++;
             currentClassProg.xpToNextLevel = (int) (currentClassProg.xpToNextLevel * currentClassProg.xpCurveMultiplier);
             hasLeveledUp = true;
-            // System.out.println(chosenClass + " Leveled Up! New Level: " + currentClassProg.level);
         }
 
         if (hasLeveledUp) {
@@ -691,7 +687,7 @@ public class Player extends MapObject {
         return classProgressData.get(chosenClass).xp;
     }
     public int getCurrentClassXPToNextLevel() {
-        if (chosenClass == PlayerClass.NONE || !classProgressData.containsKey(chosenClass)) return 100; // Default
+        if (chosenClass == PlayerClass.NONE || !classProgressData.containsKey(chosenClass)) return 100;
         return classProgressData.get(chosenClass).xpToNextLevel;
     }
     public PlayerClass getChosenClass() { return chosenClass; }
@@ -705,7 +701,6 @@ public class Player extends MapObject {
         gameData.playerClassProgress.clear();
 
         for (Map.Entry<PlayerClass, ClassProgress> entry : classProgressData.entrySet()) {
-
             if (entry.getKey() == PlayerClass.NONE) continue;
 
             String className = entry.getKey().name();
@@ -721,16 +716,12 @@ public class Player extends MapObject {
     }
 
     public void loadAllClassData() {
-
         if (gameData == null || gameData.playerClassProgress == null || gameData.playerClassProgress.isEmpty()) {
             System.out.println("No player class data found in GameData object. Using default values.");
             return;
         }
 
-        //System.out.println("Loading player class data from GameData object...");
-
         for (Map.Entry<String, Map<String, Integer>> entry : gameData.playerClassProgress.entrySet()) {
-
             try {
                 PlayerClass pc = PlayerClass.valueOf(entry.getKey());
                 Map<String, Integer> savedProgress = entry.getValue();
@@ -747,14 +738,10 @@ public class Player extends MapObject {
         }
     }
 
-
     @Override
     public void setJumping(boolean b) {
-
         if(b) {
-
             if (jumpsAvailable <= 0) return;
-
             if ((chosenClass != PlayerClass.ARCHER && falling) || (chosenClass != PlayerClass.ARCHER && jumping))
                 return;
 
@@ -765,7 +752,6 @@ public class Player extends MapObject {
         } else {
             this.jumping = false;
         }
-
     }
 
     @Override
@@ -779,7 +765,6 @@ public class Player extends MapObject {
             falling = false;
             jumpsAvailable = maxJumps;
             jumping = false;
-            // System.out.println("Landed! Jumps  to: " + jumpsAvailable);
         }
     }
 
@@ -794,11 +779,9 @@ public class Player extends MapObject {
                 break;
             case CRITDAMAGE:
                 critDMG *= multiplier;
-
                 CC += (multiplier - 1.0) * 10;
                 break;
             case DAMAGE:
-
                 scratchDamage = (int)(scratchDamage * multiplier);
                 arrowDMG = (int)(arrowDMG * multiplier);
                 fireBallDamage = (int)(fireBallDamage * multiplier);
@@ -818,7 +801,6 @@ public class Player extends MapObject {
     }
 
     public void clearBlessings() {
-
         for (int i = blessings.size() - 1; i >= 0; i--) {
             Blessing b = blessings.get(i);
             double inverseMultiplier = 1.0 / b.getValue();
@@ -847,12 +829,10 @@ public class Player extends MapObject {
             }
         }
         blessings.clear();
-
         applyCurrentClassLevelBonuses();
     }
 
-
-    public double getPositionX() {return xtemp;}
+    public double getPositionX() { return xtemp; }
     public int getDefence() { return defence; }
     public int getStrength() { return strength; }
     public double getCritChance() { return CC; }
@@ -860,7 +840,4 @@ public class Player extends MapObject {
     public double getRegenRate() { return regen; }
     public int getIntelligence() { return intelligence; }
     public double getAbilityDamageBonus() { return abilityDMG; }
-
-
-
 }
