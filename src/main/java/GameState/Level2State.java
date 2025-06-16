@@ -174,7 +174,7 @@ public class Level2State extends BaseLevelState {
                     System.out.println("Livid triggered blind effect");
                 }
                 if (livid.isDead() && livid.isReal()) {
-                    levelComplete();
+                    levelComplete(GameStateManager.LEVEL2STATE);
                 }
             }
         }
@@ -193,7 +193,7 @@ public class Level2State extends BaseLevelState {
                     currentEnemies.remove(i);
 
                     if (e instanceof Livid && ((Livid)e).isReal()) {
-                        levelComplete();
+                        levelComplete(GameStateManager.LEVEL2STATE);
                     }
                 }
 

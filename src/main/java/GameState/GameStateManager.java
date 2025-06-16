@@ -14,8 +14,6 @@ public class GameStateManager {
     private GameData gameData;
     private KeybindManager keybindManager;
 
-    private int currentLevel = 0;
-
     public static final int MENUSTATE = 0;
     public static final int WINNINGSTATE = 1;
     public static final int CATSTATE = 2;
@@ -113,17 +111,9 @@ public class GameStateManager {
         return gameStates.get(currentState);
     }
 
-    public void goToNextLevel() {
-        currentLevel++;
-        switch (currentLevel) {
-            case 1: setState(LEVEL2STATE); break;
-            case 2: setState(LEVEL3STATE); break;
-            case 3: setState(LEVEL4STATE); break;
-        }
-    }
-
     public void saveProgress() {
         SaveManager.saveGame(this.gameData);
     }
+
 
 }

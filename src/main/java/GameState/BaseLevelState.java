@@ -544,7 +544,9 @@ public abstract class BaseLevelState extends GameState {
         this.playerDeathCount++;
     }
 
-    protected void levelComplete() {
+    protected void levelComplete(int currentLevelId) {
+
+        int nextLevelId = currentLevelId + 1;
         player.clearBlessings();
 
         puzzlesSolvedCount = 0;
@@ -581,10 +583,10 @@ public abstract class BaseLevelState extends GameState {
 
         gsm.saveGameData();
 
-        GameState potentialWinState = gsm.getState(GameStateManager.WINNINGSTATE);
-        if (potentialWinState instanceof WinState) {
-            ((WinState) potentialWinState).setScoreData(finalScores);
-        }
+        WinState win = (WinState) gsm.getState(GameStateManager.WINNINGSTATE);
+        win.setScoreData(finalScores);
+        win.setNextLevelState(nextLevelId);
+
         gsm.setState(GameStateManager.WINNINGSTATE);
     }
 
@@ -603,7 +605,6 @@ public abstract class BaseLevelState extends GameState {
                 } break;
             case "/god": if(player != null) player.godMode(true); break;
             case "/stop": if(player != null) player.godMode(false); break;
-            case "/win": levelComplete(); break;
             case "/cat":
                 if (gsm != null) {
                     gsm.setState(GameStateManager.CATSTATE);

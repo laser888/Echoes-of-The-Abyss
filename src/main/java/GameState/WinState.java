@@ -26,6 +26,8 @@ public class WinState extends GameState {
 
     private ScoreData scoreData;
 
+    private int nextLevelStateId;
+
     public WinState(GameStateManager gsm, GamePanel gamePanel) {
         this.gsm = gsm;
         this.gamePanel = gamePanel;
@@ -43,6 +45,10 @@ public class WinState extends GameState {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void setNextLevelState(int id) {
+        this.nextLevelStateId = id;
     }
 
     public void setScoreData(ScoreData data) {
@@ -123,7 +129,7 @@ public class WinState extends GameState {
 
     private void select() {
         if(currentChoice == 0) {
-            gsm.goToNextLevel();
+            gsm.setState(nextLevelStateId);
         }
         if(currentChoice == 1) {
             gsm.setState(GameStateManager.MENUSTATE);
