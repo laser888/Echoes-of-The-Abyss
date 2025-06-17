@@ -76,22 +76,24 @@ public class Skeleton extends Enemy {
 
     private void getNextPosition() {
 
-        // movement
-        if(left) {
+        // Movement
+        if (left && !isAtEdge()) {
             dx -= moveSpeed;
-            if(dx < -maxSpeed) {
+            if (dx < -maxSpeed) {
                 dx = -maxSpeed;
             }
-        } else if(right) {
+        } else if (right && !isAtEdge()) {
             dx += moveSpeed;
-            if(dx > maxSpeed) {
+            if (dx > maxSpeed) {
                 dx = maxSpeed;
             }
+        } else {
+            dx = 0;
         }
 
-        if(falling) {
+        if (falling) {
             dy += fallSpeed;
-            if(dy > 0) jumping = false;
+            if (dy > 0) jumping = false;
         }
     }
 

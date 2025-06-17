@@ -27,14 +27,12 @@ public class Level4State extends BaseLevelState {
     private static final long BLESSING_TEXT_DURATION_NANO = 3_000_000_000L;
     private boolean bossSpawned;
     private boolean inBossFight;
-    private List<Enemy> bosses;
 
     public Level4State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
         this.bossSpawned = false;
         this.bossDoorIsOpen = false;
         this.inBossFight = false;
-        this.bosses = new ArrayList<>();
     }
 
     @Override
@@ -43,7 +41,6 @@ public class Level4State extends BaseLevelState {
         this.bossSpawned = false;
         this.bossDoorIsOpen = false;
         this.inBossFight = false;
-        this.bosses.clear();
         setDoorState(false);
     }
 
@@ -58,14 +55,41 @@ public class Level4State extends BaseLevelState {
         Point playerSpawn = new Point(100, 100);
         java.util.List<LevelConfiguration.EnemySpawnData> enemySpawns = new ArrayList<>();
         enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(200, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(150, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(860, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1525, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1680, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(1800, 200)));
-        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(2750, 200), true)); // Key Mob
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(250, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(300, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(400, 170)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(580, 140)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(730, 110)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(860, 80)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(900, 80)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(1050, 50)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(1200, 80)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(1350, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(1500, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(1750, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(1800, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(1850, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(1900, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(2150, 170)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(2270, 230)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(2400, 50)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(2820, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(3540, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(3550, 200)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(4100, 170)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(4150, 170)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(4200, 170)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(4250, 170)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(4300, 170)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(4350, 170)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(4400, 170)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Skeleton", new Point(4450, 170)));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Slugger", new Point(4490, 170), true));
+        enemySpawns.add(new LevelConfiguration.EnemySpawnData("Zombie", new Point(4500, 170)));
 
-        Point[] doorCoords = {new Point(96, 5), new Point(96, 6)};
+
+
+        Point[] doorCoords = {new Point(151, 4), new Point(151, 5)};
 
         this.levelConfig = new LevelConfiguration(
                 "Level 4 - Dungeony Dungeon",
@@ -75,7 +99,7 @@ public class Level4State extends BaseLevelState {
                 playerSpawn,
                 enemySpawns,
                 doorCoords,
-                new Point(2750, 200),
+                new Point(4550, 170),
                 300.0
         );
 
@@ -88,7 +112,6 @@ public class Level4State extends BaseLevelState {
         this.doorTileCoordinates = levelConfig.getDoorCoordinates();
         setDoorState(false);
         this.parTimeSeconds = levelConfig.getParTimeSeconds();
-        this.hud = new HUD(player, this);
     }
 
     @Override
@@ -145,9 +168,8 @@ public class Level4State extends BaseLevelState {
             setDoorState(false);
             bossDoorIsOpen = false;
             Enemy boss = new SluggerBoss(tileMap, player);
-            boss.setPosition(3050, 200);
+            boss.setPosition(4640, 170);
             entityManager.addEnemy(boss);
-            bosses.add(boss);
             bossSpawned = true;
             inBossFight = true;
             //System.out.println("Level 4: Door locked at x=2940, SluggerBoss spawned at (3050, 200), player.x=" + player.getx());
@@ -167,7 +189,6 @@ public class Level4State extends BaseLevelState {
                     currentEnemies.remove(i);
 
                     if (e instanceof SluggerBoss) {
-                        bosses.remove(e);
                         levelComplete(GameStateManager.LEVEL4STATE);
                     }
                 }
@@ -240,10 +261,10 @@ public class Level4State extends BaseLevelState {
         if (doorTileCoordinates != null && tileMap != null) {
             for (Point p : doorTileCoordinates) {
                 if (open) {
-                    if (p.y == 5) tileMap.setTile(p.y, p.x, 17);
+                    if (p.y == 4) tileMap.setTile(p.y, p.x, 17);
                     else tileMap.setTile(p.y, p.x, 0);
                 } else {
-                    if (p.y == 5) tileMap.setTile(p.y, p.x, 33);
+                    if (p.y == 4) tileMap.setTile(p.y, p.x, 33);
                     else tileMap.setTile(p.y, p.x, 34);
                 }
             }
@@ -258,9 +279,5 @@ public class Level4State extends BaseLevelState {
     @Override
     public int getSpawnY() {
         return (inBossFight && bossSpawned) ? 200 : (levelConfig != null ? levelConfig.getPlayerSpawnPoint().y : 100);
-    }
-
-    public List<Enemy> getBosses() {
-        return bosses;
     }
 }

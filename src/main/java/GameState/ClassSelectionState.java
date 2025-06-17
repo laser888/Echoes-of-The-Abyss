@@ -1,5 +1,6 @@
 package GameState;
 
+import Data.GameData;
 import Main.GamePanel;
 import TileMap.Background;
 import Entity.Player;
@@ -12,6 +13,7 @@ public class ClassSelectionState extends GameState {
 
     private Background bg;
     private GamePanel gamePanel;
+    private GameData gameData;
 
     private int currentChoice = 0;
     private String[] options = {
@@ -28,6 +30,7 @@ public class ClassSelectionState extends GameState {
     public ClassSelectionState(GameStateManager gsm, GamePanel gamePanel) {
         this.gsm = gsm;
         this.gamePanel = gamePanel;
+        this.gameData = gsm.getGameData();
 
         try {
             bg = new Background("/Backgrounds/menubg.gif", 0.8);
@@ -68,15 +71,23 @@ public class ClassSelectionState extends GameState {
         int optionSpacing = 35;
 
         for (int i = 0; i < options.length; i++) {
-            if (i == currentChoice) {
-                g.setColor(Color.YELLOW);
+            String text = options[i];
 
-            } else {
-                g.setColor(Color.BLACK);
+            if (i < 3) {
+                String classKey = options[i].toUpperCase();
+                int level = 0;
+
+                if (gameData.playerClassProgress.containsKey(classKey)) {
+                    level = gameData.playerClassProgress.get(classKey).getOrDefault("level", 0);
+                }
+
+                text += " (Lv " + level + ")";
             }
 
-            int optionWidth = fmOption.stringWidth(options[i]);
-            g.drawString(options[i], (GamePanel.WIDTH - optionWidth) / 2, optionsStartY + i * optionSpacing);
+            g.setFont(optionFont);
+            g.setColor(i == currentChoice ? Color.YELLOW : Color.BLACK);
+            int optionWidth = fmOption.stringWidth(text);
+            g.drawString(text, (GamePanel.WIDTH - optionWidth) / 2, optionsStartY + i * optionSpacing);
         }
     }
 
