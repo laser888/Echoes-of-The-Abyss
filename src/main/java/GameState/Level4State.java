@@ -27,12 +27,14 @@ public class Level4State extends BaseLevelState {
     private static final long BLESSING_TEXT_DURATION_NANO = 3_000_000_000L;
     private boolean bossSpawned;
     private boolean inBossFight;
+    private List<Enemy> bosses;
 
     public Level4State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
         this.bossSpawned = false;
         this.bossDoorIsOpen = false;
         this.inBossFight = false;
+        this.bosses = new ArrayList<>();
     }
 
     @Override
@@ -41,6 +43,7 @@ public class Level4State extends BaseLevelState {
         this.bossSpawned = false;
         this.bossDoorIsOpen = false;
         this.inBossFight = false;
+        this.bosses.clear();
         setDoorState(false);
     }
 
@@ -85,6 +88,7 @@ public class Level4State extends BaseLevelState {
         this.doorTileCoordinates = levelConfig.getDoorCoordinates();
         setDoorState(false);
         this.parTimeSeconds = levelConfig.getParTimeSeconds();
+        this.hud = new HUD(player, this);
     }
 
     @Override
@@ -143,6 +147,7 @@ public class Level4State extends BaseLevelState {
             Enemy boss = new SluggerBoss(tileMap, player);
             boss.setPosition(3050, 200);
             entityManager.addEnemy(boss);
+            bosses.add(boss);
             bossSpawned = true;
             inBossFight = true;
             //System.out.println("Level 4: Door locked at x=2940, SluggerBoss spawned at (3050, 200), player.x=" + player.getx());
@@ -162,6 +167,7 @@ public class Level4State extends BaseLevelState {
                     currentEnemies.remove(i);
 
                     if (e instanceof SluggerBoss) {
+                        bosses.remove(e);
                         levelComplete(GameStateManager.LEVEL4STATE);
                     }
                 }
@@ -252,5 +258,9 @@ public class Level4State extends BaseLevelState {
     @Override
     public int getSpawnY() {
         return (inBossFight && bossSpawned) ? 200 : (levelConfig != null ? levelConfig.getPlayerSpawnPoint().y : 100);
+    }
+
+    public List<Enemy> getBosses() {
+        return bosses;
     }
 }

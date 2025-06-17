@@ -9,6 +9,8 @@ public class Enemy extends MapObject{
     protected boolean dead;
     protected int damage;
 
+    protected String name;
+
     protected boolean flinching;
     protected long flinchTimer;
 
@@ -31,8 +33,18 @@ public class Enemy extends MapObject{
 
     public void update() {}
 
+    public int getHealth() { return health; }
+    public int getMaxHealth() { return maxHealth; }
+    public boolean isBoss() {
+        return false;
+    }
+
     public void setDead() {
         this.health = 0;
+    }
+
+    public String getName() {
+        return name;
     }
 
 }

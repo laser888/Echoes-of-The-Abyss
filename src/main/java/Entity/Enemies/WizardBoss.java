@@ -37,6 +37,7 @@ public class WizardBoss extends Enemy {
         this.player = player;
         this.lightningStrikes = new ArrayList<>();
         this.fireWaves = new ArrayList<>();
+        this.name = "Wizard Boss";
         moveSpeed = 1.0;
         maxSpeed = 1.5;
         fallSpeed = 0.2;
@@ -237,6 +238,11 @@ public class WizardBoss extends Enemy {
     public void draw(Graphics2D g) {
         setMapPosition();
         super.draw(g);
+    }
+
+    @Override
+    public boolean isBoss() {
+        return true; // Mark SluggerBoss as a boss
     }
 
     public ArrayList<Lightning> getLightningStrikes() { return lightningStrikes; }

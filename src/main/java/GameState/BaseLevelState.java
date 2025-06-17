@@ -75,7 +75,7 @@ public abstract class BaseLevelState extends GameState {
     }
 
     protected void initCommonLevelComponents() {
-        this.hud = new HUD(player);
+        this.hud = new HUD(player,this);
         this.entityManager = new EntityManager(player);
         paused = false;
 

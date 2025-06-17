@@ -65,6 +65,7 @@ public class Livid extends Enemy {
         this.isRealBoss = isRealBoss;
         this.cloneGroup = cloneGroup;
         this.cards = new ArrayList<>();
+        this.name = "Livid";
         moveSpeed = 0.5;
         maxSpeed = 0.5;
         fallSpeed = 0.2;
@@ -291,6 +292,11 @@ public class Livid extends Enemy {
             card.draw(g);
         }
         super.draw(g);
+    }
+
+    @Override
+    public boolean isBoss() {
+        return true; // Mark SluggerBoss as a boss
     }
 
     public ArrayList<CardProjectile> getCards() { return cards; }

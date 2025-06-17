@@ -173,7 +173,6 @@ public abstract class MapObject {
         // Check horizontal movement
         calculateCorners(xdest, y);
         if (outOfMap) {
-            System.out.println("MapObject: checkTileMapCollision early exit due to outOfMap (horizontal) at (x=" + x + ", y=" + y + ")");
             return;
         }
 
@@ -181,7 +180,6 @@ public abstract class MapObject {
             if (topLeft || bottomLeft) {
                 dx = 0;
                 xtemp = currCol * tileSize + cwidth / 2;
-                System.out.println("MapObject: Blocked left movement at x=" + xtemp);
             } else {
                 xtemp += dx;
             }
@@ -190,7 +188,6 @@ public abstract class MapObject {
             if (topRight || bottomRight) {
                 dx = 0;
                 xtemp = (currCol + 1) * tileSize - cwidth / 2;
-                System.out.println("MapObject: Blocked right movement at x=" + xtemp);
             } else {
                 xtemp += dx;
             }
@@ -200,7 +197,6 @@ public abstract class MapObject {
         if (!falling) {
             calculateCorners(x, ydest + 1);
             if (outOfMap) {
-                System.out.println("MapObject: checkTileMapCollision early exit due to outOfMap (falling) at (x=" + x + ", y=" + y + ")");
                 return;
             }
             if (!bottomLeft && !bottomRight) {
@@ -214,11 +210,9 @@ public abstract class MapObject {
         if (xtemp < minX) {
             xtemp = minX;
             dx = 0;
-            System.out.println("MapObject: Clamped to left edge at x=" + xtemp);
         } else if (xtemp > maxX) {
             xtemp = maxX;
             dx = 0;
-            System.out.println("MapObject: Clamped to right edge at x=" + xtemp);
         }
     }
 

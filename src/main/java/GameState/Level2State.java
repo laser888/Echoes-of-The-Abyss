@@ -30,6 +30,7 @@ public class Level2State extends BaseLevelState {
     private boolean bossActivated;
     private boolean bossFightStarted;
     private boolean inBossFight;
+    private List<Enemy> bosses;
 
     public Level2State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
@@ -38,6 +39,7 @@ public class Level2State extends BaseLevelState {
         this.bossDoorIsOpen = false;
         this.bossFightStarted = false;
         this.inBossFight = false;
+        this.bosses = new ArrayList<>();
     }
 
     @Override
@@ -48,6 +50,7 @@ public class Level2State extends BaseLevelState {
         this.bossFightStarted = false;
         this.inBossFight = false;
         lividGroup.clear();
+        this.bosses.clear();
         setDoorState(false);
     }
 
@@ -106,6 +109,7 @@ public class Level2State extends BaseLevelState {
         this.doorTileCoordinates = levelConfig.getDoorCoordinates();
         setDoorState(false);
         this.parTimeSeconds = levelConfig.getParTimeSeconds();
+        this.hud = new HUD(player, this);
     }
 
     @Override
@@ -175,6 +179,9 @@ public class Level2State extends BaseLevelState {
                 livid.setPosition(spawnX, 185);
                 lividGroup.add(livid);
                 entityManager.addEnemy(livid);
+                if (livid.isReal()) {
+                    bosses.add(livid);
+                }
                 System.out.println("Level 2: Spawned Livid (" + livid.getSuitType() + ", " +
                         (livid.isReal() ? "real" : "clone") + ") at (" + livid.getx() + ", " + livid.gety() + ")");
                 if (livid.isReal()) {
@@ -198,6 +205,7 @@ public class Level2State extends BaseLevelState {
                     System.out.println("Level 2: Livid triggered blind effect");
                 }
                 if (livid.isDead() && livid.isReal()) {
+                    bosses.remove(livid);
                     levelComplete(GameStateManager.LEVEL2STATE);
                 }
             }
@@ -257,7 +265,7 @@ public class Level2State extends BaseLevelState {
         if (bossHintText != null) {
             g.setFont(new Font("Arial", Font.BOLD, 14));
             g.setColor(Color.RED);
-            g.drawString(bossHintText, 80, 40);
+            g.drawString(bossHintText, 80, 60);
         }
     }
 
@@ -331,5 +339,9 @@ public class Level2State extends BaseLevelState {
     @Override
     public int getSpawnY() {
         return (inBossFight && bossActivated) ? 200 : (levelConfig != null ? levelConfig.getPlayerSpawnPoint().y : 100);
+    }
+
+    public List<Enemy> getBosses() {
+        return bosses;
     }
 }
