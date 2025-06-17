@@ -15,7 +15,7 @@ public class Blessing {
 
         double value;
 
-        double randomBonus = 0.05 + (Math.random() * 0.10); // Random value between 0.05 and 0.15
+        double randomBonus = 0.25 + (Math.random() * 0.50); // Random value between 0.25 and 0.50
 
         switch (randomType) {
             case STRENGTH:
