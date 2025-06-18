@@ -51,7 +51,7 @@ public class MenuState extends GameState {
         // draw title
         g.setColor(titleColor);
         g.setFont(titleFont);
-        g.drawString("Echoes of the Abyss", 80, 70);
+        g.drawString("Echoes of the Abyss", 40, 70);
 
         // draw menu options
         g.setFont(font);
