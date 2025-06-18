@@ -299,6 +299,19 @@ public class Level4State extends BaseLevelState {
                     System.out.println("Level 4: Cheat: Door opened");
                 }
                 break;
+            case "/solvesimon":
+                for (Enemy e : bosses) {
+                    if (e instanceof FinalBoss) {
+                        TerminalTile t = ((FinalBoss) e).getTerminal();
+                        if (t != null) {
+                            t.markSolved();
+                            t.close();
+                            BaseLevelState.inTerminal = false;
+                            System.out.println("Level 4: SimonSays solved via cheat");
+                        }
+                    }
+                }
+                break;
         }
     }
 
