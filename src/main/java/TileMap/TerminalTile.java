@@ -33,7 +33,6 @@ public class TerminalTile {
         if (isGhost) {
             this.blessingGiven = true;
         }
-        System.out.println("TerminalTile: Created, isGhost=" + isGhost + ", gp=" + (gp != null ? "present" : "null"));
     }
 
     public TerminalTile(int px, int py, int tileId, TileMap tileMap, GamePanel gp, int tileX, int tileY) {
@@ -79,7 +78,6 @@ public class TerminalTile {
         int textHeight = fm.getHeight();
 
         g.drawString(text, drawX + (size - textWidth)/2, drawY);
-        System.out.println("TerminalTile: Drew 'Press E' at drawX=" + drawX + ", drawY=" + drawY);
     }
 
     public void interact() {
@@ -93,9 +91,7 @@ public class TerminalTile {
         if (simon.isActive()) {
             simon.close();
             BaseLevelState.inTerminal = false;
-            System.out.println("TerminalTile: SimonSays closed, isGhost=" + isGhost);
         } else {
-            System.out.println("TerminalTile: Closed, no puzzle active, isGhost=" + isGhost);
         }
     }
 

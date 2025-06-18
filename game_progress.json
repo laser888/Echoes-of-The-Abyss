@@ -1,19 +1,19 @@
 {
   "playerClassProgress": {
     "MAGE": {
-      "level": 50,
-      "xp": 300,
+      "level": 1,
+      "xp": 0,
       "xpToNextLevel": 500
     },
     "ARCHER": {
-      "level": 55,
-      "xp": 363,
-      "xpToNextLevel": 922
+      "level": 1,
+      "xp": 0,
+      "xpToNextLevel": 500
     },
     "BERSERKER": {
-      "level": 50,
-      "xp": 300,
-      "xpToNextLevel": 550
+      "level": 1,
+      "xp": 0,
+      "xpToNextLevel": 500
     }
   },
   "keybinds": {},

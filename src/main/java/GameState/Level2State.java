@@ -3,6 +3,7 @@ package GameState;
 import Blessing.Blessing;
 import Entity.*;
 import Entity.Enemies.*;
+import Entity.Enemies.Bosses.Livid;
 import Entity.Projectiles.Arrow;
 import Entity.Projectiles.CardProjectile;
 import Main.GamePanel;

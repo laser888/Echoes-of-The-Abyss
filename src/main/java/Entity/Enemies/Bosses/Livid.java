@@ -1,4 +1,4 @@
-package Entity.Enemies;
+package Entity.Enemies.Bosses;
 
 import Entity.Animation;
 import Entity.Enemy;
@@ -76,7 +76,7 @@ public class Livid extends Enemy {
         cwidth = 20;
         cheight = 20;
         health = maxHealth = 3000;
-        damage = 65;
+        damage = 45;
         loadSprites(spriteSheets.get(suitType));
         right = false;
         left = false;

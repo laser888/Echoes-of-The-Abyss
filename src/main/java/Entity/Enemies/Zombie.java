@@ -26,8 +26,8 @@ public class Zombie extends Enemy {
         cwidth = 20;
         cheight = 20;
 
-        health = maxHealth = 150; // High health for a basic enemy
-        damage = 40; // High damage, but avoidable
+        health = maxHealth = 100;
+        damage = 20;
 
         // load sprites
         try {

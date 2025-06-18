@@ -5,7 +5,7 @@ import Entity.*;
 import Entity.Enemies.Skeleton;
 import Entity.Enemies.Slugger;
 import Entity.Enemies.Zombie;
-import Entity.Enemies.FinalBoss;
+import Entity.Enemies.Bosses.FinalBoss;
 import Entity.Projectiles.Arrow;
 import Entity.Projectiles.Fire;
 import Entity.Projectiles.Lightning;

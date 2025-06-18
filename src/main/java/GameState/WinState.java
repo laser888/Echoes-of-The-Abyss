@@ -104,9 +104,6 @@ public class WinState extends GameState {
         g.drawString("Rank: " + scoreData.rank, 20, statsY);
         statsY += lineHeight;
 
-        g.drawString(String.format("Trinket Multiplier: %.2f", scoreData.trinketMultiplier), 20, statsY);
-        statsY += lineHeight;
-
         g.setFont(xpFont);
         g.setColor(new Color(150, 255, 150));
         String xpText = gsm.getSelectedPlayerClass() + " Gained: +" + scoreData.xpAwarded;

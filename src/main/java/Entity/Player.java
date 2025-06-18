@@ -2,10 +2,10 @@ package Entity;
 
 import Blessing.Blessing;
 import Effects.DamageResult;
-import Entity.Enemies.FinalBoss;
-import Entity.Enemies.Livid;
+import Entity.Enemies.Bosses.FinalBoss;
+import Entity.Enemies.Bosses.Livid;
 import Entity.Enemies.Skeleton;
-import Entity.Enemies.WizardBoss;
+import Entity.Enemies.Bosses.WizardBoss;
 import Entity.Projectiles.Arrow;
 import Entity.Projectiles.FireBall;
 import GameState.GameStateManager;
@@ -48,50 +48,49 @@ public class Player extends MapObject {
     private Map<PlayerClass, ClassProgress> classProgressData;
 
     // Base Stats
-    private static final int TRUE_BASE_MAX_HEALTH = 100;
+    private static final int TRUE_BASE_MAX_HEALTH = 300; // Buffed from 100 to 300
     private static final int TRUE_BASE_DEFENSE = 10;
-    private static final int TRUE_BASE_STRENGTH = 10;
+    private static final int TRUE_BASE_STRENGTH = 15; // Increased for higher damage
     private static final int TRUE_BASE_MAX_INTELLIGENCE = 100;
     private static final double TRUE_BASE_ABILITY_DMG = 0.0;
     private static final double TRUE_BASE_MOVESPEED = 0.3;
     private static final double TRUE_BASE_MAXSPEED = 1.6;
-    private static final int TRUE_BASE_SCRATCH_DAMAGE_VALUE = 8;
+    private static final int TRUE_BASE_SCRATCH_DAMAGE_VALUE = 30;
     private static final int TRUE_BASE_SCRATCH_RANGE = 35;
     private static final double TRUE_BASE_CC = 15.0;
     private static final double TRUE_BASE_CRIT_DAMAGE = 50.0;
-    private static final int TRUE_BASE_ARROW_DMG = 18;
+    private static final int TRUE_BASE_ARROW_DMG = 40;
     private static final double TRUE_BASE_INTEL_REGEN = 1.0;
 
     // Mage Stats
     public static final int MAGE_STARTING_LEVEL = 1;
-    public static final int MAGE_INTELLIGENCE_GAIN_PER_LEVEL = 8;
-    public static final double MAGE_ABILITY_DMG_GAIN_PER_LEVEL = 1.5;
+    public static final int MAGE_INTELLIGENCE_GAIN_PER_LEVEL = 15;
+    public static final double MAGE_ABILITY_DMG_GAIN_PER_LEVEL = 2.5;
     public static final double MAGE_XP_CURVE_MULTIPLIER = 1.12;
     public static final int MAGE_INITIAL_XP_TO_NEXT_LEVEL = 500;
+    public static final double MAGE_INTEL_REGEN = 3.0;
 
     // Berserk Stats
     public static final int BERSERKER_STARTING_LEVEL = 1;
     public static final int BERSERKER_INITIAL_XP_TO_NEXT_LEVEL = 550;
     public static final double BERSERKER_XP_CURVE_MULTIPLIER = 1.125;
-
-    public static final int BERSERKER_HEALTH_GAIN_PER_LEVEL = 15;
-    public static final int BERSERKER_STRENGTH_GAIN_PER_LEVEL = 5;
-    public static final int BERSERKER_DEFENSE_GAIN_PER_LEVEL = 3;
-    public static final int BERSERKER_SCRATCH_DAMAGE_GAIN_PER_LEVEL = 3;
-    public static final double BERSERKER_MOVESPEED_GAIN_PER_LEVEL = 0.005;
-    public static final double BERSERKER_MELEE_RANGE_GAIN_PER_LEVEL = 0.5;
+    public static final int BERSERKER_HEALTH_GAIN_PER_LEVEL = 25;
+    public static final int BERSERKER_STRENGTH_GAIN_PER_LEVEL = 10;
+    public static final int BERSERKER_DEFENSE_GAIN_PER_LEVEL = 5;
+    public static final int BERSERKER_SCRATCH_DAMAGE_GAIN_PER_LEVEL = 5;
+    public static final double BERSERKER_MOVESPEED_GAIN_PER_LEVEL = 0.01;
+    public static final double BERSERKER_MELEE_RANGE_GAIN_PER_LEVEL = 1.0;
 
     // Archer Stats
     public static final int ARCHER_STARTING_LEVEL = 1;
     public static final int ARCHER_INITIAL_XP_TO_NEXT_LEVEL = 520;
     public static final double ARCHER_XP_CURVE_MULTIPLIER = 1.122;
-
-    public static final int ARCHER_PROJECTILE_DMG_BASE_BOOST = 5;
+    public static final int ARCHER_PROJECTILE_DMG_BASE_BOOST = 10;
     public static final int ARCHER_MAX_JUMPS = 2;
-    public static final int ARCHER_ARROW_DMG_GAIN_PER_LEVEL = 4;
-    public static final double ARCHER_CC_GAIN_PER_LEVEL = 0.7;
-    public static final double ARCHER_CD_GAIN_PER_LEVEL = 4.0;
-    public static final double ARCHER_INTEL_REGEN = 1.5;
+    public static final int ARCHER_ARROW_DMG_GAIN_PER_LEVEL = 6;
+    public static final double ARCHER_CC_GAIN_PER_LEVEL = 1.2;
+    public static final double ARCHER_CD_GAIN_PER_LEVEL = 5.0;
+    public static final double ARCHER_INTEL_REGEN = 4.0;
 
     // Player Stats
     private int health;
@@ -116,7 +115,7 @@ public class Player extends MapObject {
     private boolean flying;
     private boolean immune;
     private long immuneTimer;
-    private static final long IMMUNITY_DURATION_NANO = 2_000_000_000L; // 2 seconds
+    private static final long IMMUNITY_DURATION_NANO = 2_000_000_000L;
 
     // Abilities
     private boolean firing;
@@ -187,9 +186,9 @@ public class Player extends MapObject {
         this.CC = TRUE_BASE_CC;
         this.critDMG = TRUE_BASE_CRIT_DAMAGE;
         regen = 2.0;
-        this.intelRegen = TRUE_BASE_INTEL_REGEN;
+        this.intelRegen = chosenClass == PlayerClass.MAGE ? MAGE_INTEL_REGEN : chosenClass == PlayerClass.ARCHER ? ARCHER_INTEL_REGEN : TRUE_BASE_INTEL_REGEN;
         fireCost = 10;
-        fireBallDamage = 20;
+        fireBallDamage = 50;
         arrowCost = 6;
         this.arrowDMG = TRUE_BASE_ARROW_DMG;
 
@@ -283,7 +282,7 @@ public class Player extends MapObject {
                     }
                 }
                 if (hitEnemy) {
-                    DamageResult result = calculateDamage(scratchDamage, strength, CC, critDMG, null);
+                    DamageResult result = calculateDamage(scratchDamage, strength, CC, critDMG, 0);
                     e.hit(result.damage);
                     if (currentLevelState != null) {
                         currentLevelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
@@ -295,7 +294,7 @@ public class Player extends MapObject {
             for (int j = 0; j < fireBalls.size(); j++) {
                 FireBall fb = fireBalls.get(j);
                 if (fb.intersects(e)) {
-                    DamageResult result = calculateMagicDamage(fireBallDamage, intelligence, abilityDMG, null);
+                    DamageResult result = calculateMagicDamage(fireBallDamage, intelligence, abilityDMG, 0);
                     e.hit(result.damage);
                     currentLevelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
                     fireBalls.remove(j);
@@ -306,7 +305,7 @@ public class Player extends MapObject {
             for (int j = 0; j < arrows.size(); j++) {
                 Arrow a = arrows.get(j);
                 if(a.intersects(e)) {
-                    DamageResult result = calculateDamage(ARCHER_PROJECTILE_DMG_BASE_BOOST + arrowDMG, strength, CC, critDMG, null);
+                    DamageResult result = calculateDamage(ARCHER_PROJECTILE_DMG_BASE_BOOST + arrowDMG, strength, CC, critDMG, 0); // No enemy defence
                     e.hit(result.damage);
                     currentLevelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
                     arrows.remove(j);
@@ -410,7 +409,6 @@ public class Player extends MapObject {
             lastRegenTime = now;
         }
 
-        // Check immunity timer
         if (immune) {
             long elapsed = (System.nanoTime() - immuneTimer) / 1_000_000;
             if (elapsed > IMMUNITY_DURATION_NANO / 1_000_000) {
@@ -524,7 +522,7 @@ public class Player extends MapObject {
             arrows.get(i).draw(g);
         }
 
-        if(flinching || immune) { // Show flicker during immunity
+        if(flinching || immune) {
             long elapsed = (System.nanoTime() - flinchTimer) / 1000000;
             if(elapsed / 100 % 2 == 0) {
                 return;
@@ -539,11 +537,8 @@ public class Player extends MapObject {
             health = maxHealth;
             intelligence = maxIntelligence;
             dead = false;
-            immune = true; // Enable immunity on respawn
-            immuneTimer = System.nanoTime(); // Start immunity timer
-            //System.out.println("Player respawned at (" + gsm.getCurrentState().getSpawnX() + ", " + gsm.getCurrentState().getSpawnY() + ") with immunity");
-        } else {
-            return;
+            immune = true;
+            immuneTimer = System.nanoTime();
         }
     }
 
@@ -601,7 +596,6 @@ public class Player extends MapObject {
 
     public DamageResult calculateDamage(int baseSkillDamage, int strength, double critChance, double critMultiplier, Integer targetDefence) {
         int defenceValue = (targetDefence == null) ? 0 : targetDefence;
-
         double rawDamage = baseSkillDamage + strength;
         boolean crit = false;
         if (Math.random() * 100 < critChance) {
@@ -644,6 +638,7 @@ public class Player extends MapObject {
         if (this.chosenClass == PlayerClass.MAGE) {
             this.maxIntelligence += levelPoints * MAGE_INTELLIGENCE_GAIN_PER_LEVEL;
             this.abilityDMG += levelPoints * MAGE_ABILITY_DMG_GAIN_PER_LEVEL;
+            this.intelRegen = MAGE_INTEL_REGEN;
         } else if (this.chosenClass == PlayerClass.BERSERKER) {
             this.strength += levelPoints * BERSERKER_STRENGTH_GAIN_PER_LEVEL;
             this.defence += levelPoints * BERSERKER_DEFENSE_GAIN_PER_LEVEL;
@@ -657,7 +652,7 @@ public class Player extends MapObject {
             this.arrowDMG += levelPoints * ARCHER_ARROW_DMG_GAIN_PER_LEVEL;
             this.CC += levelPoints * ARCHER_CC_GAIN_PER_LEVEL;
             this.critDMG += levelPoints * ARCHER_CD_GAIN_PER_LEVEL;
-            this.intelRegen += ARCHER_INTEL_REGEN;
+            this.intelRegen = ARCHER_INTEL_REGEN;
         }
 
         this.health = this.maxHealth;

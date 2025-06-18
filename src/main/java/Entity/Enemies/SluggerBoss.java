@@ -29,7 +29,7 @@ public class SluggerBoss extends Enemy {
         cwidth = 20;
         cheight = 20;
 
-        health = maxHealth = 1500;
+        health = maxHealth = 600;
         damage = 45;
 
         // load sprites

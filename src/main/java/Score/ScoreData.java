@@ -15,18 +15,15 @@ public class ScoreData {
 
     public final double baseScore;
     public final String rank;
-    public final double trinketMultiplier;
     public final double finalDisplayScore;
     public final int xpAwarded;
 
-    public ScoreData(double baseScore, String rank, double trinketMultiplier, double finalDisplayScore, int xpAwarded, double combatScore, double puzzleScore, double timeScore, int enemiesKilled, int totalEnemies, int puzzlesSolved, int totalPuzzles, String timeTakenFormatted, boolean playerDidNotDieInLevel) {
+    public ScoreData(double baseScore, String rank, double finalDisplayScore, int xpAwarded, double combatScore, double puzzleScore, double timeScore, int enemiesKilled, int totalEnemies, int puzzlesSolved, int totalPuzzles, String timeTakenFormatted, boolean playerDidNotDieInLevel) {
 
         this.baseScore = baseScore;
         this.rank = rank;
-        this.trinketMultiplier = trinketMultiplier;
         this.finalDisplayScore = finalDisplayScore;
         this.xpAwarded = xpAwarded;
-
         this.combatScore = combatScore;
         this.puzzleScore = puzzleScore;
         this.timeScore = timeScore;

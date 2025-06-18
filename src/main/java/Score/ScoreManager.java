@@ -50,9 +50,7 @@ public class ScoreManager {
 
         String rank = determineRank(baseScore);
 
-        double trinketMultiplier = getTrinketMultiplier(rank);
-
-        double finalDisplayScore = baseScore * trinketMultiplier;
+        double finalDisplayScore = baseScore;
 
         int xpAwarded = determineXPAwarded(rank, xpMultiplier);
 
@@ -62,7 +60,7 @@ public class ScoreManager {
         String timeFormatted = String.format("%02d:%02d", minutes, seconds);
 
         return new ScoreData(
-                baseScore, rank, trinketMultiplier, finalDisplayScore, xpAwarded,
+                baseScore, rank, finalDisplayScore, xpAwarded,
                 combatScoreVal, puzzleScoreVal, timeScoreVal,
                 enemiesKilled, totalEnemiesInLevel,
                 solvedPuzzles, totalPuzzlesInLevel,
@@ -78,18 +76,6 @@ public class ScoreManager {
         else if (baseScore >= 70) return "B";
         else if (baseScore >= 50) return "C";
         else return "D";
-    }
-
-    private double getTrinketMultiplier(String rank) {
-        switch (rank) {
-            case "S+": return 1.2;
-            case "S":  return 1.0;
-            case "A":  return 0.8;
-            case "B":  return 0.64;
-            case "C":  return 0.512;
-            case "D":  return 0.41;
-            default:   return 1.0;
-        }
     }
 
     private static final int S_PLUS_RANK_XP = 1200;

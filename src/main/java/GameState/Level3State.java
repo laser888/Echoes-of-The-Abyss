@@ -4,7 +4,7 @@ import Blessing.Blessing;
 import Entity.*;
 import Entity.Enemies.Skeleton;
 import Entity.Enemies.Slugger;
-import Entity.Enemies.WizardBoss;
+import Entity.Enemies.Bosses.WizardBoss;
 import Entity.Enemies.Zombie;
 import Entity.Projectiles.Arrow;
 import Entity.Projectiles.Fire;

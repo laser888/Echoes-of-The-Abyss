@@ -1,4 +1,4 @@
-package Entity.Enemies;
+package Entity.Enemies.Bosses;
 
 import Entity.Animation;
 import Entity.Enemy;
@@ -47,8 +47,8 @@ public class WizardBoss extends Enemy {
         height = 30;
         cwidth = 20;
         cheight = 20;
-        health = maxHealth = 6000;
-        damage = 50;
+        health = maxHealth = 4500;
+        damage = 30;
         loadSprites();
         facingRight = true;
     }
@@ -115,7 +115,7 @@ public class WizardBoss extends Enemy {
 
     private void fireLightning() {
         boolean right = player.getx() > x;
-        Lightning lightning = new Lightning(tileMap, right, 150); // 150 damage
+        Lightning lightning = new Lightning(tileMap, right, 80); // 150 damage
         double spawnY = player.gety() - 100; // Above player
         double warnY = player.gety() - 50; // Warning slightly below
         lightning.setWarning(player.getx(), warnY); // Set warning position

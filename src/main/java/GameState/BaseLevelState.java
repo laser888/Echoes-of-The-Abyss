@@ -485,18 +485,69 @@ public abstract class BaseLevelState extends GameState {
     protected abstract void handleLevelSpecificKeyPressed(int k);
 
     protected void handleTypingInput(int k) {
-        if (k == KeyEvent.VK_ESCAPE) { isTyping = false; typedText.setLength(0); }
 
-        else if (k == KeyEvent.VK_ENTER) {
-            if (typedText.length() > 0) executeCommand(typedText.toString());
-            isTyping = false; typedText.setLength(0);
+        if (k == KeyEvent.VK_ESCAPE) {
+            isTyping = false;
+            typedText.setLength(0);
+            return;
+        }
 
-        } else if (k == KeyEvent.VK_BACK_SPACE && typedText.length() > 0) {
-            typedText.deleteCharAt(typedText.length() - 1);
+        if (k == KeyEvent.VK_ENTER) {
+            if (typedText.length() > 0) {
+                String command = typedText.toString();
 
-        } else if (k == KeyEvent.VK_UP && !chatHistory.isEmpty()) { chatIndex--; typedText.setLength(0); typedText.append(chatHistory.get(chatIndex)); }
-        else if (k == KeyEvent.VK_DOWN && !chatHistory.isEmpty()) { chatIndex++; typedText.setLength(0); typedText.append(chatHistory.get(chatIndex)); }
-        else { char c = (char) k; if (Character.isLetterOrDigit(c) || c == ' ' || c == '/') typedText.append(c); }
+                if (!command.trim().isEmpty() && (chatHistory.isEmpty() || !chatHistory.get(chatHistory.size() - 1).equals(command))) {
+                    chatHistory.add(command);
+                }
+            }
+            isTyping = false;
+            typedText.setLength(0);
+            return;
+        }
+
+
+        if (k == KeyEvent.VK_BACK_SPACE) {
+            if (typedText.length() > 0) {
+                typedText.deleteCharAt(typedText.length() - 1);
+            }
+            return;
+        }
+
+        if (k == KeyEvent.VK_UP) {
+            if (!chatHistory.isEmpty()) {
+
+                if (chatIndex > 0) {
+                    chatIndex--;
+                }
+
+                typedText.setLength(0);
+                typedText.append(chatHistory.get(chatIndex));
+            }
+            return;
+        }
+
+        if (k == KeyEvent.VK_DOWN) {
+            if (!chatHistory.isEmpty()) {
+
+                if (chatIndex < chatHistory.size() - 1) {
+                    chatIndex++;
+                    typedText.setLength(0);
+                    typedText.append(chatHistory.get(chatIndex));
+                } else {
+
+                    chatIndex = chatHistory.size();
+                    typedText.setLength(0);
+                }
+            }
+            return;
+        }
+
+        KeyEvent keyEvent = new KeyEvent(gamePanel, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, k, (char)k, KeyEvent.KEY_LOCATION_STANDARD);
+        char keyChar = keyEvent.getKeyChar();
+
+        if (keyChar != KeyEvent.CHAR_UNDEFINED && !Character.isISOControl(keyChar)) {
+            typedText.append(keyChar);
+        }
     }
 
 

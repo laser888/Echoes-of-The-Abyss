@@ -1,4 +1,4 @@
-package Entity.Enemies;
+package Entity.Enemies.Bosses;
 
 import Entity.Animation;
 import Entity.Enemy;
@@ -74,8 +74,8 @@ public class FinalBoss extends Enemy {
         this.height = 42;
         this.cwidth = 40;
         this.cheight = 45;
-        this.health = this.maxHealth = 1000;
-        this.damage = 50;
+        this.health = this.maxHealth = 6000;
+        this.damage = 40;
         this.initialDamage = damage;
         this.hasPlayedCrumbling = false;
         loadSprites();
@@ -191,7 +191,7 @@ public class FinalBoss extends Enemy {
 
     private void fireLightning() {
         boolean right = player.getx() > x;
-        Lightning lightning = new Lightning(tileMap, right, (int)(150 * (1 + phase * 0.5)));
+        Lightning lightning = new Lightning(tileMap, right, (int)(100 * (1 + phase * 0.5)));
         double spawnY = player.gety() - 100;
         double warnY = player.gety() - 50;
         lightning.setWarning(player.getx(), warnY);
