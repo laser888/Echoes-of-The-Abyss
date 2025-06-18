@@ -3,8 +3,8 @@ package Entity.Enemies;
 import Entity.Animation;
 import Entity.Enemy;
 import Entity.Player;
-import Entity.Lightning;
-import Entity.Fire;
+import Entity.Projectiles.Lightning;
+import Entity.Projectiles.Fire;
 import TileMap.TileMap;
 
 import javax.imageio.ImageIO;
@@ -56,7 +56,7 @@ public class WizardBoss extends Enemy {
     private void loadSprites() {
         BufferedImage spritesheet = null;
         try {
-            spritesheet = ImageIO.read(getClass().getResourceAsStream("/Sprites/Enemies/WizardBoss.gif"));
+            spritesheet = ImageIO.read(getClass().getResourceAsStream("/Sprites/Enemies/Bosses/WizardBoss.gif"));
             if (spritesheet == null) {
                 throw new IOException("WizardBoss sprite sheet is null");
             }

@@ -6,6 +6,7 @@ import Entity.Enemies.Skeleton;
 import Entity.Enemies.Slugger;
 import Entity.Enemies.SluggerBoss;
 import Entity.Enemies.Zombie;
+import Entity.Projectiles.Arrow;
 import Main.GamePanel;
 import TileMap.Background;
 import TileMap.TileMap;
@@ -176,7 +177,7 @@ public class Level1State extends BaseLevelState {
                     for (int j = skeletonArrows.size() - 1; j >= 0; j--) {
                         Arrow arrow = skeletonArrows.get(j);
                         if (arrow.isEnemyArrow() && player != null && arrow.intersects(player)) {
-                            player.hit(skeleton.getArrowDamage());
+                            player.hit(skeleton.getDamage());
                             arrow.setHit();
                         }
                     }

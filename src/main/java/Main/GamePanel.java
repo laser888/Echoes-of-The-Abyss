@@ -143,6 +143,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener, MouseLis
     }
 
     public void keyPressed(KeyEvent key) {
+        if(gsm == null) return;
         gsm.keyPressed(key.getKeyCode());
     }
 

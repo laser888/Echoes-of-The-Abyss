@@ -2,7 +2,12 @@ package Entity;
 
 import Blessing.Blessing;
 import Effects.DamageResult;
+import Entity.Enemies.FinalBoss;
+import Entity.Enemies.Livid;
 import Entity.Enemies.Skeleton;
+import Entity.Enemies.WizardBoss;
+import Entity.Projectiles.Arrow;
+import Entity.Projectiles.FireBall;
 import GameState.GameStateManager;
 import GameState.BaseLevelState;
 import TileMap.*;
@@ -50,11 +55,11 @@ public class Player extends MapObject {
     private static final double TRUE_BASE_ABILITY_DMG = 0.0;
     private static final double TRUE_BASE_MOVESPEED = 0.3;
     private static final double TRUE_BASE_MAXSPEED = 1.6;
-    private static final int TRUE_BASE_SCRATCH_DAMAGE_VALUE = 25;
+    private static final int TRUE_BASE_SCRATCH_DAMAGE_VALUE = 8;
     private static final int TRUE_BASE_SCRATCH_RANGE = 35;
     private static final double TRUE_BASE_CC = 15.0;
     private static final double TRUE_BASE_CRIT_DAMAGE = 50.0;
-    private static final int TRUE_BASE_ARROW_DMG = 25;
+    private static final int TRUE_BASE_ARROW_DMG = 18;
     private static final double TRUE_BASE_INTEL_REGEN = 1.0;
 
     // Mage Stats
@@ -290,7 +295,7 @@ public class Player extends MapObject {
             for (int j = 0; j < fireBalls.size(); j++) {
                 FireBall fb = fireBalls.get(j);
                 if (fb.intersects(e)) {
-                    DamageResult result = calculateMagicDamage(fireBallDamage, maxIntelligence, abilityDMG, null);
+                    DamageResult result = calculateMagicDamage(fireBallDamage, intelligence, abilityDMG, null);
                     e.hit(result.damage);
                     currentLevelState.addDamageNumber(result.damage, e.getx(), e.gety() - e.getHeight() / 2.0, result.isCrit);
                     fireBalls.remove(j);
@@ -308,7 +313,7 @@ public class Player extends MapObject {
                     j--;
                 }
             }
-            if (intersects(e) && !(e instanceof Skeleton)) {
+            if (intersects(e) && !(e instanceof Skeleton) && !(e instanceof FinalBoss) && !(e instanceof WizardBoss) && !(e instanceof Livid)) {
                 hit(e.getDamage());
             }
         }
@@ -639,7 +644,6 @@ public class Player extends MapObject {
         if (this.chosenClass == PlayerClass.MAGE) {
             this.maxIntelligence += levelPoints * MAGE_INTELLIGENCE_GAIN_PER_LEVEL;
             this.abilityDMG += levelPoints * MAGE_ABILITY_DMG_GAIN_PER_LEVEL;
-            this.intelRegen += 5;
         } else if (this.chosenClass == PlayerClass.BERSERKER) {
             this.strength += levelPoints * BERSERKER_STRENGTH_GAIN_PER_LEVEL;
             this.defence += levelPoints * BERSERKER_DEFENSE_GAIN_PER_LEVEL;

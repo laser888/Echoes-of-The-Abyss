@@ -1,12 +1,14 @@
-package Entity;
+package Entity.Projectiles;
 
+import Entity.Animation;
+import Entity.MapObject;
 import TileMap.TileMap;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-public class FireBall extends MapObject{
+public class FireBall extends MapObject {
 
     private boolean hit;
     private boolean remove;
@@ -31,7 +33,7 @@ public class FireBall extends MapObject{
         // load sprites
         try {
 
-            BufferedImage spritesheet = ImageIO.read(getClass().getResourceAsStream("/Sprites/Player/fireball.gif"));
+            BufferedImage spritesheet = ImageIO.read(getClass().getResourceAsStream("/Sprites/Player/Projectiles/fireball.gif"));
 
             sprites = new BufferedImage[4];
             for(int i = 0; i < sprites.length; i++) {

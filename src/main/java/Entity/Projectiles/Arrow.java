@@ -1,5 +1,6 @@
-package Entity;
+package Entity.Projectiles;
 
+import Entity.MapObject;
 import TileMap.TileMap;
 
 import javax.imageio.ImageIO;
@@ -38,7 +39,7 @@ public class Arrow extends MapObject {
         flightTimer = System.nanoTime();
 
         try {
-            sprite = ImageIO.read(getClass().getResourceAsStream("/Sprites/Player/arrow.gif"));
+            sprite = ImageIO.read(getClass().getResourceAsStream("/Sprites/Player/Projectiles/arrow.gif"));
         } catch (Exception e) {
             e.printStackTrace();
         }

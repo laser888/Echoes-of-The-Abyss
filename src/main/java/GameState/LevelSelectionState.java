@@ -61,7 +61,6 @@ public class LevelSelectionState extends GameState {
         allLevels.add(new LevelEntry("Level 1", GameStateManager.LEVEL2STATE, "Level1State")); // Requires Level 1
         allLevels.add(new LevelEntry("Level 2", GameStateManager.LEVEL3STATE, "Level2State")); // Requires Level 2
         allLevels.add(new LevelEntry("Level 3", GameStateManager.LEVEL4STATE, "Level3State")); // Requires Level 3
-        allLevels.add(new LevelEntry("~=[,,_,,]:3", GameStateManager.CATSTATE, null));
     }
 
     public void init() {

@@ -34,7 +34,7 @@ public class SluggerBoss extends Enemy {
 
         // load sprites
         try {
-            BufferedImage spritesheet = ImageIO.read(getClass().getResourceAsStream("/Sprites/Enemies/sluggerBoss.gif"));
+            BufferedImage spritesheet = ImageIO.read(getClass().getResourceAsStream("/Sprites/Enemies/Bosses/sluggerBoss.gif"));
             sprites = new BufferedImage[3];
             for (int i = 0; i < sprites.length; i++) {
                 sprites[i] = spritesheet.getSubimage(i * width, 0, width, height);

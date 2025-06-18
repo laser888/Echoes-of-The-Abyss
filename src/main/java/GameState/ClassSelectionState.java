@@ -115,9 +115,19 @@ public class ClassSelectionState extends GameState {
 
         if (proceedToGame) {
             gsm.setSelectedPlayerClass(selectedClass);
-            gsm.setState(GameStateManager.LevelSelectionState);
+
+            // Check saved data
+            GameData data = gsm.getGameData();
+            boolean hasCompletedLevel = data != null && data.completedLevels != null && !data.completedLevels.isEmpty();
+
+            if (!hasCompletedLevel) {
+                gsm.setState(GameStateManager.INTROSTATE); // Show intro if no levels completed
+            } else {
+                gsm.setState(GameStateManager.LevelSelectionState); // Skip intro
+            }
         }
     }
+
 
     public void keyPressed(int k) {
         if (k == KeyEvent.VK_ENTER) {

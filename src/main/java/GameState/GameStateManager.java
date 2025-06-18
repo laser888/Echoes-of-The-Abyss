@@ -16,15 +16,16 @@ public class GameStateManager {
 
     public static final int MENUSTATE = 0;
     public static final int WINNINGSTATE = 1;
-    public static final int CATSTATE = 2;
-    public static final int SETTINGSSTATE = 3;
-    public static final int CLASSSELECTIONSTATE = 4;
-    public static final int LevelSelectionState = 5;
-    public static final int LEVEL1STATE = 6;
-    public static final int LEVEL2STATE = 7;
-    public static final int LEVEL3STATE = 8;
-    public static final int LEVEL4STATE = 9;
-    public static final int CREDITSSTATE = 10;
+    public static final int INTROSTATE = 2;
+    public static final int CATSTATE = 3;
+    public static final int SETTINGSSTATE = 4;
+    public static final int CLASSSELECTIONSTATE = 5;
+    public static final int LevelSelectionState = 6;
+    public static final int LEVEL1STATE = 7;
+    public static final int LEVEL2STATE = 8;
+    public static final int LEVEL3STATE = 9;
+    public static final int LEVEL4STATE = 10;
+    public static final int CREDITSSTATE = 11;
 
     private Entity.Player.PlayerClass currentPlayerClassSelection = Entity.Player.PlayerClass.NONE;
 
@@ -37,6 +38,7 @@ public class GameStateManager {
         currentState = MENUSTATE;
         gameStates.add(new MenuState(this, gamePanel));
         gameStates.add(new WinState(this, gamePanel));
+        gameStates.add(new IntroState(this));
         gameStates.add(new CatState(this));
         gameStates.add(new SettingsState(this, gamePanel));
         gameStates.add(new ClassSelectionState(this, gamePanel));

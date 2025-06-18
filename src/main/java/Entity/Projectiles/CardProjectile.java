@@ -1,5 +1,7 @@
-package Entity;
+package Entity.Projectiles;
 
+import Entity.Animation;
+import Entity.MapObject;
 import TileMap.TileMap;
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -27,7 +29,7 @@ public class CardProjectile extends MapObject {
         moveSpeed = 3.5;
         dx = right ? moveSpeed : -moveSpeed;
 
-        String[] possiblePaths = {"/Sprites/Enemies/CardProjectiles.gif"};
+        String[] possiblePaths = {"/Sprites/Enemies/Projectiles/CardProjectiles.gif"};
         BufferedImage spritesheet = null;
 
         try {

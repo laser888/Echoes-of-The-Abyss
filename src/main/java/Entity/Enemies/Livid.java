@@ -3,7 +3,7 @@ package Entity.Enemies;
 import Entity.Animation;
 import Entity.Enemy;
 import Entity.Player;
-import Entity.CardProjectile;
+import Entity.Projectiles.CardProjectile;
 import TileMap.TileMap;
 
 import javax.imageio.ImageIO;
@@ -35,9 +35,9 @@ public class Livid extends Enemy {
     static {
         String[] suits = {"Diamond", "Heart", "Spade"};
         String[] paths = {
-                "/Sprites/Enemies/DiamondBoss.gif",
-                "/Sprites/Enemies/HeartBoss.gif",
-                "/Sprites/Enemies/SpadeBoss.gif"
+                "/Sprites/Enemies/Bosses/DiamondBoss.gif",
+                "/Sprites/Enemies/Bosses/HeartBoss.gif",
+                "/Sprites/Enemies/Bosses/SpadeBoss.gif"
         };
         for (int i = 0; i < suits.length; i++) {
             BufferedImage sheet = null;

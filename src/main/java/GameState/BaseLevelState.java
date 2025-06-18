@@ -60,7 +60,9 @@ public abstract class BaseLevelState extends GameState {
     protected ArrayList<String> chatHistory = new ArrayList<>();
     protected int chatIndex = -1;
 
+    // Developer and edit tools
     protected boolean editMode = false;
+    private boolean devMode = false; // Developer mode flag
     protected int selectedTile = 1;
 
     public static boolean inTerminal = false;
@@ -368,7 +370,9 @@ public abstract class BaseLevelState extends GameState {
                 handleTypingInput(k);
                 return;
             }
-            if (k == KeyEvent.VK_F1) {
+
+            // devMode check for F1 key
+            if (devMode && k == KeyEvent.VK_F1) {
 
                 editMode = !editMode;
                 //System.out.println("Edit Mode: " + (editMode ? "ON" : "OFF"));
@@ -484,7 +488,7 @@ public abstract class BaseLevelState extends GameState {
         if (k == KeyEvent.VK_ESCAPE) { isTyping = false; typedText.setLength(0); }
 
         else if (k == KeyEvent.VK_ENTER) {
-                if (typedText.length() > 0) executeCommand(typedText.toString());
+            if (typedText.length() > 0) executeCommand(typedText.toString());
             isTyping = false; typedText.setLength(0);
 
         } else if (k == KeyEvent.VK_BACK_SPACE && typedText.length() > 0) {
@@ -499,24 +503,24 @@ public abstract class BaseLevelState extends GameState {
     @Override
     public void keyReleased(int k) {
         if (player != null) {
-                if (editMode) {
-                    if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) leftPressed = false;
-                    if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) rightPressed = false;
-                    if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) upPressed = false;
-                    if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) downPressed = false;
-                }
-                if (k == KeyEvent.VK_CONTROL) controlPressed = false;
-                if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) player.setLeft(false);
-                if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) player.setRight(false);
-                if (k == keybindManager.getKeyCode(GameAction.JUMP)) player.setJumping(false);
-                if (k == keybindManager.getKeyCode(GameAction.FIRE)) player.setFiring(false);
-                if (k == keybindManager.getKeyCode(GameAction.SCRATCH)) player.setScratching(false);
-                if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) player.setUp(false);
-                if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) player.setDown(false);
-                if (k == keybindManager.getKeyCode(GameAction.GLIDE)) player.setGliding(false);
-
+            if (editMode) {
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) leftPressed = false;
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) rightPressed = false;
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) upPressed = false;
+                if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) downPressed = false;
             }
-            handleLevelSpecificKeyReleased(k);
+            if (k == KeyEvent.VK_CONTROL) controlPressed = false;
+            if (k == keybindManager.getKeyCode(GameAction.MOVE_LEFT)) player.setLeft(false);
+            if (k == keybindManager.getKeyCode(GameAction.MOVE_RIGHT)) player.setRight(false);
+            if (k == keybindManager.getKeyCode(GameAction.JUMP)) player.setJumping(false);
+            if (k == keybindManager.getKeyCode(GameAction.FIRE)) player.setFiring(false);
+            if (k == keybindManager.getKeyCode(GameAction.SCRATCH)) player.setScratching(false);
+            if (k == keybindManager.getKeyCode(GameAction.MOVE_UP)) player.setUp(false);
+            if (k == keybindManager.getKeyCode(GameAction.MOVE_DOWN)) player.setDown(false);
+            if (k == keybindManager.getKeyCode(GameAction.GLIDE)) player.setGliding(false);
+
+        }
+        handleLevelSpecificKeyReleased(k);
     }
     protected abstract void handleLevelSpecificKeyReleased(int k);
 
@@ -599,6 +603,7 @@ public abstract class BaseLevelState extends GameState {
         gsm.setState(GameStateManager.WINNINGSTATE);
     }
 
+    // The devMode flag gates command execution.
     protected void executeCommand(String command) {
 
         chatHistory.add(command);
@@ -606,30 +611,44 @@ public abstract class BaseLevelState extends GameState {
         String[] token = command.trim().split(" ");
         if (token.length == 0 || token[0].isEmpty()) return;
 
-        switch(token[0].toLowerCase()) {
-            case "/tp":
-                if(token.length == 3 && player != null) {
-                    try { player.setPosition(Integer.parseInt(token[1]), Integer.parseInt(token[2])); }
-                    catch (NumberFormatException e) { /* invalid coords */ }
-                } break;
-            case "/god": if(player != null) player.godMode(true); break;
-            case "/stop": if(player != null) player.godMode(false); break;
-            case "/cat":
-                if (gsm != null) {
-                    gsm.setState(GameStateManager.CATSTATE);
-                }
-                break;
-            case "/level2state":
-                gsm.setState(GameStateManager.LEVEL2STATE);
-                break;
-            case "/level1state":
-                gsm.setState(GameStateManager.LEVEL1STATE);
-                break;
-            case "/edit":
-                editMode = !editMode;
-                break;
-            default:
-                handleLevelSpecificCommand(token);
+        String primaryCommand = token[0].toLowerCase();
+
+        // The /dev command is always available.
+        if (primaryCommand.equals("/dev")) {
+            devMode = !devMode;
+            System.out.println("Developer Mode is now " + (devMode ? "ON" : "OFF"));
+            return;
+        }
+
+        // All other commands require devMode to be active.
+        if (devMode) {
+            switch(primaryCommand) {
+                case "/tp":
+                    if(token.length == 3 && player != null) {
+                        try { player.setPosition(Integer.parseInt(token[1]), Integer.parseInt(token[2])); }
+                        catch (NumberFormatException e) { /* invalid coords */ }
+                    } break;
+                case "/god": if(player != null) player.godMode(true); break;
+                case "/stop": if(player != null) player.godMode(false); break;
+                case "/cat":
+                    if (gsm != null) {
+                        gsm.setState(GameStateManager.CATSTATE);
+                    }
+                    break;
+                case "/level2state":
+                    gsm.setState(GameStateManager.LEVEL2STATE);
+                    break;
+                case "/level1state":
+                    gsm.setState(GameStateManager.LEVEL1STATE);
+                    break;
+                case "/edit":
+                    editMode = !editMode;
+                    break;
+                default:
+                    handleLevelSpecificCommand(token);
+            }
+        } else {
+            System.out.println("Unknown command or developer mode is not enabled.");
         }
     }
 

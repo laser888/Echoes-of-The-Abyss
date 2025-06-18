@@ -17,17 +17,27 @@ public class TerminalTile {
     private int tileY;
     private static final int INTERACTION_RADIUS_IN_TILES = 2;
     private boolean blessingGiven = false;
+    private boolean isGhost;
 
-    public TerminalTile(int px, int py, int tileId, TileMap tileMap, GamePanel gp, int tileX, int tileY) {
+    public TerminalTile(int px, int py, int tileId, TileMap tileMap, GamePanel gp, int tileX, int tileY, boolean isGhost) {
         this.px = px;
         this.py = py;
         this.tileX = tileX;
         this.tileY = tileY;
         this.tileId = tileId;
         this.tileMap = tileMap;
+        this.isGhost = isGhost;
         int radius = tileMap.getTileSize() * INTERACTION_RADIUS_IN_TILES;
         simon = new SimonSays(px, py, gp, tileMap.getTileSize());
         font = new Font("Arial", Font.BOLD, 12);
+        if (isGhost) {
+            this.blessingGiven = true;
+        }
+        System.out.println("TerminalTile: Created, isGhost=" + isGhost + ", gp=" + (gp != null ? "present" : "null"));
+    }
+
+    public TerminalTile(int px, int py, int tileId, TileMap tileMap, GamePanel gp, int tileX, int tileY) {
+        this(px, py, tileId, tileMap, gp, tileX, tileY, false);
     }
 
     public void update() {
@@ -35,6 +45,9 @@ public class TerminalTile {
     }
 
     public void render(Graphics2D g, int camX, int camY) {
+        if (isGhost && !simon.isActive()) {
+            return;
+        }
         int drawX = px + camX;
         int drawY = py + camY;
         int size = tileMap.getTileSize();
@@ -50,22 +63,23 @@ public class TerminalTile {
     }
 
     public void drawPressEPrompt(Graphics2D g, int camX, int camY) {
-        if (!simon.isActive() && !simon.isCompleted()) {
-            int drawX = px + camX;
-            int drawY = py + camY - 20;
-            int size = tileMap.getTileSize();
-
-            g.setFont(font);
-            g.setColor(Color.WHITE);
-
-            String text = "Press E";
-            FontMetrics fm = g.getFontMetrics();
-            int textWidth = fm.stringWidth(text);
-            int textHeight = fm.getHeight();
-
-            g.setColor(Color.WHITE);
-            g.drawString(text, drawX + (size - textWidth)/2, drawY);
+        if (simon.isActive() || simon.isCompleted()) {
+            return;
         }
+        int drawX = px + camX;
+        int drawY = py + camY - 20;
+        int size = tileMap.getTileSize();
+
+        g.setFont(font);
+        g.setColor(isGhost ? new Color(255, 255, 255, 128) : Color.WHITE);
+
+        String text = "Press E";
+        FontMetrics fm = g.getFontMetrics();
+        int textWidth = fm.stringWidth(text);
+        int textHeight = fm.getHeight();
+
+        g.drawString(text, drawX + (size - textWidth)/2, drawY);
+        System.out.println("TerminalTile: Drew 'Press E' at drawX=" + drawX + ", drawY=" + drawY);
     }
 
     public void interact() {
@@ -76,8 +90,13 @@ public class TerminalTile {
     }
 
     public void close() {
-        simon.close();
-        BaseLevelState.inTerminal = false;
+        if (simon.isActive()) {
+            simon.close();
+            BaseLevelState.inTerminal = false;
+            System.out.println("TerminalTile: SimonSays closed, isGhost=" + isGhost);
+        } else {
+            System.out.println("TerminalTile: Closed, no puzzle active, isGhost=" + isGhost);
+        }
     }
 
     public boolean isActive() { return simon.isActive(); }
@@ -98,14 +117,8 @@ public class TerminalTile {
         return tz.contains(playerX, playerY);
     }
 
-    public int getX() {
-        return tileX;
-    }
-
-    public int getY() {
-        return tileY;
-    }
-
+    public int getX() { return tileX; }
+    public int getY() { return tileY; }
     public boolean isBlessingGiven() { return blessingGiven; }
     public void setBlessingGiven() { this.blessingGiven = true; }
 }

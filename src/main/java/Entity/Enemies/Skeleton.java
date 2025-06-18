@@ -1,7 +1,7 @@
 package Entity.Enemies;
 
 import Entity.Animation;
-import Entity.Arrow;
+import Entity.Projectiles.Arrow;
 import Entity.Enemy;
 import Entity.Player;
 import TileMap.TileMap;
@@ -25,7 +25,7 @@ public class Skeleton extends Enemy {
     private static final long FIRE_COOLDOWN_NANO = 3 * 1000 * 1000000L; // 3 seconds
     private static final double ATTACK_RANGE_PIXELS = 125.0;
     private static final double DETECTION_RANGE_PIXELS = 300.0;
-    private int arrowDamage;
+    private int damage;
 
     private boolean patrolling;
 
@@ -45,7 +45,7 @@ public class Skeleton extends Enemy {
         cheight = 20;
 
         health = maxHealth = 80;
-        arrowDamage = 25;
+        damage = 25;
 
         lastFireTimeNano = System.nanoTime() - FIRE_COOLDOWN_NANO;
 
@@ -228,7 +228,7 @@ public class Skeleton extends Enemy {
         super.draw(g);
     }
 
-    public int getArrowDamage() {
-        return arrowDamage;
+    public int getDamage() {
+        return damage;
     }
 }

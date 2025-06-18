@@ -3,6 +3,8 @@ package GameState;
 import Blessing.Blessing;
 import Entity.*;
 import Entity.Enemies.*;
+import Entity.Projectiles.Arrow;
+import Entity.Projectiles.CardProjectile;
 import Main.GamePanel;
 import TileMap.Background;
 import TileMap.TileMap;

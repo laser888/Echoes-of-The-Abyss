@@ -1,5 +1,7 @@
-package Entity;
+package Entity.Projectiles;
 
+import Entity.MapObject;
+import Entity.Player;
 import TileMap.TileMap;
 
 import javax.imageio.ImageIO;
@@ -30,7 +32,7 @@ public class Fire extends MapObject {
     }
 
     private void loadSprite() {
-        String[] possiblePaths = {"/Sprites/Enemies/fire.gif"};
+        String[] possiblePaths = {"/Sprites/Enemies/Projectiles/fire.gif"};
         for (String path : possiblePaths) {
             try {
                 System.out.println("Attempting to load Fire sprite from: " + path);

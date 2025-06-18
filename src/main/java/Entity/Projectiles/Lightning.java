@@ -1,5 +1,7 @@
-package Entity;
+package Entity.Projectiles;
 
+import Entity.MapObject;
+import Entity.Player;
 import TileMap.TileMap;
 
 import javax.imageio.ImageIO;
@@ -58,7 +60,7 @@ public class Lightning extends MapObject {
     }
 
     private void loadSprite() {
-        String[] possiblePaths = {"/Sprites/Enemies/lightning.gif",};
+        String[] possiblePaths = {"/Sprites/Enemies/Projectiles/lightning.gif",};
         for (String path : possiblePaths) {
             try {
                 System.out.println("Attempting to load Lightning sprite from: " + path);
