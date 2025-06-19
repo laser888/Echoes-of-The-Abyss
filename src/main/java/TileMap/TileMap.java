@@ -60,7 +60,13 @@ public class TileMap {
 
         try {
 
-            tileset = ImageIO.read(getClass().getResourceAsStream(s));
+            InputStream is = getClass().getResourceAsStream(s);
+            if (is == null) {
+                System.err.println("Error: Could not find resource at path: " + s);
+                // You might want to throw a runtime exception here to make it obvious
+                throw new RuntimeException("Failed to load critical resource: " + s);
+            }
+            tileset = ImageIO.read(is);
             numTilesAcross = tileset.getWidth() / tileSize;
             tiles = new Tile[2][numTilesAcross];
 
