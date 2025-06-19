@@ -3,7 +3,8 @@ package Entity.Enemies.Bosses;
 import Entity.Animation;
 import Entity.Enemy;
 import Entity.Player;
-import Entity.Projectiles.CardProjectile;
+import Entity.Projectiles.Card;
+import Main.GamePanel;
 import TileMap.TileMap;
 
 import javax.imageio.ImageIO;
@@ -14,24 +15,27 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
-public class Livid extends Enemy {
-    private Player player;
-    private ArrayList<CardProjectile> cards;
-    private ArrayList<Livid> cloneGroup;
-    private String suitType;
-    private boolean isRealBoss;
-    private Random rand = new Random();
+// Controls Clone Boss and its clones
+public class CloneBoss extends Enemy {
+    private Player player; // Player reference
+    private ArrayList<Card> cards; // Card projectile list
+    private ArrayList<CloneBoss> cloneGroup; // Clone group reference
+    private String suitType; // Boss suit (Diamond, Heart, Spade)
+    private boolean isRealBoss; // Real boss flag
+    private Random rand; // Random number generator
+    // Animation states
     private static final int IDLE = 0;
     private static final int WALKING = 1;
     private static final int ATTACKING = 2;
-    private long lastAttackTime;
-    private static final long ATTACK_COOLDOWN = 2000;
-    private static final int ATTACK_RANGE = 200;
-    private long lastBlindTime;
-    private static final long BLIND_COOLDOWN = 10000;
-    private boolean shouldBlindPlayer = false;
-    private static HashMap<String, BufferedImage> spriteSheets = new HashMap<>();
+    private long lastAttackTime; // Last attack time
+    private static final long ATTACK_COOLDOWN = 2000; // Attack cooldown (ms)
+    private long lastBlindTime; // Last blind effect time
+    private static final long BLIND_COOLDOWN = 10000; // Blind cooldown (ms)
+    private static final int ATTACK_RANGE = 300; // Attack range (pixels)
+    private boolean shouldBlindPlayer; // Blind effect flag
+    private static HashMap<String, BufferedImage> spriteSheets = new HashMap<>(); // Cached sprite sheets
 
+    // Loads sprite sheets for all suits
     static {
         String[] suits = {"Diamond", "Heart", "Spade"};
         String[] paths = {
@@ -42,12 +46,9 @@ public class Livid extends Enemy {
         for (int i = 0; i < suits.length; i++) {
             BufferedImage sheet = null;
             try {
-                sheet = ImageIO.read(Livid.class.getResourceAsStream(paths[i]));
-                if (sheet == null) {
-                    throw new IOException("Resource stream is null for " + paths[i]);
-                }
-
-            } catch (Exception e) {
+                sheet = ImageIO.read(CloneBoss.class.getResourceAsStream(paths[i]));
+                if (sheet == null) throw new IOException("Sprite sheet not found: " + paths[i]);
+            } catch (IOException e) {
                 sheet = new BufferedImage(105, 135, BufferedImage.TYPE_INT_ARGB);
                 Graphics2D g = sheet.createGraphics();
                 g.setColor(Color.RED);
@@ -58,13 +59,15 @@ public class Livid extends Enemy {
         }
     }
 
-    public Livid(TileMap tm, Player player, String suitType, boolean isRealBoss, ArrayList<Livid> cloneGroup) {
+    // Initializes Livid boss
+    public CloneBoss(TileMap tm, Player player, String suitType, boolean isRealBoss, ArrayList<CloneBoss> cloneGroup) {
         super(tm);
         this.player = player;
-        this.suitType = suitType;
+        this.suitType = (suitType != null) ? suitType : "Diamond"; // Defaults to Diamond
         this.isRealBoss = isRealBoss;
-        this.cloneGroup = cloneGroup;
+        this.cloneGroup = (cloneGroup != null) ? cloneGroup : new ArrayList<>(); // Defaults to empty list
         this.cards = new ArrayList<>();
+        this.rand = new Random();
         this.name = "Livid";
         moveSpeed = 0.5;
         maxSpeed = 0.5;
@@ -77,63 +80,39 @@ public class Livid extends Enemy {
         cheight = 20;
         health = maxHealth = 3000;
         damage = 45;
-        loadSprites(spriteSheets.get(suitType));
+        loadSprites(spriteSheets.get(this.suitType));
         right = false;
         left = false;
     }
 
+    // Loads boss sprites
     private void loadSprites(BufferedImage spritesheet) {
         sprites = new ArrayList<>();
-        if (spritesheet == null) {
-            spritesheet = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g = spritesheet.createGraphics();
-            g.setColor(Color.RED);
-            g.fillRect(0, 0, width, height);
-            g.dispose();
-        }
-
         BufferedImage[] idleFrames = new BufferedImage[1];
         BufferedImage[] walkingFrames = new BufferedImage[6];
         BufferedImage[] attackingFrames = new BufferedImage[2];
 
         try {
-            if (spritesheet.getWidth() < width * 6 || spritesheet.getHeight() < height * 3) {
-                throw new Exception("Invalid dimensions");
+            if (spritesheet == null || spritesheet.getWidth() < width * 6 || spritesheet.getHeight() < height * 3) {
+                throw new IOException("Invalid sprite sheet");
             }
-            for (int i = 0; i < 1; i++) {
-                idleFrames[i] = spritesheet.getSubimage(i * width, 0, width, height);
-            }
+            idleFrames[0] = spritesheet.getSubimage(0, 0, width, height);
             for (int i = 0; i < 6; i++) {
                 walkingFrames[i] = spritesheet.getSubimage(i * width, height, width, height);
             }
             for (int i = 0; i < 2; i++) {
                 attackingFrames[i] = spritesheet.getSubimage(i * width, height * 2, width, height);
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
+            // Creates placeholder sprites
             BufferedImage placeholder = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g = placeholder.createGraphics();
             g.setColor(Color.RED);
             g.fillRect(0, 0, width, height);
             g.dispose();
-            for (int i = 0; i < 1; i++) idleFrames[i] = placeholder;
+            idleFrames[0] = placeholder;
             for (int i = 0; i < 6; i++) walkingFrames[i] = placeholder;
             for (int i = 0; i < 2; i++) attackingFrames[i] = placeholder;
-        }
-
-        for (int i = 0; i < idleFrames.length; i++) {
-            if (idleFrames[i] == null) {
-                idleFrames[i] = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-            }
-        }
-        for (int i = 0; i < walkingFrames.length; i++) {
-            if (walkingFrames[i] == null) {
-                walkingFrames[i] = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-            }
-        }
-        for (int i = 0; i < attackingFrames.length; i++) {
-            if (attackingFrames[i] == null) {
-                attackingFrames[i] = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-            }
         }
 
         sprites.add(idleFrames);
@@ -144,20 +123,21 @@ public class Livid extends Enemy {
         setAnimation(IDLE);
     }
 
+    // Sets animation state
     private void setAnimation(int anim) {
-        if (currentAction != anim) {
+        if (currentAction != anim && animation != null) {
             currentAction = anim;
-            animation.setFrames(sprites.get(anim));
+            animation.setFrames(sprites.get(Math.min(anim, sprites.size() - 1)));
             animation.setDelay(anim == WALKING ? 50 : (anim == ATTACKING ? 100 : 400));
         }
     }
 
+    // Triggers blind effect
     public void triggerBlind() {
-        if (isRealBoss) {
-            shouldBlindPlayer = true;
-        }
+        if (isRealBoss) shouldBlindPlayer = true;
     }
 
+    // Checks if blind effect should apply
     public boolean shouldBlindPlayer() {
         if (shouldBlindPlayer) {
             shouldBlindPlayer = false;
@@ -166,28 +146,29 @@ public class Livid extends Enemy {
         return false;
     }
 
+    // Fires card projectile
     private void fireCard() {
-        if (cards.size() >= 3) {
-            return;
-        }
-        boolean fireRight = (player.getx() > x);
-        CardProjectile card = new CardProjectile(tileMap, fireRight, damage);
+        if (cards.size() >= 3 || player == null) return;
+        boolean fireRight = player.getx() > x;
+        Card card = new Card(tileMap, fireRight, damage);
         card.setPosition(x, y);
         cards.add(card);
         lastAttackTime = System.currentTimeMillis();
         setAnimation(ATTACKING);
     }
 
+    // Handles damage taken
     @Override
     public void hit(int damage) {
         if (dead || flinching) return;
-        health -= damage;
+        health = Math.max(0, health - Math.max(0, damage));
         if (health <= 0) {
             dead = true;
-            if (!isRealBoss) {
-                for (Livid l : cloneGroup) {
-                    if (l.isRealBoss && !l.dead) {
-                        l.health = l.maxHealth;
+            if (!isRealBoss && cloneGroup != null) {
+                // Resets real boss health
+                for (CloneBoss cb : cloneGroup) {
+                    if (cb.isRealBoss && !cb.dead) {
+                        cb.health = cb.maxHealth;
                         break;
                     }
                 }
@@ -197,7 +178,9 @@ public class Livid extends Enemy {
         flinchTimer = System.nanoTime();
     }
 
+    // Calculates next position
     private void getNextPosition() {
+        if (player == null) return;
         double minDistance = 50.0;
         double distToPlayer = player.getx() - x;
         double absDistToPlayer = Math.abs(distToPlayer);
@@ -205,10 +188,10 @@ public class Livid extends Enemy {
         if (absDistToPlayer < minDistance) {
             dx = 0;
         } else if (absDistToPlayer < ATTACK_RANGE) {
-
+            // Moves toward player
             double targetDx = (distToPlayer > 0 ? moveSpeed : -moveSpeed);
             dx = (dx + targetDx) / 2;
-            facingRight = (distToPlayer > 0);
+            facingRight = distToPlayer > 0;
             left = !facingRight;
             right = facingRight;
         } else {
@@ -217,56 +200,57 @@ public class Livid extends Enemy {
             right = false;
         }
 
-        for (Livid other : cloneGroup) {
-            if (other != this) {
-                double dxDiff = x - other.x;
-                double dyDiff = y - other.y;
-                double distance = Math.sqrt(dxDiff * dxDiff + dyDiff * dyDiff);
-                if (distance < cwidth && distance > 0) {
-                    double repelStrength = (cwidth - distance) / cwidth * moveSpeed;
-                    double repelDx = (dxDiff / distance) * repelStrength;
-                    dx += repelDx;
+        // Repels from other clones
+        if (cloneGroup != null) {
+            for (CloneBoss other : cloneGroup) {
+                if (other != this) {
+                    double dxDiff = x - other.x;
+                    double dyDiff = y - other.y;
+                    double distance = Math.sqrt(dxDiff * dxDiff + dyDiff * dyDiff);
+                    if (distance < cwidth && distance > 0) {
+                        double repelStrength = (cwidth - distance) / cwidth * moveSpeed;
+                        dx += (dxDiff / distance) * repelStrength;
+                    }
                 }
             }
         }
 
-        if (dx > maxSpeed) dx = maxSpeed;
-        else if (dx < -maxSpeed) dx = -maxSpeed;
-
+        dx = Math.max(-maxSpeed, Math.min(dx, maxSpeed));
         if (falling) {
             dy += fallSpeed;
-            if (dy > maxFallSpeed) dy = maxFallSpeed;
+            dy = Math.min(dy, maxFallSpeed);
         } else {
             dy = 0;
         }
     }
 
+    // Updates boss state
     @Override
     public void update() {
+        if (player == null || tileMap == null) return;
         getNextPosition();
         checkTileMapCollision();
         setPosition(xtemp, ytemp);
 
         if (flinching) {
             long elapsed = (System.nanoTime() - flinchTimer) / 1_000_000;
-            if (elapsed > 1000) {
-                flinching = false;
-            }
+            if (elapsed > 1000) flinching = false;
         }
 
-        long elapsed = System.currentTimeMillis() - lastBlindTime;
-        if (elapsed > BLIND_COOLDOWN && isRealBoss) {
+        // Triggers blind effect
+        if (isRealBoss && System.currentTimeMillis() - lastBlindTime > BLIND_COOLDOWN) {
             triggerBlind();
             lastBlindTime = System.currentTimeMillis();
         }
 
+        // Triggers attack
         double distToPlayer = Math.abs(player.getx() - x);
         if (distToPlayer < ATTACK_RANGE && System.currentTimeMillis() - lastAttackTime > ATTACK_COOLDOWN) {
             fireCard();
-            lastAttackTime = System.currentTimeMillis();
         }
 
-        if (currentAction == ATTACKING && animation.hasPlayedOnce()) {
+        // Updates animation
+        if (currentAction == ATTACKING && animation != null && animation.hasPlayedOnce()) {
             setAnimation(IDLE);
         } else if (dx != 0 && currentAction != ATTACKING) {
             setAnimation(WALKING);
@@ -274,32 +258,45 @@ public class Livid extends Enemy {
             setAnimation(IDLE);
         }
 
+        // Updates projectiles
         for (int i = 0; i < cards.size(); i++) {
-            cards.get(i).update();
-            if (cards.get(i).shouldRemove()) {
-                cards.remove(i);
-                i--;
-            }
+            Card card = cards.get(i);
+            card.update();
+            if (card.shouldRemove()) cards.remove(i--);
         }
 
-        animation.update();
+        if (animation != null) animation.update();
     }
 
+    // Draws boss and cards
     @Override
     public void draw(Graphics2D g) {
+        if (g == null || tileMap == null) return;
         setMapPosition();
-        for (CardProjectile card : cards) {
+        for (Card card : cards) {
             card.draw(g);
         }
         super.draw(g);
     }
 
+    // Identifies as boss
     @Override
     public boolean isBoss() {
-        return true; // Mark SluggerBoss as a boss
+        return true;
     }
 
-    public ArrayList<CardProjectile> getCards() { return cards; }
-    public String getSuitType() { return suitType; }
-    public boolean isReal() { return isRealBoss; }
+    // Returns card projectiles
+    public ArrayList<Card> getCards() {
+        return cards;
+    }
+
+    // Returns suit type
+    public String getSuitType() {
+        return suitType;
+    }
+
+    // Checks if real boss
+    public boolean isReal() {
+        return isRealBoss;
+    }
 }

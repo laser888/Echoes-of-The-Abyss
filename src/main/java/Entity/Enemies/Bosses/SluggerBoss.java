@@ -1,7 +1,8 @@
-package Entity.Enemies;
+package Entity.Enemies.Bosses;
 
 import Entity.Animation;
 import Entity.Enemy;
+import Entity.Player;
 import Main.GamePanel;
 import TileMap.TileMap;
 
@@ -11,38 +12,41 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 
-// Manages Zombie enemy behavior
-public class Zombie extends Enemy {
-    private static final int SPRITE_COUNT = 4; // Number of sprite frames
-    BufferedImage[] frames; // Animation frames
+// Manages SluggerBoss behavior
+public class SluggerBoss extends Enemy {
+    private Player player; // Player reference
+    private static final int SPRITE_COUNT = 3; // Number of sprite frames
+    private static final double TOLERANCE = 1.5; // Movement tolerance (pixels)
 
-    // Initializes Zombie
-    public Zombie(TileMap tm) {
+    // Initializes SluggerBoss
+    public SluggerBoss(TileMap tm, Player player) {
         super(tm);
-        moveSpeed = 0.2;
-        maxSpeed = 0.2;
+        this.player = player;
+        moveSpeed = 0.6;
+        maxSpeed = 0.6;
         fallSpeed = 0.2;
         maxFallSpeed = 10.0;
+        name = "Slugger Boss";
         width = 30;
         height = 30;
         cwidth = 20;
         cheight = 20;
-        health = maxHealth = 100;
-        damage = 40;
+        health = maxHealth = 600;
+        damage = 45;
         loadSprites();
         right = true;
         facingRight = true;
     }
 
-    // Loads zombie sprites
+    // Loads boss sprites
     private void loadSprites() {
         try {
-            BufferedImage spritesheet = ImageIO.read(getClass().getResourceAsStream("/Sprites/Enemies/zombie.gif"));
+            BufferedImage spritesheet = ImageIO.read(getClass().getResourceAsStream("/Sprites/Enemies/Bosses/sluggerBoss.gif"));
             if (spritesheet == null || spritesheet.getWidth() < width * SPRITE_COUNT || spritesheet.getHeight() < height) {
                 throw new IOException("Invalid sprite sheet");
             }
             sprites = new ArrayList<>();
-            frames = new BufferedImage[SPRITE_COUNT];
+            BufferedImage[] frames = new BufferedImage[SPRITE_COUNT];
             for (int i = 0; i < SPRITE_COUNT; i++) {
                 frames[i] = spritesheet.getSubimage(i * width, 0, width, height);
             }
@@ -60,11 +64,7 @@ public class Zombie extends Enemy {
             sprites.add(frames);
         }
         animation = new Animation();
-        animation.setFrames(frames);
-        animation.setDelay(300);
-
-        right = true;
-        facingRight = true;
+        setAnimation();
     }
 
     // Sets animation
@@ -73,16 +73,6 @@ public class Zombie extends Enemy {
             animation.setFrames(sprites.get(0));
             animation.setDelay(300);
         }
-    }
-
-    // Checks platform edge
-    private boolean isAtEdge() {
-        if (tileMap == null) return true;
-        double nextX = x + (right ? cwidth / 2 + 1 : -cwidth / 2 - 1);
-        double nextY = y + cheight / 2 + 1;
-        int tileX = (int)(nextX / tileMap.getTileSize());
-        int tileY = (int)(nextY / tileMap.getTileSize());
-        return tileMap.getType(tileY, tileX) == 0;
     }
 
     // Calculates next position
@@ -98,7 +88,7 @@ public class Zombie extends Enemy {
         }
     }
 
-    // Updates zombie state
+    // Updates boss state
     public void update() {
         getNextPosition();
         checkTileMapCollision();
@@ -109,8 +99,21 @@ public class Zombie extends Enemy {
             if (elapsed > 400) flinching = false;
         }
 
-        // Reverses direction at edge
-        if (isAtEdge() || (right && dx == 0) || (left && dx == 0)) {
+        // Chases player or patrols
+        if (player != null) {
+            double playerX = player.getPositionX();
+            double bossX = getx();
+            if (Math.abs(playerX - bossX) <= TOLERANCE) {
+                right = false;
+                left = false;
+                dx = 0;
+            } else {
+                right = playerX > bossX;
+                left = !right;
+                facingRight = right;
+                dx = right ? maxSpeed : -maxSpeed;
+            }
+        } else if ((right && dx == 0) || (left && dx == 0)) {
             right = !right;
             left = !left;
             facingRight = right;
@@ -120,10 +123,16 @@ public class Zombie extends Enemy {
         if (animation != null) animation.update();
     }
 
-    // Draws zombie
+    // Draws boss
     public void draw(Graphics2D g) {
         if (g == null || tileMap == null) return;
         setMapPosition();
         super.draw(g);
+    }
+
+    // Identifies as boss
+    @Override
+    public boolean isBoss() {
+        return true;
     }
 }

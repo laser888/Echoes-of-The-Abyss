@@ -6,19 +6,19 @@ import java.awt.event.MouseEvent;
 import javax.swing.ImageIcon;
 import Main.GamePanel;
 
+// Shows cat GIF
 public class CatState extends GameState {
-    private Image catImage;
-    private Color titleColor;
-    private Font titleFont;
-    private Font font;
+    private Image catImage; // Cat GIF
+    private Color titleColor; // Title color
+    private Font titleFont; // Title font
+    private Font font; // Text font
 
+    // Initializes state
     public CatState(GameStateManager gsm) {
         this.gsm = gsm;
-
         try {
             ImageIcon icon = new ImageIcon(getClass().getResource("/Backgrounds/cat-cat-vibing.gif"));
             catImage = icon.getImage();
-
             titleColor = new Color(128, 0, 0);
             titleFont = new Font("Century Gothic", Font.PLAIN, 28);
             font = new Font("Arial", Font.PLAIN, 12);
@@ -28,16 +28,17 @@ public class CatState extends GameState {
         }
     }
 
+    // Initializes state
     public void init() {}
 
-    public void update() {
-    }
+    // Updates state
+    public void update() {}
 
+    // Draws state
     public void draw(Graphics2D g) {
-        // Clear background
+        // Clears background
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, GamePanel.WIDTH, GamePanel.HEIGHT);
-
         if (catImage != null) {
             int imgWidth = catImage.getWidth(null);
             int imgHeight = catImage.getHeight(null);
@@ -60,16 +61,22 @@ public class CatState extends GameState {
         }
     }
 
+    // Handles key press
     public void keyPressed(int k) {
         if (k == KeyEvent.VK_ESCAPE) {
             gsm.setState(GameStateManager.MENUSTATE);
         }
     }
 
+    // Handles key release
     public void keyReleased(int k) {}
 
+    // Handles mouse press
     public void mousePressed(MouseEvent e) {}
 
-    public int getSpawnX() {return 0;}
-    public  int getSpawnY() { return 0;}
+    // Gets spawn X
+    public int getSpawnX() { return 0; }
+
+    // Gets spawn Y
+    public int getSpawnY() { return 0; }
 }

@@ -9,81 +9,67 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
+// Handles class selection
 public class ClassSelectionState extends GameState {
+    private Background bg; // Background
+    private GamePanel gamePanel; // Game panel
+    private GameData gameData; // Game data
+    private int currentChoice = 0; // Menu choice
+    private String[] options = { "Mage", "Berserker", "Archer", "Back to Menu" }; // Menu options
+    private Color titleColor; // Title color
+    private Font titleFont; // Title font
+    private Font optionFont; // Option font
 
-    private Background bg;
-    private GamePanel gamePanel;
-    private GameData gameData;
-
-    private int currentChoice = 0;
-    private String[] options = {
-            "Mage",
-            "Berserker",
-            "Archer",
-            "Back to Menu"
-    };
-
-    private Color titleColor;
-    private Font titleFont;
-    private Font optionFont;
-
+    // Initializes state
     public ClassSelectionState(GameStateManager gsm, GamePanel gamePanel) {
         this.gsm = gsm;
         this.gamePanel = gamePanel;
         this.gameData = gsm.getGameData();
-
         try {
             bg = new Background("/Backgrounds/menubg.gif", 0.8);
-            //bg.setVector(-0.05, 0);
-
             titleColor = new Color(220, 180, 50);
             titleFont = new Font("Century Gothic", Font.BOLD, 28);
             optionFont = new Font("Arial", Font.BOLD, 20);
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    // Initializes state
     public void init() {
         currentChoice = 0;
     }
 
+    // Updates state
     public void update() {
         bg.update();
     }
 
+    // Draws state
     public void draw(Graphics2D g) {
         bg.draw(g);
-
-        // Title
+        // Draws title
         g.setColor(titleColor);
         g.setFont(titleFont);
         String titleText = "Choose Your Class";
         FontMetrics fmTitle = g.getFontMetrics(titleFont);
         int titleWidth = fmTitle.stringWidth(titleText);
         g.drawString(titleText, (GamePanel.WIDTH - titleWidth) / 2, 60);
-
-        // Options
+        // Draws options
         g.setFont(optionFont);
         FontMetrics fmOption = g.getFontMetrics(optionFont);
         int optionsStartY = 120;
         int optionSpacing = 35;
-
         for (int i = 0; i < options.length; i++) {
             String text = options[i];
-
             if (i < 3) {
                 String classKey = options[i].toUpperCase();
                 int level = 0;
-
                 if (gameData.playerClassProgress.containsKey(classKey)) {
                     level = gameData.playerClassProgress.get(classKey).getOrDefault("level", 0);
                 }
-
                 text += " (Lv " + level + ")";
             }
-
             g.setFont(optionFont);
             g.setColor(i == currentChoice ? Color.YELLOW : Color.BLACK);
             int optionWidth = fmOption.stringWidth(text);
@@ -91,10 +77,10 @@ public class ClassSelectionState extends GameState {
         }
     }
 
+    // Handles menu selection
     private void select() {
         Player.PlayerClass selectedClass = Player.PlayerClass.NONE;
         boolean proceedToGame = false;
-
         switch (currentChoice) {
             case 0:
                 selectedClass = Player.PlayerClass.MAGE;
@@ -112,23 +98,19 @@ public class ClassSelectionState extends GameState {
                 gsm.setState(GameStateManager.MENUSTATE);
                 return;
         }
-
         if (proceedToGame) {
             gsm.setSelectedPlayerClass(selectedClass);
-
-            // Check saved data
             GameData data = gsm.getGameData();
             boolean hasCompletedLevel = data != null && data.completedLevels != null && !data.completedLevels.isEmpty();
-
             if (!hasCompletedLevel) {
-                gsm.setState(GameStateManager.INTROSTATE); // Show intro if no levels completed
+                gsm.setState(GameStateManager.INTROSTATE);
             } else {
-                gsm.setState(GameStateManager.LevelSelectionState); // Skip intro
+                gsm.setState(GameStateManager.LevelSelectionState);
             }
         }
     }
 
-
+    // Handles key press
     public void keyPressed(int k) {
         if (k == KeyEvent.VK_ENTER) {
             select();
@@ -150,8 +132,10 @@ public class ClassSelectionState extends GameState {
         }
     }
 
+    // Handles key release
     public void keyReleased(int k) {}
 
+    // Handles mouse press
     public void mousePressed(MouseEvent e) {
         int panelWidth = gamePanel.getCurrentWidth();
         int panelHeight = gamePanel.getCurrentHeight();
@@ -159,23 +143,19 @@ public class ClassSelectionState extends GameState {
         float scaleY = (float) GamePanel.HEIGHT / panelHeight;
         int logicalX = (int) (e.getX() * scaleX);
         int logicalY = (int) (e.getY() * scaleY);
-
         FontMetrics fmOption = gamePanel.getFontMetrics(optionFont);
         int optionsStartY = 120;
         int optionSpacing = 35;
-
         for (int i = 0; i < options.length; i++) {
             int optionWidth = fmOption.stringWidth(options[i]);
             int textDrawX = (GamePanel.WIDTH - optionWidth) / 2;
             int textDrawY = optionsStartY + i * optionSpacing;
-
             Rectangle itemBounds = new Rectangle(
                     textDrawX,
                     textDrawY - fmOption.getAscent(),
                     optionWidth,
                     fmOption.getHeight()
             );
-
             if (itemBounds.contains(logicalX, logicalY)) {
                 currentChoice = i;
                 select();
@@ -183,6 +163,10 @@ public class ClassSelectionState extends GameState {
             }
         }
     }
-    public int getSpawnX() {return 0;}
-    public  int getSpawnY() { return 0;}
+
+    // Gets spawn X
+    public int getSpawnX() { return 0; }
+
+    // Gets spawn Y
+    public int getSpawnY() { return 0; }
 }

@@ -11,23 +11,25 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+// Displays level selection screen and handles input
 public class LevelSelectionState extends GameState {
 
-    private Background bg;
-    private GamePanel gamePanel;
+    private Background bg; // Background image
+    private GamePanel gamePanel; // Reference to panel for dimensions
 
-    private int currentChoice = 0;
-    private String[] options = { "Tutorial", "Level 1", "Level 2", "Level 3", "~=[,,_,,]:3"};
+    private int currentChoice = 0; // Currently highlighted option
+    private String[] options = { "Tutorial", "Level 1", "Level 2", "Level 3", "~=[,,_,,]:3" }; // Mouse menu labels (legacy)
 
     private Color titleColor;
     private Font titleFont;
     private Font optionFont;
     private Font lockFont;
 
+    // Represents one level entry in the menu
     private static class LevelEntry {
-        String displayName;
-        int stateId;
-        String requiredLevelToUnlock;
+        String displayName; // Displayed name
+        int stateId; // GameState constant
+        String requiredLevelToUnlock; // Key from save data
 
         LevelEntry(String displayName, int stateId, String requiredLevelToUnlock) {
             this.displayName = displayName;
@@ -36,11 +38,12 @@ public class LevelSelectionState extends GameState {
         }
     }
 
-    private ArrayList<LevelEntry> allLevels;
-    private Set<String> completedLevelsFromSave;
+    private ArrayList<LevelEntry> allLevels; // All levels in selection
+    private Set<String> completedLevelsFromSave; // Completed level keys from save
 
-    private Font font;
+    private Font font; // For measuring mouse bounds
 
+    // Initializes fonts, background, and level list
     public LevelSelectionState(GameStateManager gsm, GamePanel gamePanel) {
         this.gsm = gsm;
         this.gamePanel = gamePanel;
@@ -51,42 +54,41 @@ public class LevelSelectionState extends GameState {
             optionFont = new Font("Arial", Font.BOLD, 22);
             lockFont = new Font("Arial", Font.ITALIC, 14);
             font = new Font("Arial", Font.PLAIN, 28);
-
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         allLevels = new ArrayList<>();
-        allLevels.add(new LevelEntry("Tutorial", GameStateManager.LEVEL1STATE, null)); // Requires no previous level
-        allLevels.add(new LevelEntry("Level 1", GameStateManager.LEVEL2STATE, "Level1State")); // Requires Level 1
-        allLevels.add(new LevelEntry("Level 2", GameStateManager.LEVEL3STATE, "Level2State")); // Requires Level 2
-        allLevels.add(new LevelEntry("Level 3", GameStateManager.LEVEL4STATE, "Level3State")); // Requires Level 3
+        allLevels.add(new LevelEntry("Tutorial", GameStateManager.LEVEL1STATE, null));
+        allLevels.add(new LevelEntry("Level 1", GameStateManager.LEVEL2STATE, "Level1State"));
+        allLevels.add(new LevelEntry("Level 2", GameStateManager.LEVEL3STATE, "Level2State"));
+        allLevels.add(new LevelEntry("Level 3", GameStateManager.LEVEL4STATE, "Level3State"));
     }
 
+    // Loads completed levels from save
     public void init() {
-
         GameData gameData = gsm.getGameData();
 
         if (gameData != null && gameData.completedLevels != null) {
             this.completedLevelsFromSave = gameData.completedLevels;
-            //System.out.println("Level Selection: Loaded completed levels: " + completedLevelsFromSave);
         } else {
-            // Fallback
             this.completedLevelsFromSave = new HashSet<>();
             System.out.println("Level Selection: No save data found, starting with no completed levels.");
         }
+
         currentChoice = 0;
     }
 
+    // Updates background animation
     public void update() {
         bg.update();
     }
 
-    public void draw(java.awt.Graphics2D g) {
-        // draw bg
+    // Draws level list and lock status
+    public void draw(Graphics2D g) {
         bg.draw(g);
-
         g.setFont(optionFont);
+
         int startY = 50;
         int lineHeight = 46;
 
@@ -102,7 +104,6 @@ public class LevelSelectionState extends GameState {
 
             g.drawString(level.displayName, 120, startY + i * lineHeight);
 
-            // Draw Locked
             if (!isUnlocked) {
                 g.setFont(lockFont);
                 g.setColor(new Color(150, 0, 0));
@@ -112,6 +113,7 @@ public class LevelSelectionState extends GameState {
         }
     }
 
+    // Handles selection confirmation
     private void select() {
         LevelEntry selectedLevel = allLevels.get(currentChoice);
         boolean isUnlocked = (selectedLevel.requiredLevelToUnlock == null || completedLevelsFromSave.contains(selectedLevel.requiredLevelToUnlock));
@@ -119,27 +121,21 @@ public class LevelSelectionState extends GameState {
         if (isUnlocked) {
             System.out.println("Starting level: " + selectedLevel.displayName);
             gsm.setState(selectedLevel.stateId);
-
         } else {
             System.out.println("Cannot start locked level: " + selectedLevel.displayName);
         }
     }
 
+    // Handles key input
     public void keyPressed(int k) {
-        if(k == KeyEvent.VK_ENTER) {
+        if (k == KeyEvent.VK_ENTER) {
             select();
         }
-        if(k == KeyEvent.VK_UP) {
-            currentChoice--;
-            if(currentChoice == -1) {
-                currentChoice = options.length - 1 ;
-            }
+        if (k == KeyEvent.VK_UP) {
+            currentChoice = (currentChoice - 1 + options.length) % options.length;
         }
-        if(k == KeyEvent.VK_DOWN) {
-            currentChoice++;
-            if(currentChoice == options.length) {
-                currentChoice = 0;
-            }
+        if (k == KeyEvent.VK_DOWN) {
+            currentChoice = (currentChoice + 1) % options.length;
         }
         if (k == KeyEvent.VK_ESCAPE) {
             gsm.setState(GameStateManager.CLASSSELECTIONSTATE);
@@ -148,6 +144,7 @@ public class LevelSelectionState extends GameState {
 
     public void keyReleased(int k) {}
 
+    // Handles mouse click to select level
     public void mousePressed(MouseEvent e) {
         int panelWidth = gamePanel.getCurrentWidth();
         int panelHeight = gamePanel.getCurrentHeight();
@@ -158,7 +155,6 @@ public class LevelSelectionState extends GameState {
         int logicalY = (int) (e.getY() * scaleY);
 
         for (int i = 0; i < options.length; i++) {
-
             int itemY = 140 + i * 15;
             int itemHeight = 15;
             int textWidth = gamePanel.getFontMetrics(font).stringWidth(options[i]);
@@ -173,7 +169,7 @@ public class LevelSelectionState extends GameState {
         }
     }
 
-    public int getSpawnX() {return 0;}
-    public  int getSpawnY() { return 0;}
-
+    // Overrides player spawn (not used)
+    public int getSpawnX() { return 0; }
+    public int getSpawnY() { return 0; }
 }

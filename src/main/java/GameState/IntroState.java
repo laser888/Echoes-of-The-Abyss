@@ -12,7 +12,7 @@ public class IntroState extends GameState {
     private Font promptFont;
 
     private String[] lines = {
-            "Welcome to the dungeon. Fight enemies as you move through each room.",
+            "Welcome to the Echoes Of The Abyss. Fight enemies as you move through each room.",
             "Solve terminals to earn blessings and boost your stats.",
             "Your score determines your final rank — higher rank, better rewards.",
             "Defeat the boss at the end of each floor to progress."

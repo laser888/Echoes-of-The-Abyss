@@ -1,5 +1,6 @@
 package Main;
 
+// Defines all player input actions to bind keys to
 public enum GameAction {
     MOVE_LEFT,
     MOVE_RIGHT,
@@ -13,5 +14,4 @@ public enum GameAction {
     OPEN_CHAT,
     DEBUG_TOGGLE,
     TAB_TOGGLE
-
 }

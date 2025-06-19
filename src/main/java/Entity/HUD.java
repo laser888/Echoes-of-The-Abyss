@@ -1,6 +1,6 @@
 package Entity;
 
-import Entity.Enemies.Bosses.Livid;
+import Entity.Enemies.Bosses.CloneBoss;
 import Main.GamePanel;
 import GameState.BaseLevelState;
 
@@ -81,7 +81,7 @@ public class HUD {
         if (levelState.getEntityManager() != null) {
             for (Enemy enemy : levelState.getEntityManager().getEnemies()) {
                 if (enemy.isBoss() && !enemy.isDead()) {
-                    if(enemy instanceof Livid && enemy.isDead()) {
+                    if(enemy instanceof CloneBoss && enemy.isDead()) {
                         activeBoss = enemy;
                         break;
                     }

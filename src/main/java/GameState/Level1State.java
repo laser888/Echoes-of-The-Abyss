@@ -4,7 +4,7 @@ import Blessing.Blessing;
 import Entity.*;
 import Entity.Enemies.Skeleton;
 import Entity.Enemies.Slugger;
-import Entity.Enemies.SluggerBoss;
+import Entity.Enemies.Bosses.SluggerBoss;
 import Entity.Enemies.Zombie;
 import Entity.Projectiles.Arrow;
 import Main.GamePanel;
@@ -17,19 +17,21 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+// Manages Level 1 state
 public class Level1State extends BaseLevelState {
-    private LevelConfiguration levelConfig;
-    private boolean bossDoorIsOpen;
-    private Point[] doorTileCoordinates;
-    private Enemy keyMob;
-    private boolean blessingApplied = false;
-    private String blessingText = null;
-    private long blessingTextTimer = 0;
-    private static final long BLESSING_TEXT_DURATION_NANO = 3_000_000_000L;
-    private boolean bossSpawned;
-    private boolean inBossFight;
-    private List<Enemy> bosses;
+    private LevelConfiguration levelConfig; // Level settings
+    private boolean bossDoorIsOpen; // Tracks boss door
+    private Point[] doorTileCoordinates; // Door tiles
+    private Enemy keyMob; // Key enemy
+    private boolean blessingApplied = false; // Tracks blessing
+    private String blessingText = null; // Blessing message
+    private long blessingTextTimer = 0; // Blessing timer
+    private static final long BLESSING_TEXT_DURATION_NANO = 3_000_000_000L; // Blessing display time
+    private boolean bossSpawned; // Tracks boss spawn
+    private boolean inBossFight; // Tracks boss fight
+    private List<Enemy> bosses; // Boss list
 
+    // Initializes state
     public Level1State(GameStateManager gsm, GamePanel gamePanel) {
         super(gsm, gamePanel);
         this.bossSpawned = false;
@@ -38,6 +40,7 @@ public class Level1State extends BaseLevelState {
         this.bosses = new ArrayList<>();
     }
 
+    // Initializes level
     @Override
     public void init() {
         super.init();
@@ -48,6 +51,7 @@ public class Level1State extends BaseLevelState {
         setDoorState(false);
     }
 
+    // Loads level assets
     @Override
     protected void loadLevelSpecifics() {
         this.tileMap = new TileMap(30, gamePanel);
@@ -81,18 +85,16 @@ public class Level1State extends BaseLevelState {
         );
 
         this.bg = new Background(levelConfig.getBackgroundPath(), 0.1);
-
         Player.PlayerClass selectedClass = gsm.getSelectedPlayerClass();
         this.player = new Player(tileMap, this, selectedClass, gsm, gsm.getGameData());
         this.player.setPosition(levelConfig.getPlayerSpawnPoint().x, levelConfig.getPlayerSpawnPoint().y);
-
         this.doorTileCoordinates = levelConfig.getDoorCoordinates();
         setDoorState(false);
         this.parTimeSeconds = levelConfig.getParTimeSeconds();
-
         this.hud = new HUD(player, this);
     }
 
+    // Adds level enemies
     @Override
     protected void populateLevelEntities() {
         for (LevelConfiguration.EnemySpawnData spawnData : levelConfig.getEnemySpawns()) {
@@ -117,10 +119,10 @@ public class Level1State extends BaseLevelState {
         this.totalEnemiesAtStart = entityManager.getEnemies().size();
     }
 
+    // Updates level logic
     @Override
     protected void updateLevelSpecificLogic() {
         tileMap.updateInteractive();
-
         for (TerminalTile t : tileMap.getInteractiveTiles()) {
             if (t.isCompleted() && !t.isBlessingGiven()) {
                 t.setBlessingGiven();
@@ -133,15 +135,12 @@ public class Level1State extends BaseLevelState {
                 t.close();
             }
         }
-
         if (blessingText != null && (System.nanoTime() - blessingTextTimer) > BLESSING_TEXT_DURATION_NANO) {
             blessingText = null;
         }
-
         if (player != null && player.isDead() && inBossFight) {
             player.respawn();
         }
-
         if (bossDoorIsOpen && !bossSpawned && player != null && player.getx() > 2940) {
             setDoorState(false);
             bossDoorIsOpen = false;
@@ -152,7 +151,6 @@ public class Level1State extends BaseLevelState {
             bossSpawned = true;
             inBossFight = true;
         }
-
         if (entityManager != null) {
             List<Enemy> currentEnemies = entityManager.getEnemies();
             for (int i = currentEnemies.size() - 1; i >= 0; i--) {
@@ -170,7 +168,6 @@ public class Level1State extends BaseLevelState {
                         levelComplete(GameStateManager.LEVEL1STATE);
                     }
                 }
-
                 if (e instanceof Skeleton) {
                     Skeleton skeleton = (Skeleton) e;
                     ArrayList<Arrow> skeletonArrows = skeleton.getArrows();
@@ -186,10 +183,10 @@ public class Level1State extends BaseLevelState {
         }
     }
 
+    // Draws level elements
     @Override
     protected void drawLevelSpecificElements(Graphics2D g) {
         tileMap.drawInteractive(g, player);
-
         if (blessingText != null) {
             g.setFont(new Font("Arial", Font.BOLD, 14));
             g.setColor(Color.YELLOW);
@@ -197,13 +194,17 @@ public class Level1State extends BaseLevelState {
         }
     }
 
+    // Handles key press
     @Override
     protected void handleLevelSpecificKeyPressed(int k) {
         tileMap.handleKeyPress(k, player);
     }
 
+    // Handles key release
+    @Override
     protected void handleLevelSpecificKeyReleased(int k) {}
 
+    // Handles mouse press
     public void mousePressed(MouseEvent e) {
         int mx = e.getX() / GamePanel.SCALE;
         int my = e.getY() / GamePanel.SCALE;
@@ -211,6 +212,7 @@ public class Level1State extends BaseLevelState {
         super.mousePressed(e);
     }
 
+    // Handles commands
     @Override
     protected void handleLevelSpecificCommand(String[] token) {
         switch (token[0].toLowerCase()) {
@@ -223,6 +225,7 @@ public class Level1State extends BaseLevelState {
         }
     }
 
+    // Opens boss door
     private void openBossDoor() {
         if (!bossDoorIsOpen) {
             bossDoorIsOpen = true;
@@ -230,6 +233,7 @@ public class Level1State extends BaseLevelState {
         }
     }
 
+    // Sets door state
     private void setDoorState(boolean open) {
         if (doorTileCoordinates != null && tileMap != null) {
             for (Point p : doorTileCoordinates) {
@@ -244,16 +248,19 @@ public class Level1State extends BaseLevelState {
         }
     }
 
+    // Gets spawn X
     @Override
     public int getSpawnX() {
         return (inBossFight && bossSpawned) ? 2950 : (levelConfig != null ? levelConfig.getPlayerSpawnPoint().x : 100);
     }
 
+    // Gets spawn Y
     @Override
     public int getSpawnY() {
         return (inBossFight && bossSpawned) ? 200 : (levelConfig != null ? levelConfig.getPlayerSpawnPoint().y : 100);
     }
 
+    // Gets bosses
     public List<Enemy> getBosses() {
         return bosses;
     }
