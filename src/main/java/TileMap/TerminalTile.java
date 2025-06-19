@@ -98,7 +98,7 @@ public class TerminalTile {
     public boolean isActive() { return simon.isActive(); }
     public boolean isCompleted() { return simon.isCompleted(); }
     public boolean isSolved() { return simon.isPuzzleSolved(); }
-    public void markSolved() { simon.setPuzzleSolved(true); }
+    public void markSolved() { simon.setPuzzleSolved(true); BaseLevelState.inTerminal = false;}
     public void mousePressed(int x, int y) { simon.mousePressed(x, y); }
     public Point getPos() { return new Point(px, py); }
 
