@@ -348,5 +348,14 @@ public class TileMap {
             return null;
         }
         return tiles[0][tileId].getImage();
+
+    }
+
+    public void closeActiveTerminal() {
+        for (TerminalTile terminal : interactiveTiles) {
+            if (terminal != null && terminal.isActive()) {
+                terminal.close();
+            }
+        }
     }
 }

@@ -27,7 +27,7 @@ public class Zombie extends Enemy {
         cheight = 20;
 
         health = maxHealth = 100;
-        damage = 20;
+        damage = 40;
 
         // load sprites
         try {

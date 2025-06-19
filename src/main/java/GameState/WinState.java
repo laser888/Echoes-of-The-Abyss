@@ -14,7 +14,7 @@ public class WinState extends GameState {
     private GamePanel gamePanel;
 
     private int currentChoice = 0;
-    private String[] options = { "Next Level", "Main Menu", "Quit"};
+    private String[] options = { "Next Level", "Replay", "Main Menu", "Quit"};
 
     private Color titleColor;
     private Font titleFont;
@@ -129,9 +129,12 @@ public class WinState extends GameState {
             gsm.setState(nextLevelStateId);
         }
         if(currentChoice == 1) {
-            gsm.setState(GameStateManager.MENUSTATE);
+            gsm.setState(nextLevelStateId - 1);
         }
         if(currentChoice == 2) {
+            gsm.setState(GameStateManager.MENUSTATE);
+        }
+        if(currentChoice == 3) {
             System.exit(0);
         }
     }

@@ -45,7 +45,7 @@ public class Skeleton extends Enemy {
         cheight = 20;
 
         health = maxHealth = 200;
-        damage = 15;
+        damage = 30;
 
         lastFireTimeNano = System.nanoTime() - FIRE_COOLDOWN_NANO;
 

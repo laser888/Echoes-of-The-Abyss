@@ -8,6 +8,7 @@ import Main.GameAction;
 import Main.GamePanel;
 import Score.ScoreData;
 import Score.ScoreManager;
+import Terminals.SimonSays;
 import TileMap.Background;
 import TileMap.TileMap;
 import Main.KeybindManager;
@@ -495,6 +496,9 @@ public abstract class BaseLevelState extends GameState {
         if (k == KeyEvent.VK_ENTER) {
             if (typedText.length() > 0) {
                 String command = typedText.toString();
+                executeCommand(command);
+                isTyping = false;
+                typedText.setLength(0);
 
                 if (!command.trim().isEmpty() && (chatHistory.isEmpty() || !chatHistory.get(chatHistory.size() - 1).equals(command))) {
                     chatHistory.add(command);
@@ -642,7 +646,6 @@ public abstract class BaseLevelState extends GameState {
             String levelIdentifier = this.getClass().getSimpleName();
 
             gameData.completedLevels.add(levelIdentifier);
-            System.out.println("Level Complete! Marking '" + levelIdentifier + "' as beaten.");
         }
 
         gsm.saveGameData();
@@ -783,5 +786,9 @@ public abstract class BaseLevelState extends GameState {
     public abstract int getSpawnY();
     public EntityManager getEntityManager() {
         return this.entityManager;
+    }
+    public void closeActiveTerminal() {
+        tileMap.closeActiveTerminal();
+        inTerminal = false;
     }
 }

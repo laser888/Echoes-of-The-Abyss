@@ -55,11 +55,11 @@ public class Player extends MapObject {
     private static final double TRUE_BASE_ABILITY_DMG = 0.0;
     private static final double TRUE_BASE_MOVESPEED = 0.3;
     private static final double TRUE_BASE_MAXSPEED = 1.6;
-    private static final int TRUE_BASE_SCRATCH_DAMAGE_VALUE = 30;
+    private static final int TRUE_BASE_SCRATCH_DAMAGE = 80;
     private static final int TRUE_BASE_SCRATCH_RANGE = 35;
     private static final double TRUE_BASE_CC = 15.0;
     private static final double TRUE_BASE_CRIT_DAMAGE = 50.0;
-    private static final int TRUE_BASE_ARROW_DMG = 40;
+    private static final int TRUE_BASE_ARROW_DMG = 80;
     private static final double TRUE_BASE_INTEL_REGEN = 1.0;
 
     // Mage Stats
@@ -178,7 +178,7 @@ public class Player extends MapObject {
         this.abilityDMG = TRUE_BASE_ABILITY_DMG;
         this.moveSpeed = TRUE_BASE_MOVESPEED;
         this.maxSpeed = TRUE_BASE_MAXSPEED;
-        this.scratchDamage = TRUE_BASE_SCRATCH_DAMAGE_VALUE;
+        this.scratchDamage = TRUE_BASE_SCRATCH_DAMAGE;
         this.scratchRange = TRUE_BASE_SCRATCH_RANGE;
 
         lastRegenTime = System.nanoTime();
@@ -533,12 +533,14 @@ public class Player extends MapObject {
 
     public void respawn() {
         if (dead || outOfMap) {
+            if (currentLevelState != null && BaseLevelState.inTerminal) currentLevelState.closeActiveTerminal();
             setPosition(gsm.getCurrentState().getSpawnX(), gsm.getCurrentState().getSpawnY());
             health = maxHealth;
             intelligence = maxIntelligence;
             dead = false;
             immune = true;
             immuneTimer = System.nanoTime();
+
         }
     }
 
@@ -568,7 +570,7 @@ public class Player extends MapObject {
             this.abilityDMG = TRUE_BASE_ABILITY_DMG;
             this.moveSpeed = TRUE_BASE_MOVESPEED;
             this.maxSpeed = TRUE_BASE_MAXSPEED;
-            this.scratchDamage = TRUE_BASE_SCRATCH_DAMAGE_VALUE;
+            this.scratchDamage = TRUE_BASE_SCRATCH_DAMAGE;
             this.scratchRange = TRUE_BASE_SCRATCH_RANGE;
             this.CC = TRUE_BASE_CC;
             this.critDMG = TRUE_BASE_CRIT_DAMAGE;
