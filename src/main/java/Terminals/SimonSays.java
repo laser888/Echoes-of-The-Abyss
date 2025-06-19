@@ -83,7 +83,6 @@ public class SimonSays extends Terminal {
         flashOn = true;
         awaitingInput = false;
         flashTimer = System.currentTimeMillis();
-        System.out.println("Sequence now: " + sequence);
     }
 
     // Updates puzzle state
@@ -147,7 +146,6 @@ public class SimonSays extends Terminal {
         }
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastInputTime < 200) {
-            System.out.println("Click ignored: too soon after last input at " + lastInputTime);
             return;
         }
         int panelWidth = gamePanel.getCurrentWidth();
@@ -187,8 +185,6 @@ public class SimonSays extends Terminal {
                 System.out.println("Incorrect sequence, resetting");
                 resetGame();
             }
-        } else {
-            System.out.println("Click outside grid or in gap: gridX=" + gridX + ", gridY=" + gridY);
         }
     }
 
@@ -216,7 +212,6 @@ public class SimonSays extends Terminal {
         if (solved) {
             completed = true;
             active = false;
-            System.out.println("SimonSays setPuzzleSolved: " + solved);
         }
     }
 
@@ -228,7 +223,6 @@ public class SimonSays extends Terminal {
     // Marks puzzle as solved
     public void markSolved() {
         setPuzzleSolved(true);
-        System.out.println("SimonSays markSolved called");
     }
 
     // Checks if solved
